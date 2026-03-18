@@ -26,7 +26,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className='w-full h-[200vh] bg-linear-to-r from-white via-amber-300 to-blue-400 relative scrollbar-hide '>
+    <div className='w-full h-[200vh] relative'>
       <Navbar />
       <Hero />
     </div>

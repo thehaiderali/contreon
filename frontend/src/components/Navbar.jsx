@@ -5,11 +5,12 @@ import { ThemeToggle } from "./theme-toggle"
 const Navbar = () => {
   return (
     <div className="bg-background/70 backdrop-blur-md border-b p-4 w-full flex justify-between items-center px-8 sticky top-0 z-50">
-      
-      {/* Left */}
       <div className="flex gap-6 items-center">
-        <Link className="font-semibold text-lg">Brand</Link>
-
+        <Link to="/" className="py-4 flex items-center gap-2 px-2">
+            <div className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <img src="./applogo.png"  alt="logo" className="object-cover rounded-xl " />
+            </div>
+            Contreon </Link>
         <Link to="#" className="hover:text-primary transition">
           Creators
         </Link>
@@ -21,21 +22,16 @@ const Navbar = () => {
         </Link>
       </div>
 
-      {/* Right */}
       <div className="flex gap-4 items-center">
-        
-        {/* Login */}
+
         <Button variant="outline" asChild>
           <Link to="/login">Login</Link>
         </Button>
-
-        {/* Theme Toggle */}
-        <ThemeToggle />
-
-        {/* Get Started */}
         <Button asChild>
           <Link to="/signup">Get Started</Link>
         </Button>
+      <ThemeToggle />
+
 
       </div>
     </div>

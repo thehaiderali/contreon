@@ -26,9 +26,7 @@ export function SignupForm({
       <FieldGroup>
         <div className="flex flex-col items-center gap-1 text-center">
           <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-sm text-balance text-muted-foreground">
-            Fill in the form below to create your account
-          </p>
+          
         </div>
         <Field>
           <FieldLabel htmlFor="name">Full Name</FieldLabel>
@@ -36,7 +34,7 @@ export function SignupForm({
         </Field>
         <Field>
           <FieldLabel htmlFor="email">Email</FieldLabel>
-          <Input id="email" type="email" placeholder="m@example.com" required />
+          <Input id="email" type="email" placeholder="hello@example.com" required />
         </Field>
         <Field>
           <FieldLabel htmlFor="password">Password</FieldLabel>
