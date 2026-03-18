@@ -1,22 +1,43 @@
-import React from 'react'
-import { Link } from 'react-router'
-import { Button } from '@/components/ui/button'
+import { Link } from "react-router"
+import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "./theme-toggle"
 
 const Navbar = () => {
   return (
-    <div className='bg-white/50 backdrop-blur-md  p-6 w-full flex justify-between items-center px-8  sticky top-0  '>
-      <div className='flex gap-10'>
-        <p className='rounded-4xl border-2 border-white hover:bg-black hover:text-white p-4'>Creators</p>
-        <p className='rounded-4xl border-2 border-white hover:bg-black hover:text-white p-4'>Features</p>
-        <p className='rounded-4xl border-2 border-white hover:bg-black hover:text-white p-4'>Pricing</p>
-      </div>
-      <div className='flex gap-10'>
-        <p className='rounded-4xl border-2 border-white hover:bg-black hover:text-white p-4'>Login</p>
-          <Button asChild >
-      <Link to="/signup">Get Started</Link>
-    </Button>
+    <div className="bg-background/70 backdrop-blur-md border-b p-4 w-full flex justify-between items-center px-8 sticky top-0 z-50">
+      
+      {/* Left */}
+      <div className="flex gap-6 items-center">
+        <Link className="font-semibold text-lg">Brand</Link>
+
+        <Link to="#" className="hover:text-primary transition">
+          Creators
+        </Link>
+        <Link to="#" className="hover:text-primary transition">
+          Features
+        </Link>
+        <Link to="#" className="hover:text-primary transition">
+          Pricing
+        </Link>
       </div>
 
+      {/* Right */}
+      <div className="flex gap-4 items-center">
+        
+        {/* Login */}
+        <Button variant="outline" asChild>
+          <Link to="/login">Login</Link>
+        </Button>
+
+        {/* Theme Toggle */}
+        <ThemeToggle />
+
+        {/* Get Started */}
+        <Button asChild>
+          <Link to="/signup">Get Started</Link>
+        </Button>
+
+      </div>
     </div>
   )
 }
