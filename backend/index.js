@@ -7,9 +7,15 @@ import authRouter from "./routes/auth.routes.js"
 
 
 const app=express()
+app.use(cors({
+  origin: 'http://localhost:5173', // Your frontend URL
+  credentials: true, // If you're using cookies/sessions
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors())
+
 
 app.get("/health",(req,res)=>{
     return res.status(200).json({

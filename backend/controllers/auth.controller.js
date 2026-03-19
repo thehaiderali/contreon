@@ -34,12 +34,10 @@ export async function signup(req,res){
         role:data.role
     })
     await user.save()
-    const response=user.toObject();
-    delete response.password;
     return res.status(201).json({
         success:true,
         data:{
-            user:response
+            message:"User Signed up Successfully"
         }
     })
     } catch (error) {
@@ -88,17 +86,20 @@ export async function login(req,res){
             expiresIn:"7d"
         })
 
+        const user=existingUser.toObject()
+        delete user.password
         res.cookie("token",token,{
             httpOnly:true,
-            secure:false,// Will Make it True if Deployed
-            sameSite :"lax",
+            secure:true,// Will Make it True if Deployed
+            sameSite :"none",
             maxAge:7*24*60*60*1000  //7days
         })
 
         return res.status(200).json({
             success:true,
             data:{
-                message:"User logged in Successfully"
+                message:"User logged in Successfully",
+                user
             }
         })
 
@@ -115,9 +116,13 @@ export async function login(req,res){
 export async function logout(req,res){
 
     try {
-        res.clearCookie("token");
+            res.clearCookie("token", {
+            httpOnly: true,
+            sameSite: "none",
+            secure: true, // true in production
+        });
         return res.status(200).json({
-            success:false,
+            success:true,
             data:{
                 message:"User Logged out Successfully"
             }
@@ -132,4 +137,33 @@ export async function logout(req,res){
     }
 
 
+}
+
+
+export async function getMe(req, res) {
+  try {
+    const userId = req.user.userId; // from JWT
+
+    const user = await User.findById(userId).select("-password");
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        user,
+      },
+    });
+  } catch (error) {
+    console.log("Error in getMe:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error",
+    });
+  }
 }
