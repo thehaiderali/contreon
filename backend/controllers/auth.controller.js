@@ -39,7 +39,7 @@ export async function signup(req,res){
     return res.status(201).json({
         success:true,
         data:{
-            user
+            user:response
         }
     })
     } catch (error) {

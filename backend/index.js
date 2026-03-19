@@ -28,7 +28,7 @@ app.listen(envConfig.PORT,async()=>{
         console.log("Server Started at http://localhost:3000  ")
     }
     else {
-        console.log(`Server Started at ${envConfig.BACKEND_URL}:${envConfig.PORT}`)
+        console.log(`Server Started at ${envConfig.BACKEND_URL}`)
     }
     await connectDB()
 })
