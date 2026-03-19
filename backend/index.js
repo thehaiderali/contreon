@@ -1,9 +1,14 @@
 import express from "express"
 import cors from "cors"
+import cookieParser from "cookie-parser"
 import { envConfig } from "./config/env.js"
 import { connectDB } from "./config/db.js"
+import authRouter from "./routes/auth.routes.js"
+
+
 const app=express()
 app.use(express.json())
+app.use(cookieParser())
 app.use(cors())
 
 app.get("/health",(req,res)=>{
@@ -13,6 +18,10 @@ app.get("/health",(req,res)=>{
         timestamp:Date.now()
     })
 })
+
+app.use("/api/auth",authRouter);
+
+
 
 app.listen(envConfig.PORT,async()=>{
     if(envConfig.NODE_ENV==="developement"){
