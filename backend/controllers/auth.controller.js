@@ -6,7 +6,6 @@ import jwt from "jsonwebtoken"
 import { envConfig } from "../config/env.js";
 
 
-
 export async function signup(req,res){
     try {
 
