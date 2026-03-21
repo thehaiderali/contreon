@@ -115,7 +115,7 @@ export const useAuthStore = create(
             user: null,
             isAuthenticated: false,
             loading: false,
-            error: null, // Don't show error for checkAuth failures
+            error: err, // Don't show error for checkAuth failures
           });
         }
       },

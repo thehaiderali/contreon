@@ -16,7 +16,7 @@ import {
   Settings
 } from "lucide-react"
 
-export function CreatorSideBar() {
+export function SubscriberAppSidebar() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -43,34 +43,24 @@ export function CreatorSideBar() {
             <NavLink to="/home" className={({ isActive }) => 
               `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
             }>
-              Dashboard
+              Home
             </NavLink>
             <NavLink to="/home/explore" className={({ isActive }) => 
               `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
             }>
-              Library
+              Explore
             </NavLink>
-            <NavLink to="/home/library" className={({ isActive }) => 
+            <NavLink to="/home/chat" className={({ isActive }) => 
               `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
             }>
-              Members
+              Chat
             </NavLink>
-            <NavLink to="/home/insights" className={({ isActive }) => 
+            <NavLink to="/home/notifications" className={({ isActive }) => 
               `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
             }>
-              Insights
+              Notifications
             </NavLink>
-            <NavLink to="/home/payouts" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Payouts
-            </NavLink>
-            <NavLink to="/home/messages" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Chats
-            </NavLink>
-              <NavLink to="/home/settings" className={({ isActive }) => 
+            <NavLink to="/home/settings" className={({ isActive }) => 
               `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
             }>
               Settings
@@ -92,12 +82,12 @@ export function CreatorSideBar() {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-medium">
-                  {user?.fullName || user?.name || user?.email || "User"}
+                  {user?.fullName || "User"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {user?.email || ""}
                 </span>
-                 <span className="text-xs fond-bold ">
+                <span className="text-xs text-muted-foreground">
                   {user?.role || ""}
                 </span>
               </div>
