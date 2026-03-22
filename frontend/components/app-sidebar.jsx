@@ -13,7 +13,13 @@ import {
   ChevronUp, 
   LogOut, 
   User,
-  Settings
+  Settings,
+  LayoutDashboard,
+  BookOpen,
+  Users,
+  BarChart3,
+  Wallet,
+  MessageSquare
 } from "lucide-react"
 
 export function CreatorSideBar() {
@@ -26,55 +32,50 @@ export function CreatorSideBar() {
     navigate("/")
   }
 
+  const creatorNavItems = [
+    { to: "/creator", label: "Dashboard", icon: LayoutDashboard },
+    { to: "/creator/library", label: "Library", icon: BookOpen },
+    { to: "/creator/members", label: "Members", icon: Users },
+    { to: "/creator/insights", label: "Insights", icon: BarChart3 },
+    { to: "/creator/payouts", label: "Payouts", icon: Wallet },
+    { to: "/creator/messages", label: "Chats", icon: MessageSquare },
+    { to: "/creator/settings", label: "Settings", icon: Settings },
+  ]
+
   return (
     <Sidebar>
       <SidebarHeader>
-        <Link to="/home" className="py-4 flex items-center gap-2 px-2">
+        <Link to="/creator" className="py-4 flex items-center gap-2 px-2">
           <div className="flex size-6 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <img src="./applogo.png" alt="logo" className="rounded-xl" />
           </div>
-          Contreon
+          <span className="font-semibold">Contreon</span>
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <nav className="flex flex-col gap-2 px-2">
-            <NavLink to="/home" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Dashboard
-            </NavLink>
-            <NavLink to="/home/explore" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Library
-            </NavLink>
-            <NavLink to="/home/library" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Members
-            </NavLink>
-            <NavLink to="/home/insights" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Insights
-            </NavLink>
-            <NavLink to="/home/payouts" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Payouts
-            </NavLink>
-            <NavLink to="/home/messages" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Chats
-            </NavLink>
-              <NavLink to="/home/settings" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Settings
-            </NavLink>
+            {creatorNavItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end // Apply 'end' to all links for exact matching only
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 p-2 rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-foreground hover:bg-muted'
+                    }`
+                  }
+                >
+                  <IconComponent className="size-4" />
+                  <span className="text-sm">{item.label}</span>
+                </NavLink>
+              )
+            })}
           </nav>
         </SidebarGroup>
       </SidebarContent>
@@ -97,8 +98,8 @@ export function CreatorSideBar() {
                 <span className="text-xs text-muted-foreground">
                   {user?.email || ""}
                 </span>
-                 <span className="text-xs fond-bold ">
-                  {user?.role || ""}
+                <span className="text-xs font-bold text-primary">
+                  {user?.role || "Creator"}
                 </span>
               </div>
             </div>
@@ -107,10 +108,16 @@ export function CreatorSideBar() {
 
           {/* User menu dropdown */}
           {showUserMenu && (
-            <div className="mt-1 p-1 rounded-lg border bg-card shadow-lg">
+            <div className="mt-2 p-1 rounded-lg border bg-card shadow-lg">
               <NavLink 
-                to="/home/profile" 
-                className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
+                to="/creator/profile" 
+                className={({ isActive }) =>
+                  `flex items-center gap-2 p-2 rounded transition-colors ${
+                    isActive
+                      ? 'bg-muted font-medium'
+                      : 'hover:bg-muted'
+                  }`
+                }
                 onClick={() => setShowUserMenu(false)}
               >
                 <User className="size-4" />
@@ -118,8 +125,14 @@ export function CreatorSideBar() {
               </NavLink>
               
               <NavLink 
-                to="/home/settings" 
-                className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
+                to="/creator/settings" 
+                className={({ isActive }) =>
+                  `flex items-center gap-2 p-2 rounded transition-colors ${
+                    isActive
+                      ? 'bg-muted font-medium'
+                      : 'hover:bg-muted'
+                  }`
+                }
                 onClick={() => setShowUserMenu(false)}
               >
                 <Settings className="size-4" />
@@ -130,7 +143,7 @@ export function CreatorSideBar() {
               
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 p-2 h-auto font-normal text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="w-full justify-start gap-2 p-2 h-auto font-normal text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                 onClick={async () => {
                   setShowUserMenu(false)
                   await handleLogout()
@@ -143,7 +156,7 @@ export function CreatorSideBar() {
           )}
         </div>
         
-        <p className="text-xs px-2 pb-2 text-muted-foreground">
+        <p className="text-xs px-2 pb-2 text-muted-foreground text-center">
           © Contreon 2026
         </p>
       </SidebarFooter>
