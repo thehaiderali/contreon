@@ -4,7 +4,7 @@ import { ThemeToggle } from "./theme-toggle"
 
 const Navbar = () => {
   return (
-    <div className="bg-background/70 backdrop-blur-md border-b p-4 w-full flex justify-between items-center px-8 sticky top-0 z-50">
+    <div className="bg-background/70 backdrop-blur-md border-b p-4 w-full flex justify-between items-center px-8 sticky top-0 z-50 text-xs" >
       <div className="flex gap-6 items-center">
         <Link to="/" className="py-4 flex items-center gap-2 px-2">
             <div className="flex size-7 items-center justify-center rounded-xl bg-primary text-primary-foreground">

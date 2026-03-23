@@ -5,9 +5,9 @@
 @import "@fontsource-variable/inter";
 
 @custom-variant dark (&:is(.dark *));
-::-webkit-scrollbar {
+/* ::-webkit-scrollbar {
   display: none;
-}
+} */
 
 
 :root {
