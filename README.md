@@ -8,7 +8,7 @@ CONTREON addresses these challenges by offering a lightweight subscription platf
 - Create and customize public profiles
 - Publish exclusive content for subscribers
 - Manage subscription tiers (Regular $5/month, Premium $15/month)
-- Receive transparent revenue analytics with a 98% creator / 2% platform fee split
+- Receive transparent revenue analytics with a 85% creator / 15% platform fee split
 - Accept direct payouts via Stripe Connect
 
 ---
