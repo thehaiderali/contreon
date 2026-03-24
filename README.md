@@ -26,7 +26,7 @@ CONTREON addresses these challenges by offering a lightweight subscription platf
 
 - **Backend:** Node.js with JWT Authentication (24-hour expiry, role-based)
 - **Frontend:** React
-- **Database:** MongoDB (Mongoose ODM)
+- **Database:** MongoDB (Mongoose ODM) and Sql(MYSQL)
 - **Payments:** Stripe Connect (creator onboarding & direct payouts)
 - **Validation:** Zod schemas
 - **Security:** bcrypt password hashing, rate-limiting (5 req/15 min per IP)
