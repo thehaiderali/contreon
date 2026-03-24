@@ -53,7 +53,7 @@ CONTREON addresses these challenges by offering a lightweight subscription platf
 - MongoDB (local or Atlas)
 - Stripe account (Test Mode keys)
 
-**Backen:d**
+**Backend:**
 
 bash
 cd backend
