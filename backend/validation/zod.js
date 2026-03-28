@@ -6,8 +6,6 @@ export function errorParser(error){
 })))
 }
 
-
-
 export const signUpSchema=z.object({
     fullName:z.string().min(3).max(50),
     email:z.email(),
@@ -27,9 +25,9 @@ export const creatorProfileSchema = z.object({
     bio: z.string().min(10).max(80),
     pageName: z.string().min(3).max(20),
     pageUrl: z.string().min(3).max(30),
-    profileImageUrl: z.string().url().optional(),
-    bannerUrl: z.string().url().optional(),
-    socialLinks: z.array(z.string().url()).optional(),
+    profileImageUrl: z.url().optional(),
+    bannerUrl: z.url().optional(),
+    socialLinks: z.array(z.url()).optional(),
     aboutPage: z.string().max(200).optional(),
 })
 

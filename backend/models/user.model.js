@@ -1,5 +1,4 @@
 import { model, Schema } from "mongoose";
-
 const userSchema=new Schema({
    fullName:{
     type:String,
@@ -25,6 +24,10 @@ const userSchema=new Schema({
     type:String,
     enum:["creator","subscriber"],
     required:true
+   },
+   onBoarded:{
+      type:Boolean,
+      default:false,
    }
 
 },{timestamps:true})
