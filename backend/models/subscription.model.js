@@ -26,7 +26,7 @@ const subscriptionSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "paused", "canceled"],
+      enum: ["active", "paused", "cancelled"],
       default: "active",
     },
     startDate: {
