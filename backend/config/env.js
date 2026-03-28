@@ -18,6 +18,9 @@ if(!process.env.NODE_ENV){
 if(!process.env.BACKEND_URL){
     throw new Error("BACKEND_URL not defined")
 }
+if(!process.env.UPLOADTHING_TOKEN){
+    throw new Error("UPLOADTHING_TOKEN not defined")
+}
 
 export const envConfig={
 
@@ -26,6 +29,6 @@ export const envConfig={
    FRONTEND_URL : process.env.FRONTEND_URL,
    PORT:process.env.PORT ,
    NODE_ENV:process.env.NODE_ENV,
-   BACKEND_URL:process.env.BACKEND_URL
-
+   BACKEND_URL:process.env.BACKEND_URL,
+   UPLOADTHING_TOKEN:process.env.UPLOADTHING_TOKEN 
 }
