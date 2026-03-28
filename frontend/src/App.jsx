@@ -3,8 +3,6 @@ import { Routes, Route } from 'react-router';
 import HomePage from './components/HomePage';
 import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
-
-// Single Layout for both Creator and Subscriber
 import Home from './pages/private/subscriber/Home';
 
 // Subscriber Pages
