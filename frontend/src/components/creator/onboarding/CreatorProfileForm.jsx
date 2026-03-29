@@ -126,7 +126,6 @@ const CreatorProfileForm = () => {
       if (response.data.success) {
         setSuccessMessage('Profile created successfully!');
        
-             window.location.reload();
       } else {
         throw new Error(response.data.message || 'Failed to create profile');
       }

@@ -3,12 +3,11 @@ import CreatorProfileForm from '../onboarding/CreatorProfileForm';
 import CreatorProfile from './Profile';// ✅ import the new profile component
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
+import OnBoarding from '../onboarding/OnBoarding';
 
 const CreatorHome = () => {
   const { user } = useAuthStore();
   const [isOnboarded,setisOnboarded] = useState(false)
-  
-  
     const fetchProfile=async()=>{
       const response=await api.get("/creators/profile/me");
       console.log(response)
@@ -28,7 +27,7 @@ const CreatorHome = () => {
       {isOnboarded ? (
         // ✅ Show profile component when onboarded
         <div className="max-w-2xl mx-auto px-4 py-8">
-          <CreatorProfile />
+          Show Creator Page 
         </div>
       ) : (
         // ✅ Show onboarding form when not onboarded
@@ -41,8 +40,8 @@ const CreatorHome = () => {
               Let's begin creating your page!
             </p>
           </div>
-          <div className="w-full max-w-2xl">
-            <CreatorProfileForm />
+          <div className="w-full max-w-2xl min-h-screen">
+            <OnBoarding />
           </div>
         </div>
       )}
