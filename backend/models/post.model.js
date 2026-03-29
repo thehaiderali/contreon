@@ -37,6 +37,14 @@ const postSchema = new mongoose.Schema({
       return this.isPaid === true;
     }
   },
+  isPublished:{
+    type:Boolean,
+    default:false,
+  },
+  isDraft:{
+    type:Boolean,
+    default:true
+  },
   description:{
     type:String,
     required: function () {
