@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +8,7 @@ import { Plus, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
 import { UploadButton } from '@/lib/uploadthing';
 import { api } from '@/lib/api';
+import ProfileCreationSuccess from './ProfileCreationSuccess';
 
 const CreatorProfileForm = () => {
   const { user } = useAuthStore();
@@ -26,6 +26,7 @@ const CreatorProfileForm = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showForm, setShowForm] = useState(true);
 
   const validateForm = () => {
     const newErrors = {};
@@ -125,7 +126,7 @@ const CreatorProfileForm = () => {
 
       if (response.data.success) {
         setSuccessMessage('Profile created successfully!');
-       
+        setShowForm(false);
       } else {
         throw new Error(response.data.message || 'Failed to create profile');
       }
@@ -159,164 +160,182 @@ const CreatorProfileForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>Creator Profile Information</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-
-          {/* Bio */}
-          <div className="space-y-2">
-            <Label htmlFor="bio">Bio <span className="text-red-500">*</span></Label>
-            <Textarea
-              id="bio"
-              name="bio"
-              value={formData.bio}
-              onChange={handleChange}
-              placeholder="Tell us about yourself (10-80 characters)"
-              className={errors.bio ? 'border-red-500' : ''}
-              rows={3}
-            />
-            <div className="flex justify-between">
-              {errors.bio && <p className="text-sm text-red-500">{errors.bio}</p>}
-              <p className="text-sm text-gray-500 ml-auto">{formData.bio.length}/80</p>
-            </div>
-          </div>
-
-          {/* Page Name */}
-          <div className="space-y-2">
-            <Label htmlFor="pageName">Page Name <span className="text-red-500">*</span></Label>
-            <Input
-              id="pageName"
-              name="pageName"
-              value={formData.pageName}
-              onChange={handleChange}
-              placeholder="Enter page name (3-20 characters)"
-              className={errors.pageName ? 'border-red-500' : ''}
-            />
-            {errors.pageName && <p className="text-sm text-red-500">{errors.pageName}</p>}
-          </div>
-
-          {/* Page URL */}
-          <div className="space-y-2">
-            <Label htmlFor="pageUrl">Page URL <span className="text-red-500">*</span></Label>
-            <Input
-              id="pageUrl"
-              name="pageUrl"
-              value={formData.pageUrl}
-              onChange={handleChange}
-              placeholder="Enter page URL (3-30 characters)"
-              className={errors.pageUrl ? 'border-red-500' : ''}
-            />
-            {errors.pageUrl && <p className="text-sm text-red-500">{errors.pageUrl}</p>}
-          </div>
-
-          {/* Profile Image */}
-          <div className="space-y-2">
-            <Label>Profile Image</Label>
-            <div className="flex items-center gap-4">
-              {formData.profileImageUrl && (
-                <div className="relative w-16 h-16 rounded-full overflow-hidden border">
-                  <img src={formData.profileImageUrl} alt="Profile preview" className="w-full h-full object-cover" />
-                </div>
-              )}
-              <UploadButton
-                endpoint="imageUploader"
-                onClientUploadComplete={handleProfileImageUpload}
-                onUploadError={(error) => console.error('Upload error:', error)}
-              />
-            </div>
-            {formData.profileImageUrl && (
-              <p className="text-xs text-green-600 mt-1">Image uploaded successfully</p>
-            )}
-          </div>
-
-          {/* Banner Image */}
-          <div className="space-y-2">
-            <Label>Banner Image</Label>
-            {formData.bannerUrl && (
-              <div className="relative w-full h-32 rounded-lg overflow-hidden border">
-                <img src={formData.bannerUrl} alt="Banner preview" className="w-full h-full object-cover" />
-              </div>
-            )}
-            <UploadButton
-              endpoint="imageUploader"
-              onClientUploadComplete={handleBannerImageUpload}
-              onUploadError={(error) => console.error('Upload error:', error)}
-            />
-          </div>
-
-          {/* Social Links */}
-          <div className="space-y-2">
-            <Label>Social Links</Label>
-            {formData.socialLinks.map((link, index) => (
-              <div key={index} className="flex gap-2 items-center">
-                <Input
-                  value={link}
-                  onChange={(e) => handleSocialLinkChange(index, e.target.value)}
-                  placeholder={`Social link ${index + 1}`}
-                  className="flex-1"
+    <>
+      {showForm && (
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xs">Creator Profile Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Bio */}
+              <div className="space-y-2">
+                <Label htmlFor="bio" className="text-xs">
+                  Bio <span className="text-red-500">*</span>
+                </Label>
+                <Textarea
+                  id="bio"
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleChange}
+                  placeholder="Tell us about yourself (10-80 characters)"
+                  className={`${errors.bio ? 'border-red-500' : ''} text-xs`}
+                  rows={2}
                 />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => removeSocialLink(index)}
-                  disabled={formData.socialLinks.length === 1 && !link}
+                <div className="flex justify-between">
+                  {errors.bio && <p className="text-xs text-red-500">{errors.bio}</p>}
+                  <p className="text-xs text-gray-500 ml-auto">{formData.bio.length}/80</p>
+                </div>
+              </div>
+
+              {/* Page Name */}
+              <div className="space-y-2">
+                <Label htmlFor="pageName" className="text-xs">
+                  Page Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="pageName"
+                  name="pageName"
+                  value={formData.pageName}
+                  onChange={handleChange}
+                  placeholder="Enter page name (3-20 characters)"
+                  className={`${errors.pageName ? 'border-red-500' : ''} text-xs`}
+                />
+                {errors.pageName && <p className="text-xs text-red-500">{errors.pageName}</p>}
+              </div>
+
+              {/* Page URL */}
+              <div className="space-y-2">
+                <Label htmlFor="pageUrl" className="text-xs">
+                  Page URL <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="pageUrl"
+                  name="pageUrl"
+                  value={formData.pageUrl}
+                  onChange={handleChange}
+                  placeholder="Enter page URL (3-30 characters)"
+                  className={`${errors.pageUrl ? 'border-red-500' : ''} text-xs`}
+                />
+                {errors.pageUrl && <p className="text-xs text-red-500">{errors.pageUrl}</p>}
+              </div>
+
+              {/* Profile Image */}
+              <div className="space-y-2">
+                <Label className="text-xs">Profile Image</Label>
+                <div className="flex items-center gap-4">
+                  {formData.profileImageUrl && (
+                    <div className="relative w-16 h-16 rounded-full overflow-hidden border">
+                      <img src={formData.profileImageUrl} alt="Profile preview" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <UploadButton
+                    endpoint="imageUploader"
+                    onClientUploadComplete={handleProfileImageUpload}
+                    onUploadError={(error) => console.error('Upload error:', error)}
+                  />
+                </div>
+                {formData.profileImageUrl && (
+                  <p className="text-xs text-green-600 mt-1">Image uploaded successfully</p>
+                )}
+              </div>
+
+              {/* Banner Image */}
+              <div className="space-y-2">
+                <Label className="text-xs">Banner Image</Label>
+                {formData.bannerUrl && (
+                  <div className="relative w-full h-32 rounded-lg overflow-hidden border">
+                    <img src={formData.bannerUrl} alt="Banner preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+                <UploadButton
+                  endpoint="imageUploader"
+                  onClientUploadComplete={handleBannerImageUpload}
+                  onUploadError={(error) => console.error('Upload error:', error)}
+                />
+              </div>
+
+              {/* Social Links */}
+              <div className="space-y-2">
+                <Label className="text-xs">Social Links</Label>
+                {formData.socialLinks.map((link, index) => (
+                  <div key={index} className="flex gap-2 items-center">
+                    <Input
+                      value={link}
+                      onChange={(e) => handleSocialLinkChange(index, e.target.value)}
+                      placeholder={`Social link ${index + 1}`}
+                      className="flex-1 text-xs"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => removeSocialLink(index)}
+                      disabled={formData.socialLinks.length === 1 && !link}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="xs" 
+                  onClick={addSocialLink} 
+                  className="mt-2 text-xs"
                 >
-                  <X className="h-4 w-4" />
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Social Link
                 </Button>
               </div>
-            ))}
-            <Button type="button" variant="outline" size="sm" onClick={addSocialLink} className="mt-2">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Social Link
-            </Button>
-          </div>
 
-          {/* About Page */}
-          <div className="space-y-2">
-            <Label htmlFor="aboutPage">About Page</Label>
-            <Textarea
-              id="aboutPage"
-              name="aboutPage"
-              value={formData.aboutPage}
-              onChange={handleChange}
-              placeholder="Tell more about yourself (max 200 characters)"
-              className={errors.aboutPage ? 'border-red-500' : ''}
-              rows={4}
-            />
-            <div className="flex justify-between">
-              {errors.aboutPage && <p className="text-sm text-red-500">{errors.aboutPage}</p>}
-              <p className="text-sm text-gray-500 ml-auto">{formData.aboutPage.length}/200</p>
-            </div>
-          </div>
+              {/* About Page */}
+              <div className="space-y-2">
+                <Label htmlFor="aboutPage" className="text-xs">About Page</Label>
+                <Textarea
+                  id="aboutPage"
+                  name="aboutPage"
+                  value={formData.aboutPage}
+                  onChange={handleChange}
+                  placeholder="Tell more about yourself (max 200 characters)"
+                  className={`${errors.aboutPage ? 'border-red-500' : ''} text-xs`}
+                  rows={4}
+                />
+                <div className="flex justify-between">
+                  {errors.aboutPage && <p className="text-xs text-red-500">{errors.aboutPage}</p>}
+                  <p className="text-xs text-gray-500 ml-auto">{formData.aboutPage.length}/200</p>
+                </div>
+              </div>
 
-          {/* Submit */}
-          <div className="pt-4">
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Create Profile'}
-            </Button>
-          </div>
+              {/* Submit */}
+              <div className="pt-4">
+                <Button type="submit" className="w-full text-xs" disabled={isSubmitting}>
+                  {isSubmitting ? 'Submitting...' : 'Create Profile'}
+                </Button>
+              </div>
 
-          {/* Success Message */}
-          {successMessage && (
-            <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <p className="text-sm text-green-600">{successMessage}</p>
-            </div>
-          )}
+              {/* Success Message */}
+              {successMessage && (
+                <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-600">{successMessage}</p>
+                </div>
+              )}
 
-          {/* Submit Error */}
-          {errors.submit && (
-            <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-sm text-red-600">{errors.submit}</p>
-            </div>
-          )}
-
-        </CardContent>
-      </Card>
-    </form>
+              {/* Submit Error */}
+              {errors.submit && (
+                <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-xs text-red-600">{errors.submit}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </form>
+      )}
+      {!showForm && (
+        <ProfileCreationSuccess />
+      )}
+    </>
   );
 };
 
