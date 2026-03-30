@@ -27,7 +27,7 @@ const CreatorHome = () => {
       {isOnboarded ? (
         // ✅ Show profile component when onboarded
         <div className="max-w-2xl mx-auto px-4 py-8">
-          Show Creator Page 
+          <CreatorProfile/>
         </div>
       ) : (
         // ✅ Show onboarding form when not onboarded
@@ -41,7 +41,7 @@ const CreatorHome = () => {
             </p>
           </div>
           <div className="w-full max-w-2xl min-h-screen">
-            <OnBoarding />
+            <CreatorProfileForm/>
           </div>
         </div>
       )}
