@@ -22,6 +22,7 @@ import Payouts from './pages/private/creator/Payouts';
 // Protected Routes
 import { ProtectedRoutes } from './components/ProtectedRoutes';
 import { CreatorRoutes } from './components/CreatorRoutes';
+import EditCreatorProfile from './pages/private/creator/ProfileEdit';
 
 const App = () => {
   return (
@@ -53,6 +54,7 @@ const App = () => {
             <Route path="payouts" element={<Payouts />} />
             <Route path="messages" element={<Chats />} />
             <Route path="settings" element={<Settings />} />
+            <Route path='profile/edit' element={<EditCreatorProfile/>}/>
           </Route>
         </Route>
       </Route>

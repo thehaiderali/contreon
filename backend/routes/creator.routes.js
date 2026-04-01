@@ -4,7 +4,8 @@ import {
   getCreatorProfileById,
   getMyCreatorProfile,
   getCreatorById,
-  makeCreatorProfile
+  makeCreatorProfile,
+  updateCreatorProfile
 } from "../controllers/creator.controller.js";
 
 const creatorRouter = Router();
@@ -13,5 +14,6 @@ creatorRouter.get("/profile/me", authMiddleware,checkCreator, getMyCreatorProfil
 creatorRouter.get("/profile/:creatorId", getCreatorProfileById);
 creatorRouter.get("/:creatorId", getCreatorById);
 creatorRouter.post("/profile", authMiddleware, checkCreator, makeCreatorProfile);
+creatorRouter.put("/profile/edit", authMiddleware, checkCreator, updateCreatorProfile);
 
 export default creatorRouter;

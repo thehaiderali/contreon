@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken"
 import { envConfig } from "../config/env.js";
-
+import User from "../models/user.model.js";
 
 export const authMiddleware = (req, res, next) => {
   const token = req.cookies.token;
@@ -17,7 +17,6 @@ export const authMiddleware = (req, res, next) => {
 export const checkCreator=async(req,res,next)=>{
 
   try {
-   
     const role=req.user.role;
     if(role!=="creator"){
       return res.status(403).json({
@@ -28,6 +27,40 @@ export const checkCreator=async(req,res,next)=>{
     else{
       next()
     }
+  } catch (error) {
+    return res.status(500).json({
+      success:false,
+      error:"Internal Server Error"
+    })
+  }
+
+}
+
+
+export const checkCreatorExists=async(req,res,next)=>{
+
+  try {
+    const role=req.user.role;
+    if(role!=="creator"){
+      return res.status(403).json({
+        success:false,
+        error:"Creator Access Required"
+      })
+    }
+    const userExists=await User.findById(req.user.userId);
+    if(!userExists){
+      return res.status(404).json({
+        success:false,
+        error:"User not found "
+      })
+    }
+    if(userExists.role!=="creator"){
+      return res.status(403).json({
+        success:false,
+        error:"Creator Access Required"
+      })
+    }
+    next()
   } catch (error) {
     return res.status(500).json({
       success:false,

@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
-import { creatorProfileSchema, errorParser } from "../validation/zod.js";
+import { creatorProfileSchema, errorParser, updateCreatorProfileSchema } from "../validation/zod.js";
 
 export async function getCreatorProfileById(req, res) {
   try {
@@ -79,7 +79,6 @@ export async function makeCreatorProfile(req, res) {
       return res.status(400).json({ success: false, error: "Invalid Creator Id" });
     }
 
-    // ✅ Fixed: define creator before checking it
     const creator = await User.findById(creatorId);
     if (!creator) {
       return res.status(404).json({ success: false, error: "Creator not Found" });
@@ -151,4 +150,119 @@ export async function makeCreatorProfile(req, res) {
       error: process.env.NODE_ENV === "development" ? error.message : undefined
     });
   }
+}
+
+export async function updateCreatorProfile(req, res) {
+    try {
+        const creatorId = req.user?.userId;
+
+        // Validate creator ID
+        if (!mongoose.Types.ObjectId.isValid(creatorId)) {
+            return res.status(400).json({ 
+                success: false, 
+                error: "Invalid Creator Id" 
+            });
+        }
+
+        // Check if user exists
+        const creator = await User.findById(creatorId);
+        if (!creator) {
+            return res.status(404).json({ 
+                success: false, 
+                error: "Creator not Found" 
+            });
+        }
+
+        // Check if profile exists
+        const existingProfile = await CreatorProfile.findOne({ creatorId });
+        if (!existingProfile) {
+            return res.status(404).json({
+                success: false,
+                error: "Creator profile not found. Please create a profile first"
+            });
+        }
+
+        // Validate request body
+        const validationResult = updateCreatorProfileSchema.safeParse(req.body);
+        if (!validationResult.success) {
+            return res.status(400).json({
+                success: false,
+                message: "Validation failed",
+                error: errorParser(validationResult.error)
+            });
+        }
+
+        const validatedData = validationResult.data;
+
+        // Check if pageUrl is being updated and if it's already taken
+        if (validatedData.pageUrl && validatedData.pageUrl !== existingProfile.pageUrl) {
+            const existingPageUrl = await CreatorProfile.findOne({ 
+                pageUrl: validatedData.pageUrl,
+                creatorId: { $ne: creatorId } // Exclude current profile
+            });
+            
+            if (existingPageUrl) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Page URL already taken. Please choose a different URL"
+                });
+            }
+        }
+
+        // Prepare update data
+        const updateData = {};
+        
+        // Only include fields that are provided in the request
+        if (validatedData.bio !== undefined) updateData.bio = validatedData.bio;
+        if (validatedData.pageName !== undefined) updateData.pageName = validatedData.pageName;
+        if (validatedData.pageUrl !== undefined) updateData.pageUrl = validatedData.pageUrl;
+        if (validatedData.profileImageUrl !== undefined) updateData.profileImageUrl = validatedData.profileImageUrl;
+        if (validatedData.bannerUrl !== undefined) updateData.bannerUrl = validatedData.bannerUrl;
+        if (validatedData.socialLinks !== undefined) updateData.socialLinks = validatedData.socialLinks;
+        if (validatedData.aboutPage !== undefined) updateData.aboutPage = validatedData.aboutPage;
+
+        // Add updatedAt timestamp
+        updateData.updatedAt = new Date();
+
+        // Update the profile
+        const updatedProfile = await CreatorProfile.findOneAndUpdate(
+            { creatorId },
+            { $set: updateData },
+            { new: true, runValidators: true } // Return updated document and run validators
+        );
+
+        return res.status(200).json({
+            success: true,
+            message: "Creator profile updated successfully",
+            data: {
+                profile: updatedProfile,
+                updatedFields: Object.keys(updateData).filter(key => key !== 'updatedAt')
+            }
+        });
+
+    } catch (error) {
+        console.error("Error in updateCreatorProfile:", error);
+        if (error.code === 11000) {
+            const field = Object.keys(error.keyPattern)[0];
+            return res.status(400).json({
+                success: false,
+                message: `${field} already exists. Please use a different ${field}`
+            });
+        }
+
+        // Handle validation errors from MongoDB
+        if (error.name === 'ValidationError') {
+            return res.status(400).json({
+                success: false,
+                message: "Database validation failed",
+                error: Object.values(error.errors).map(e => e.message)
+            });
+        }
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+            error: process.env.NODE_ENV === "development" ? error.message : undefined
+        });
+    }
 }
