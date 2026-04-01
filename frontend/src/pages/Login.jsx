@@ -18,7 +18,7 @@ export default function LoginPage() {
     console.log("🔄 LoginPage useEffect - isAuthenticated:", isAuthenticated);
     if (isAuthenticated === true) {
       console.log("✅ User authenticated, navigating to /home");
-      navigate("/home", { replace: true });
+      navigate("/creator", { replace: true });
     }
   }, [isAuthenticated, navigate]);
 

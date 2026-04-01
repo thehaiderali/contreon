@@ -6,8 +6,8 @@ const collectionRouter=Router();
 
 
 collectionRouter.post("/",checkCreatorExists,creationCollection)
-collectionRouter.put("/:collectionId",checkCreatorExists,creationCollection)
-collectionRouter.delete("/:collectionId",checkCreatorExists,creationCollection)
+collectionRouter.put("/:collectionId",checkCreatorExists,updateCollection)
+collectionRouter.delete("/:collectionId",checkCreatorExists,deleteCollection)
 
 
 

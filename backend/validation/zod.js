@@ -31,6 +31,18 @@ export const creatorProfileSchema = z.object({
     aboutPage: z.string().max(200).optional(),
 })
 
+export const updateCreatorProfileSchema = z.object({
+    bio: z.string().min(10).max(80).optional(),
+    pageName: z.string().min(3).max(20).optional(),
+    pageUrl: z.string().min(3).max(30).optional(),
+    profileImageUrl: z.string().url().optional(),
+    bannerUrl: z.string().url().optional(),
+    socialLinks: z.array(z.string().url()).optional(),
+    aboutPage: z.string().max(200).optional(),
+}).refine(data => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update"
+});
+
 export const subscriptionTierSchema = z.object({
     tierName: z.enum(["regular", "premium"]),
     price: z.number().positive(),
