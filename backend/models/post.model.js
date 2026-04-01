@@ -22,7 +22,7 @@ const postSchema = new mongoose.Schema({
     type: String,
     default: ""
   },
-  authorId: {
+  creatorId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "User",
     required: true
@@ -44,6 +44,10 @@ const postSchema = new mongoose.Schema({
   isDraft:{
     type:Boolean,
     default:true
+  },
+  thumbnailUrl:{
+    type:String,
+    default:""
   },
   description:{
     type:String,

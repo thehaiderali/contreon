@@ -19,8 +19,13 @@ const collectionSchema=new mongoose.Schema({
      type: mongoose.Schema.Types.ObjectId,
      ref: "Post",
      },
-
+ 
 ],
+description:{
+    type:String,
+    min:10,
+    max:100,
+}
 
 })
 

@@ -43,3 +43,12 @@ export const subscriptionSchema = z.object({
     creatorId: z.string().min(1),
     tierType: z.enum(["regular", "premium"]),
 })
+
+export const collectionSchema=z.object({
+    title:z.string().min(3).max(30).trim(),
+    description:z.string().min(10).max(100).trim().optional(),
+})
+export const collectionUpdateSchema=z.object({
+    title:z.string().min(3).max(30).trim().optional(),
+    description:z.string().min(10).max(100).trim().optional(),
+})
