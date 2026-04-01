@@ -79,7 +79,6 @@ export async function makeCreatorProfile(req, res) {
       return res.status(400).json({ success: false, error: "Invalid Creator Id" });
     }
 
-    // ✅ Fixed: define creator before checking it
     const creator = await User.findById(creatorId);
     if (!creator) {
       return res.status(404).json({ success: false, error: "Creator not Found" });
