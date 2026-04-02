@@ -21,6 +21,9 @@ if(!process.env.BACKEND_URL){
 if(!process.env.UPLOADTHING_TOKEN){
     throw new Error("UPLOADTHING_TOKEN not defined")
 }
+if(!process.env.STRIPE_SECRET_KEY){
+    throw new Error("Stripe Secret Key Undefiend not defined")
+}
 
 export const envConfig={
 
@@ -30,5 +33,6 @@ export const envConfig={
    PORT:process.env.PORT ,
    NODE_ENV:process.env.NODE_ENV,
    BACKEND_URL:process.env.BACKEND_URL,
-   UPLOADTHING_TOKEN:process.env.UPLOADTHING_TOKEN 
+   UPLOADTHING_TOKEN:process.env.UPLOADTHING_TOKEN,
+   STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY
 }

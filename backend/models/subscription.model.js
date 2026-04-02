@@ -14,7 +14,6 @@ const subscriptionSchema = new Schema(
     },
     tierType: {
       type: String,
-      enum: ["regular", "premium"],
       required: true,
     },
     stripeSubscriptionId: {
