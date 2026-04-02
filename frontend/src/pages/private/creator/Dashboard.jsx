@@ -1,30 +1,26 @@
-
 import React from 'react'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
-// Import your component files (adjust paths as needed)
 import CreatorHome from '@/src/components/creator/dashboard/Home'
-import Collections from '@/src/components/creator/dashboard/Collections'
-import Shop from '@/src/components/creator/dashboard/Shop'
-import Memberships from '@/src/components/creator/dashboard/Memberships'
-import Recommendations from '@/src/components/creator/dashboard/Recommendations'
+import NoCollections from './NoCollections'
+import NoShop from './NoShop'
+import NoMemberships from './NoMemberships'
+import NoRecommendations from './NoRecommendations'
 
 export const Dashboard = () => {
 
   const navlinks = ["Home", "Collections", "Shop", "Memberships", "Recommendations"]
   const [currentLink, setCurrentLink] = useState("Home")
 
-  // Map links to their corresponding components
   const componentMap = {
     "Home": <CreatorHome />,
-    "Collections": <Collections />,
-    "Shop": <Shop />,
-    "Memberships": <Memberships />,
-    "Recommendations": <Recommendations />
+    "Collections": <NoCollections />,
+    "Shop": <NoShop />,
+    "Memberships": <NoMemberships />,
+    "Recommendations": <NoRecommendations />
   }
 
-  // Animation variants for navigation items
   const navItemVariants = {
     initial: { opacity: 0, y: -20 },
     animate: { opacity: 1, y: 0 },
@@ -35,7 +31,6 @@ export const Dashboard = () => {
     tap: { scale: 0.95 }
   }
 
-  // Animation variants for the active indicator
   const contentVariants = {
     initial: { 
       opacity: 0, 
@@ -81,7 +76,6 @@ export const Dashboard = () => {
       transition={{ duration: 0.5 }}
       className='w-full min-h-screen p-20'
     >
-      {/* Navigation Container */}
       <motion.div 
         variants={containerVariants}
         initial="hidden"
@@ -108,12 +102,10 @@ export const Dashboard = () => {
             >
               {link}
             </h1>
-            
           </motion.div>
         ))}
       </motion.div>
       
-      {/* Content Container with Animated Transitions */}
       <div className="mt-12 overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.div
