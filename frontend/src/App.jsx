@@ -23,6 +23,8 @@ import Payouts from './pages/private/creator/Payouts';
 import { ProtectedRoutes } from './components/ProtectedRoutes';
 import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
+import StripeOnboarding from './pages/private/creator/StripeOnboarding';
+import StripeSuccess from './pages/private/creator/StripeSucess';
 
 const App = () => {
   return (
@@ -55,6 +57,8 @@ const App = () => {
             <Route path="messages" element={<Chats />} />
             <Route path="settings" element={<Settings />} />
             <Route path='profile/edit' element={<EditCreatorProfile/>}/>
+            <Route path='onboarding' element={<StripeOnboarding/>}/>
+            <Route path='onboarding/success' element={<StripeSuccess/>}/>
           </Route>
         </Route>
       </Route>

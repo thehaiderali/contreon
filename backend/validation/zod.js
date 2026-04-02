@@ -44,7 +44,7 @@ export const updateCreatorProfileSchema = z.object({
 });
 
 export const subscriptionTierSchema = z.object({
-    tierName: z.enum(["regular", "premium"]),
+    tierName: z.string().min(3).max(30),
     price: z.number().positive(),
     description: z.string().optional(),
     perks: z.array(z.string()).optional(),

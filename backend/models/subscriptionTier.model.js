@@ -9,7 +9,6 @@ const subscriptionTierSchema = new Schema(
     },
     tierName: {
       type: String,
-      enum: ["regular", "premium"],
       required: true,
     },
     price: {
@@ -26,6 +25,12 @@ const subscriptionTierSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    stripeProductId:{
+      type:String
+    },
+    stripePriceId:{
+      type:String,
+    }
   },
   { timestamps: true }
 );

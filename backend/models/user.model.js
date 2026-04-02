@@ -28,6 +28,14 @@ const userSchema=new Schema({
    onBoarded:{
       type:Boolean,
       default:false,
+   },
+   isConnected:{
+      type:Boolean,
+      default:false
+   },
+   connectedID:{
+      type:String,
+      default:""
    }
 
 },{timestamps:true})
