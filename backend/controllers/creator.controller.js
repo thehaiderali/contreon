@@ -264,6 +264,19 @@ export async function creatorConnectStripe(req,res){
   
   try {
     const user=await User.findById(req.user.userId);
+      if (user.isConnected && user.connectedID) {
+      try {
+        const existingAccount = await stripe.accounts.retrieve(user.connectedID);
+        if (existingAccount.charges_enabled && existingAccount.payouts_enabled) {
+          return res.status(400).json({
+            success: false,
+            error: "Stripe account already connected and verified"
+          });
+        }
+      } catch (err) {
+        console.log("Existing Stripe account not found, creating new one");
+      }
+    }
     const account=await stripe.accounts.create({
       type:"express",
       country:"US",
@@ -281,14 +294,21 @@ export async function creatorConnectStripe(req,res){
         platform_user_id:user._id.toString()
       }
     })
-     const accountLink = await stripe.accountLinks.create({
+    const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: 'http://localhost:5173/creator/onboarding/refresh',
-      return_url: 'http://localhost:5173/creator/onboarding/success',
-      type: 'account_onboarding',
+      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
+      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
+      type: "account_onboarding",
     });
     
-    await User.findByIdAndUpdate(user._id,{connectedID:account.id,isConnected:true})
+  await User.findByIdAndUpdate(
+      user._id,
+      {
+        connectedID: account.id,
+        isConnected: true,
+      },
+      { new: true }
+    );
     return res.status(200).json({
       success:true,
       data:{
@@ -311,24 +331,47 @@ export async function creatorConnectStripe(req,res){
 }
 
 
-export async function checkStripeStatus(req,res){
-  try {
 
-    const account = await stripe.accounts.retrieve();
+export async function checkStripeStatus(req, res) {
+  try {
+    const user = await User.findById(req.user.userId);
     
-    const isOnboarded = account.charges_enabled && 
-                        account.payouts_enabled &&
-                        account.details_submitted;
-   return res.json({
-      accountId: account.id,
-      onboarded: isOnboarded,
-      requirements: account.requirements,
+    if (!user || !user.connectedID) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          onboarded: false,
+          accountId: null,
+          requirements: null,
+        },
+      });
+    }
+
+    const account = await stripe.accounts.retrieve(user.connectedID);
+
+    const isOnboarded =
+      account.charges_enabled &&
+      account.payouts_enabled &&
+      account.details_submitted;
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        accountId: account.id,
+        onboarded: isOnboarded,
+        requirements: account.requirements,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+      },
     });
   } catch (error) {
-    res.status(400).json({ error: error.message });
+    console.log("Error checking Stripe status:", error);
+    return res.status(500).json({
+      success: false,
+      error: error.message,
+    });
   }
 }
-
 
 export async function createMembership(req,res){
   
@@ -341,7 +384,7 @@ export async function createMembership(req,res){
         error:errorParser(ZodError)
       })
     }
-    const user=await User.findByID(req.user.userId);
+    const user=await User.findById(req.user.userId);
     const already=await SubscriptionTier.findOne({tierName:data.tierName,creatorId:user._id});
     if(already){
       return res.status(409).json({
@@ -359,7 +402,7 @@ export async function createMembership(req,res){
       stripeAccount:user.connectedID
     })
 
-    const price=stripe.prices.create({
+    const price=await stripe.prices.create({
       product:product.id,
       unit_amount:data.price,
       currency:"usd",

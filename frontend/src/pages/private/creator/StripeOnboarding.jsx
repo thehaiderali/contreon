@@ -42,27 +42,30 @@ const StripeOnboarding = () => {
       [e.target.name]: e.target.value
     })
   }
-
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setIsLoading(true)
-    setError('')
+const handleSubmit = async (e) => {
+  e.preventDefault()
+  setIsLoading(true)
+  setError('')
+  
+  try {
+    const response = await api.post("/creators/connect-stripe", {
+      email: formData.email,
+      fullName: formData.fullName,
+      country: formData.country,
+      accountType: formData.accountType,
+    })
     
-    try {
-      // TODO: Replace with your actual API endpoint
-      const response = await api.post("/creators/connect-stripe",{formData})
-      if(!response.data.success){
-        throw new Error("Error in Request")
-      }
-      setOnboardingUrl(response.data.data.onboardingUrl)
-      setStep(2)
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setIsLoading(false)
+    if(!response.data.success){
+      throw new Error(response.data.error || "Error in Request")
     }
+    setOnboardingUrl(response.data.data.onboardingUrl)
+    setStep(2)
+  } catch (err) {
+    setError(err.response?.data?.error || err.message)
+  } finally {
+    setIsLoading(false)
   }
-
+}
   const handleStartOnboarding = () => {
     if (onboardingUrl) {
       window.location.href = onboardingUrl

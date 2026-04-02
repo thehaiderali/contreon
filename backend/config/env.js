@@ -24,6 +24,9 @@ if(!process.env.UPLOADTHING_TOKEN){
 if(!process.env.STRIPE_SECRET_KEY){
     throw new Error("Stripe Secret Key Undefiend not defined")
 }
+if(!process.env.STRIPE_WEBHOOK_SECRET){
+    throw new Error("STRIPE_WEBHOOK_SECRET not defined")
+}
 
 export const envConfig={
 
@@ -34,5 +37,6 @@ export const envConfig={
    NODE_ENV:process.env.NODE_ENV,
    BACKEND_URL:process.env.BACKEND_URL,
    UPLOADTHING_TOKEN:process.env.UPLOADTHING_TOKEN,
-   STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY
+   STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY,
+   STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
 }

@@ -10,6 +10,11 @@ import creatorRouter from "./routes/creator.routes.js"
 
 
 const app=express()
+app.post(
+  "/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook
+);
 app.use(cors({
   origin: 'http://localhost:5173', // Your frontend URL
   credentials: true, // If you're using cookies/sessions
