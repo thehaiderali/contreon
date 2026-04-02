@@ -1,10 +1,10 @@
 import { Router } from "express"
 
-const suibscriberRouter=Router()
+const subscriberRouter=Router()
 
 
 
-export default suibscriberRouter
+export default subscriberRouter
 
 
 
