@@ -13,18 +13,36 @@ import {
   ChevronUp, 
   LogOut, 
   User,
-  Settings
+  Settings,
+  Home,
+  Compass,
+  MessageSquare,
+  Bell,
+  Moon,
+  Sun
 } from "lucide-react"
+
+import { ThemeToggle } from "@/src/components/theme-toggle"
+import { useTheme } from "@/hooks/use-theme"
 
 export function SubscriberAppSidebar() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuthStore()
+  const { toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
     await logout()
     navigate("/")
   }
+
+  const subscriberNavItems = [
+    { to: "/home", label: "Home", icon: Home },
+    { to: "/home/explore", label: "Explore", icon: Compass },
+    { to: "/home/chat", label: "Chats", icon: MessageSquare },
+    { to: "/home/notifications", label: "Notifications", icon: Bell },
+    { to: "/home/settings", label: "Settings", icon: Settings },
+  ]
 
   return (
     <Sidebar>
@@ -33,38 +51,33 @@ export function SubscriberAppSidebar() {
           <div className="flex size-6 items-center justify-center rounded-xl bg-primary text-primary-foreground">
             <img src="./applogo.png" alt="logo" className="rounded-xl" />
           </div>
-          Contreon
+          <span className="font-semibold">Contreon</span>
         </Link>
       </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
           <nav className="flex flex-col gap-2 px-2">
-            <NavLink to="/home" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Home
-            </NavLink>
-            <NavLink to="/home/explore" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Explore
-            </NavLink>
-            <NavLink to="/home/chat" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Chat
-            </NavLink>
-            <NavLink to="/home/notifications" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Notifications
-            </NavLink>
-            <NavLink to="/home/settings" className={({ isActive }) => 
-              `hover:bg-muted p-2 rounded ${isActive ? 'bg-muted font-medium' : ''}`
-            }>
-              Settings
-            </NavLink>
+            {subscriberNavItems.map((item) => {
+              const IconComponent = item.icon
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.to === "/home"}
+                  className={({ isActive }) =>
+                    `flex items-center gap-3 p-2 rounded-md transition-colors ${
+                      isActive
+                        ? 'bg-primary text-primary-foreground font-medium'
+                        : 'text-foreground hover:bg-muted'
+                    }`
+                  }
+                >
+                  <IconComponent className="size-4" />
+                  <span className="text-sm">{item.label}</span>
+                </NavLink>
+              )
+            })}
           </nav>
         </SidebarGroup>
       </SidebarContent>
@@ -82,13 +95,13 @@ export function SubscriberAppSidebar() {
               </div>
               <div className="flex flex-col">
                 <span className="text-sm font-medium">
-                  {user?.fullName || "User"}
+                  {user?.fullName || user?.name || user?.email || "User"}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   {user?.email || ""}
                 </span>
-                <span className="text-xs text-muted-foreground">
-                  {user?.role || ""}
+                <span className="text-xs font-bold text-primary">
+                  {user?.role || "Subscriber"}
                 </span>
               </div>
             </div>
@@ -97,10 +110,16 @@ export function SubscriberAppSidebar() {
 
           {/* User menu dropdown */}
           {showUserMenu && (
-            <div className="mt-1 p-1 rounded-lg border bg-card shadow-lg">
+            <div className="mt-2 p-1 rounded-lg border bg-card shadow-lg">
               <NavLink 
                 to="/home/profile" 
-                className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 p-2 rounded transition-colors ${
+                    isActive
+                      ? 'bg-muted font-medium'
+                      : 'hover:bg-muted'
+                  }`
+                }
                 onClick={() => setShowUserMenu(false)}
               >
                 <User className="size-4" />
@@ -109,18 +128,31 @@ export function SubscriberAppSidebar() {
               
               <NavLink 
                 to="/home/settings" 
-                className="flex items-center gap-2 p-2 rounded hover:bg-muted transition-colors"
+                className={({ isActive }) =>
+                  `flex items-center gap-2 p-2 rounded transition-colors ${
+                    isActive
+                      ? 'bg-muted font-medium'
+                      : 'hover:bg-muted'
+                  }`
+                }
                 onClick={() => setShowUserMenu(false)}
               >
                 <Settings className="size-4" />
                 <span className="text-sm">Settings</span>
               </NavLink>
               
+              {/* Theme Toggle */}
+              <div className="flex items-center gap-2 p-2 rounded transition-colors hover:bg-muted">
+                <div className="size-4 -ml-6" />
+                <span className="text-xs">Theme Switch</span>
+                <ThemeToggle />
+              </div>
+              
               <div className="h-px bg-border my-1" />
               
               <Button
                 variant="ghost"
-                className="w-full justify-start gap-2 p-2 h-auto font-normal text-red-500 hover:text-red-600 hover:bg-red-50"
+                className="w-full justify-start gap-2 p-2 h-auto font-normal text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950"
                 onClick={async () => {
                   setShowUserMenu(false)
                   await handleLogout()
@@ -133,7 +165,7 @@ export function SubscriberAppSidebar() {
           )}
         </div>
         
-        <p className="text-xs px-2 pb-2 text-muted-foreground">
+        <p className="text-xs px-2 pb-2 text-muted-foreground text-center">
           © Contreon 2026
         </p>
       </SidebarFooter>
