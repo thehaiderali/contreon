@@ -7,7 +7,12 @@ import {
   makeCreatorProfile,
   updateCreatorProfile,
   creatorConnectStripe,
-  checkStripeStatus
+  checkStripeStatus,
+  createMembership,
+  getAllMembershipsForCreator,
+  getMembershipById,
+  updateMembership,
+  deleteMembership,
 } from "../controllers/creator.controller.js";
 
 const creatorRouter = Router();
@@ -18,6 +23,11 @@ creatorRouter.get("/:creatorId", getCreatorById);
 creatorRouter.post("/profile", authMiddleware, checkCreator, makeCreatorProfile);
 creatorRouter.put("/profile/edit", authMiddleware, checkCreator, updateCreatorProfile);
 creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,creatorConnectStripe)
+creatorRouter.post("/memberships",authMiddleware,checkCreatorExists,createMembership)
+creatorRouter.get("/memberships/:id",authMiddleware,checkCreatorExists,getMembershipById)
+creatorRouter.put("/memberships/:id",authMiddleware,checkCreatorExists,updateMembership)
+creatorRouter.delete("/memberships/:id",authMiddleware,checkCreatorExists,deleteMembership)
+creatorRouter.get("/products/me",authMiddleware,checkCreatorExists,getAllMembershipsForCreator)
 creatorRouter.get("/stripe-status",authMiddleware,checkCreatorExists,checkStripeStatus)
 creatorRouter.get("/onboarding/refresh/:accountId", async (req, res) => {
   try {

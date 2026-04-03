@@ -394,7 +394,7 @@ export async function createMembership(req,res){
     }
 
     const product=await stripe.products.create({
-      name:`Creater-${user._id.toString()}-${data.tierName}`,
+      name:`${data.tierName}`,
       metadata:{
         creator_account:user._id.toString()
       }
@@ -404,7 +404,7 @@ export async function createMembership(req,res){
 
     const price=await stripe.prices.create({
       product:product.id,
-      unit_amount:data.price,
+      unit_amount:data.price*100,
       currency:"usd",
       recurring:{
         interval:"month"
@@ -446,43 +446,258 @@ export async function createMembership(req,res){
 
 
 
-export async function getAllCreatorProducts(req,res){
-   try {
-    const creator=User.findById(req.user.userId)
-    const products = await stripe.products.list({
-      limit: 100,
-      metadata: {
-        creator_account: creator.connectedID,
-      },
-    }, {
-      stripeAccount:creator.connectedID
-    });
-    const productsWithPrices = await Promise.all(
-      products.data.map(async (product) => {
-        const prices = await stripe.prices.list({
-          product: product.id,
-          active: true,
-        }, {
-          stripeAccount: req.params.creatorAccountId,
-        });
+// export async function getAllCreatorProducts(req,res){
+//    try {
+//     const creator=await User.findById(req.user.userId)
+//     const products = await stripe.products.list({
+//       limit: 100,
+//     }, {
+//       stripeAccount:creator.connectedID
+//     });
+//     const productsWithPrices = await Promise.all(
+//       products.data.map(async (product) => {
+//         const prices = await stripe.prices.list({
+//           product: product.id,
+//           active: true,
+//         }, {
+//           stripeAccount: creator.connectedID,
+//         });
         
-        return {
-          ...product,
-          prices: prices.data,
-        };
-      })
-    );
-   return res.status(200).json({
-    success:true,
-    data:{
-      products:productsWithPrices
-    }
-   })
+//         return {
+//           ...product,
+//           prices: prices.data,
+//         };
+//       })
+//     );
+//     console.log("Stripe Response :  ",productsWithPrices)
+//    return res.status(200).json({
+//     success:true,
+//     data:{
+//       products:productsWithPrices
+//     }
+//    })
+//   } catch (error) {
+//    console.log("Error in Getting Products for Creator : ",error);
+//     return res.status(500).json({
+//       success:false,
+//       error:"Internal Server Error"
+//     })
+//   }
+// }
+
+
+export async function getAllMembershipsForCreator(req,res){
+
+  try {
+    
+    const creator =await User.findById(req.user.userId);
+    const memberShips=await SubscriptionTier.find({creatorId:creator._id});
+    // if(!memberShips){
+    //   return res.status(404).json({
+    //     success:false,
+    //     error:"No Memberships Found"
+    //   })
+    // }
+    return res.status(200).json({
+      success:true,
+      data:{
+        memberShips
+      }
+    })
+
   } catch (error) {
-   console.log("Error in Getting Products for Creator : ",error);
+    console.log("Error in Getting Memberships for Creator : ",error);
     return res.status(500).json({
       success:false,
       error:"Internal Server Error"
     })
+  }
+
+}
+
+export async function getMembershipById(req,res){
+  try {
+    const id=req.params.id;
+    const memberShip=await SubscriptionTier.findById(id);
+     return res.status(200).json({
+      success:true,
+      data:{
+        memberShip
+      }
+     })
+
+  } catch (error) {
+    console.log("Error in Getting MemberShip By Id : ",error)
+    return res.status(500).json({
+      success:false,
+      error:"Internal Server Error"
+    })
+  }
+}
+
+export async function updateMembership(req, res) {
+  try {
+    const { id } = req.params; // Membership ID from URL
+    const { success, data, error: ZodError } = subscriptionTierSchema.safeParse(req.body);
+    
+    if (!success) {
+      return res.status(400).json({
+        success: false,
+        error: errorParser(ZodError)
+      });
+    }
+
+    // Find the user
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        error: "User not found"
+      });
+    }
+
+    // Find the existing membership
+    const existingMembership = await SubscriptionTier.findOne({
+      _id: id,
+      creatorId: req.user.userId.toString()
+    });
+
+    if (!existingMembership) {
+      return res.status(404).json({
+        success: false,
+        error: "Membership not found or you don't have permission to edit it"
+      });
+    }
+
+    // Check if another membership with the same name exists (excluding current one)
+    const duplicateMembership = await SubscriptionTier.findOne({
+      tierName: data.tierName,
+      creatorId: user._id,
+      _id: { $ne: id } // Exclude current membership
+    });
+
+    if (duplicateMembership) {
+      return res.status(409).json({
+        success: false,
+        error: "Membership with Same Name Already Exists. Please Try Again"
+      });
+    }
+
+    // Update Stripe product if tier name changed
+    if (data.tierName !== existingMembership.tierName) {
+      try {
+        await stripe.products.update(
+          existingMembership.stripeProductId,
+          {
+            name: `${data.tierName}`,
+            metadata: {
+              creator_account: user._id.toString()
+            }
+          },
+          {
+            stripeAccount: user.connectedID
+          }
+        );
+      } catch (stripeError) {
+        console.log("Error updating Stripe product:", stripeError);
+        // Don't fail the entire request if Stripe update fails
+        // but log the error for debugging
+      }
+    }
+
+    // Update Stripe price if price changed
+    let newStripePriceId = existingMembership.stripePriceId;
+    if (data.price !== existingMembership.price) {
+      try {
+        // Create a new price (Stripe doesn't allow price updates)
+        const newPrice = await stripe.prices.create({
+          product: existingMembership.stripeProductId,
+          unit_amount: data.price * 100,
+          currency: "usd",
+          recurring: {
+            interval: "month"
+          },
+          metadata: {
+            creator_account: user.connectedID
+          }
+        }, {
+          stripeAccount: user.connectedID
+        });
+        
+        newStripePriceId = newPrice.id;
+        
+        // Optional: Deactivate the old price
+        await stripe.prices.update(
+          existingMembership.stripePriceId,
+          { active: false },
+          { stripeAccount: user.connectedID }
+        );
+      } catch (stripeError) {
+        console.log("Error creating new Stripe price:", stripeError);
+        return res.status(500).json({
+          success: false,
+          error: "Failed to update pricing in Stripe"
+        });
+      }
+    }
+
+    // Update the membership in database
+    const updatedMembership = await SubscriptionTier.findByIdAndUpdate(
+      id,
+      {
+        tierName: data.tierName,
+        price: data.price,
+        description: data.description,
+        perks: data.perks,
+        stripePriceId: newStripePriceId,
+        updatedAt: new Date()
+      },
+      { new: true } // Return the updated document
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        membership: updatedMembership
+      },
+      message: "Membership updated successfully"
+    });
+
+  } catch (error) {
+    console.log("Error in Updating Membership: ", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
+  }
+}
+
+export async function deleteMembership(req, res) {
+  try {
+    const { id } = req.params;
+
+    const membership = await SubscriptionTier.findOneAndDelete({
+      _id: id,
+      creatorId: req.user.userId.toString()
+    });
+
+    if (!membership) {
+      return res.status(404).json({
+        success: false,
+        error: "Membership not found"
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Membership deleted successfully"
+    });
+
+  } catch (error) {
+    console.log("Error in Deleting Membership: ", error);
+    return res.status(500).json({
+      success: false,
+      error: "Internal Server Error"
+    });
   }
 }
