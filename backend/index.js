@@ -7,17 +7,20 @@ import authRouter from "./routes/auth.routes.js"
 import { createRouteHandler } from "uploadthing/express"
 import { uploadRouter } from "./uploads/uploadthing.js"
 import creatorRouter from "./routes/creator.routes.js"
-
+import subscriptionRouter from "./routes/subscriptions.routes.js"
+import collectionRouter from "./routes/collection.routes.js";
+import { handleStripeWebhook } from "./controllers/webhook.controller.js"
 
 const app=express()
-// app.post(
-//   "/webhook/stripe",
-//   express.raw({ type: "application/json" }),
-//   handleStripeWebhook
-// );
+app.post(
+  "/webhook/stripe",
+  express.raw({ type: "application/json" }),
+  handleStripeWebhook
+);
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Your frontend URL
-  credentials: true, // If you're using cookies/sessions
+  origin: 'http://localhost:5173', 
+  credentials: true, 
 }));
 app.use(express.json())
 app.use(cookieParser())
@@ -44,6 +47,9 @@ app.use(
 );
 
 app.use("/api/creators",creatorRouter)
+app.use("/api/subscriptions", subscriptionRouter);
+app.use("/api/collections", collectionRouter);
+
 app.listen(envConfig.PORT,async()=>{
     if(envConfig.NODE_ENV==="developement"){
         console.log("Server Started at http://localhost:3000  ")
