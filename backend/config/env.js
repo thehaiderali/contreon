@@ -28,6 +28,12 @@ if(!process.env.STRIPE_WEBHOOK_SECRET){
     throw new Error("STRIPE_WEBHOOK_SECRET not defined")
 }
 
+if(!process.env.PLATFORM_FEE){
+    throw new Error("PLATFORM_FEE not defined")
+}
+
+
+
 export const envConfig={
 
    MONGO_URI : process.env.MONGO_URI,
@@ -39,4 +45,5 @@ export const envConfig={
    UPLOADTHING_TOKEN:process.env.UPLOADTHING_TOKEN,
    STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY,
    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
+   PLATFORM_FEE:process.env.PLATFORM_FEE
 }

@@ -1,0 +1,255 @@
+import stripe from "../config/stripe.js";
+import Subscription from "../models/subscription.model.js";
+import SubscriptionTier from "../models/subscriptionTier.model.js";
+import User from "../models/user.model.js";
+
+// Create a new subscription
+export async function createSubscription(req, res) {
+  try {
+    const { tierId } = req.body;
+    const subscriberId = req.user.userId;
+
+    // Get tier details
+    const tier = await SubscriptionTier.findById(tierId);
+    if (!tier) {
+      return res.status(404).json({ success: false, error: "Tier not found" });
+    }
+
+    // Check if already subscribed
+    const existingSub = await Subscription.findOne({
+      subscriberId,
+      creatorId: tier.creatorId,
+      status: "active"
+    });
+
+    if (existingSub) {
+      return res.status(400).json({ success: false, error: "Already subscribed to this creator" });
+    }
+
+    // Get creator's Stripe account
+    const creator = await User.findById(tier.creatorId);
+    if (!creator || !creator.connectedID) {
+      return res.status(400).json({ success: false, error: "Creator not set up for payments" });
+    }
+
+    // Get or create customer in creator's Stripe account
+    const subscriber = await User.findById(subscriberId);
+    let customer;
+
+    const existingCustomers = await stripe.customers.list(
+      { email: subscriber.email, limit: 1 },
+      { stripeAccount: creator.connectedID }
+    );
+
+    if (existingCustomers.data.length > 0) {
+      customer = existingCustomers.data[0];
+    } else {
+      customer = await stripe.customers.create(
+        {
+          email: subscriber.email,
+          name: subscriber.fullName,
+          metadata: { subscriberId: subscriberId.toString() }
+        },
+        { stripeAccount: creator.connectedID }
+      );
+    }
+
+    // Create subscription with 2% platform fee
+    const subscription = await stripe.subscriptions.create(
+      {
+        customer: customer.id,
+        items: [{ price: tier.stripePriceId }],
+        payment_behavior: "default_incomplete",
+        expand: ["latest_invoice.payment_intent"],
+        application_fee_percent: 2, // 2% platform fee
+        metadata: {
+          subscriberId: subscriberId.toString(),
+          creatorId: tier.creatorId.toString(),
+          tierId: tierId
+        }
+      },
+      { stripeAccount: creator.connectedID }
+    );
+
+    // Save to database
+    const newSubscription = new Subscription({
+      subscriberId,
+      creatorId: tier.creatorId,
+      tierType: tier.tierName,
+      stripeSubscriptionId: subscription.id,
+      stripePriceId: tier.stripePriceId,
+      status: "incomplete",
+      startDate: new Date(),
+      nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+    });
+
+    await newSubscription.save();
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        subscription: newSubscription,
+        clientSecret: subscription.latest_invoice.payment_intent.client_secret,
+        subscriptionId: subscription.id
+      }
+    });
+
+  } catch (error) {
+    console.error("Error creating subscription:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Get my subscriptions (subscriber view)
+export async function getMySubscriptions(req, res) {
+  try {
+    const subscriptions = await Subscription.find({ subscriberId: req.user.userId })
+      .populate("creatorId", "fullName email")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      data: { subscriptions }
+    });
+  } catch (error) {
+    console.error("Error fetching subscriptions:", error);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+}
+
+// Get creator's subscribers (creator view)
+export async function getCreatorSubscribers(req, res) {
+  try {
+    const subscriptions = await Subscription.find({ creatorId: req.user.userId })
+      .populate("subscriberId", "fullName email")
+      .sort({ createdAt: -1 });
+
+    const stats = {
+      total: subscriptions.length,
+      active: subscriptions.filter(s => s.status === "active").length,
+      cancelled: subscriptions.filter(s => s.status === "cancelled").length,
+      monthlyRecurring: subscriptions
+        .filter(s => s.status === "active")
+        .reduce((sum, s) => {
+          // You'll need to fetch tier prices or store them
+          return sum;
+        }, 0)
+    };
+
+    return res.status(200).json({
+      success: true,
+      data: { subscriptions, stats }
+    });
+  } catch (error) {
+    console.error("Error fetching subscribers:", error);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+}
+
+// Cancel subscription
+export async function cancelSubscription(req, res) {
+  try {
+    const { subscriptionId } = req.params;
+    const userId = req.user.userId;
+    const userRole = req.user.role;
+
+    const subscription = await Subscription.findById(subscriptionId);
+    if (!subscription) {
+      return res.status(404).json({ success: false, error: "Subscription not found" });
+    }
+
+    // Check permission (subscriber or creator)
+    if (userRole === "subscriber" && subscription.subscriberId.toString() !== userId) {
+      return res.status(403).json({ success: false, error: "Unauthorized" });
+    }
+    if (userRole === "creator" && subscription.creatorId.toString() !== userId) {
+      return res.status(403).json({ success: false, error: "Unauthorized" });
+    }
+
+    const creator = await User.findById(subscription.creatorId);
+    
+    // Cancel at period end in Stripe
+    await stripe.subscriptions.update(
+      subscription.stripeSubscriptionId,
+      { cancel_at_period_end: true },
+      { stripeAccount: creator.connectedID }
+    );
+
+    subscription.status = "cancelled";
+    subscription.cancelDate = new Date();
+    subscription.autoRenew = false;
+    await subscription.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription cancelled. Access will continue until period end."
+    });
+
+  } catch (error) {
+    console.error("Error cancelling subscription:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Resume cancelled subscription
+export async function resumeSubscription(req, res) {
+  try {
+    const { subscriptionId } = req.params;
+
+    const subscription = await Subscription.findById(subscriptionId);
+    if (!subscription) {
+      return res.status(404).json({ success: false, error: "Subscription not found" });
+    }
+
+    if (subscription.subscriberId.toString() !== req.user.userId) {
+      return res.status(403).json({ success: false, error: "Unauthorized" });
+    }
+
+    const creator = await User.findById(subscription.creatorId);
+
+    await stripe.subscriptions.update(
+      subscription.stripeSubscriptionId,
+      { cancel_at_period_end: false },
+      { stripeAccount: creator.connectedID }
+    );
+
+    subscription.status = "active";
+    subscription.cancelDate = null;
+    subscription.autoRenew = true;
+    await subscription.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Subscription resumed"
+    });
+
+  } catch (error) {
+    console.error("Error resuming subscription:", error);
+    return res.status(500).json({ success: false, error: error.message });
+  }
+}
+
+// Check if user is subscribed to a creator
+export async function checkSubscriptionStatus(req, res) {
+  try {
+    const { creatorId } = req.params;
+    const userId = req.user.userId;
+
+    const subscription = await Subscription.findOne({
+      subscriberId: userId,
+      creatorId: creatorId,
+      status: "active"
+    });
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        isSubscribed: !!subscription,
+        subscription: subscription || null
+      }
+    });
+  } catch (error) {
+    console.error("Error checking subscription:", error);
+    return res.status(500).json({ success: false, error: "Internal Server Error" });
+  }
+}

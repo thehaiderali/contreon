@@ -69,3 +69,37 @@ export const checkCreatorExists=async(req,res,next)=>{
   }
 
 }
+
+
+export const checkSubscriberExists=async(req,res,next)=>{
+
+  try {
+    const role=req.user.role;
+    if(role!=="subscriber"){
+      return res.status(403).json({
+        success:false,
+        error:"Subscriber Access Required"
+      })
+    }
+    const userExists=await User.findById(req.user.userId);
+    if(!userExists){
+      return res.status(404).json({
+        success:false,
+        error:"User not found "
+      })
+    }
+    if(userExists.role!=="subscriber"){
+      return res.status(403).json({
+        success:false,
+        error:"Creator Access Required"
+      })
+    }
+    next()
+  } catch (error) {
+    return res.status(500).json({
+      success:false,
+      error:"Internal Server Error"
+    })
+  }
+
+}

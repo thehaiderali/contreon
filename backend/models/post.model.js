@@ -39,15 +39,13 @@ const postSchema = new mongoose.Schema({
   },
   isPublished:{
     type:Boolean,
-    default:false,
-  },
-  isDraft:{
-    type:Boolean,
-    default:true
   },
   thumbnailUrl:{
     type:String,
     default:""
+  },
+  commentsAllowed:{
+    type:Boolean
   },
   description:{
     type:String,

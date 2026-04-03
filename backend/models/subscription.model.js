@@ -12,8 +12,9 @@ const subscriptionSchema = new Schema(
       ref: "User",
       required: true,
     },
-    tierType: {
-      type: String,
+    tierId: {
+     type: Schema.Types.ObjectId,
+      ref: "SubscriptionTier",
       required: true,
     },
     stripeSubscriptionId: {

@@ -14,7 +14,7 @@ import {
   updateMembership,
   deleteMembership,
 } from "../controllers/creator.controller.js";
-
+import stripe from "../config/stripe.js";
 const creatorRouter = Router();
 
 creatorRouter.get("/profile/me", authMiddleware,checkCreator, getMyCreatorProfile);
