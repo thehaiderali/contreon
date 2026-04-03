@@ -16,9 +16,9 @@ const NoRecommendations = () => {
         <div className="flex flex-col items-center text-center p-12 space-y-6">
           
           <div className="relative">
-            <div className="absolute inset-0 bg-purple-500/20 rounded-full blur-2xl" />
-            <div className="relative bg-purple-500/10 p-6 rounded-full ring-1 ring-purple-500/20">
-              <Sparkles className="w-16 h-16 text-purple-500" strokeWidth={1.5} />
+            <div className="absolute inset-0  rounded-full blur-2xl" />
+            <div className="relative bg-purple-500/10 p-6 rounded-full ring-1 ring-white">
+              <Sparkles className="w-16 h-16 " strokeWidth={1.5} />
             </div>
           </div>
 
@@ -33,7 +33,7 @@ const NoRecommendations = () => {
 
           <Button 
             size="lg" 
-            className="mt-4 gap-2 bg-linear-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 shadow-lg hover:shadow-xl transition-all duration-300"
+            className="mt-4 gap-2  shadow-lg hover:shadow-xl transition-all duration-300"
             onClick={() => window.location.href = '/creator/recommendations/create'}
           >
             <Plus className="w-5 h-5" />

@@ -3,10 +3,10 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 
 import CreatorHome from '@/src/components/creator/dashboard/Home'
-import NoCollections from './NoCollections'
-import NoShop from './NoShop'
-import NoMemberships from './NoMemberships'
-import NoRecommendations from './NoRecommendations'
+import NoCollections from './dashboard/NoCollections'
+import NoShop from './dashboard/NoShop'
+import Memberships from '@/src/components/creator/dashboard/Memberships'
+import NoRecommendations from './dashboard/NoRecommendations'
 
 export const Dashboard = () => {
 
@@ -17,7 +17,7 @@ export const Dashboard = () => {
     "Home": <CreatorHome />,
     "Collections": <NoCollections />,
     "Shop": <NoShop />,
-    "Memberships": <NoMemberships />,
+    "Memberships": <Memberships />,
     "Recommendations": <NoRecommendations />
   }
 

@@ -23,12 +23,10 @@ import {
 } from "lucide-react"
 
 import { ThemeToggle } from "@/src/components/theme-toggle"
-import { useTheme } from "@/hooks/use-theme"
 
 export function SubscriberAppSidebar() {
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, logout } = useAuthStore()
-  const { toggleTheme } = useTheme()
   const navigate = useNavigate()
 
   const handleLogout = async () => {
