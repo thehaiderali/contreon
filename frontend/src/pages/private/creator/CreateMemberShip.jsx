@@ -8,4 +8,4 @@ const CreateMemberShip = () => {
   )
 }
 
-export default CreateMemberShip
+export default CreateMemberShip;

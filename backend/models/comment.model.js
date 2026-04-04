@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-
-
 const commentSchema=new mongoose.Schema({
     authorId:{
         type:mongoose.Schema.Types.ObjectId,
@@ -10,6 +8,12 @@ const commentSchema=new mongoose.Schema({
        type:mongoose.Schema.Types.ObjectId,
         ref:"Post"
     },
+    content:{
+        type:String,
+        trim:true,
+        min:3,
+        max:100,
+    }
 
 },{timestamps:true})
 

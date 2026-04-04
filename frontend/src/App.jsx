@@ -59,7 +59,6 @@ const App = () => {
             <Route path='profile/edit' element={<EditCreatorProfile/>}/>
             <Route path='memberships/create' element={<CreateMemberShip/>}/>
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} />
-
           </Route>
         </Route>
       </Route>
