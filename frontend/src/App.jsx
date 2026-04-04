@@ -30,6 +30,9 @@ import MembershipEditForm from './components/creator/membership/MemberShipEditFo
 import Collections from './components/creator/dashboard/Collections';
 import CollectionCreationForm from './components/creator/collection/CollectionCreationForm';
 import CollectionEditForm from './components/creator/collection/CollectionEditForm';
+import CreateVideoPost from './pages/private/creator/posts/CreateVideoPost';
+import CreateTextPost from './pages/private/creator/posts/CreateTextPost';
+import CreateAudioPost from './pages/private/creator/posts/CreateAudioPost';
 
 const App = () => {
   return (
@@ -65,12 +68,13 @@ const App = () => {
             <Route path="messages" element={<Chats />} />
             <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
-            <Route path="memberships/:id/edit" element={<MembershipEditForm />} />
-
-          
+            <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
           <Route path="/creator/collections" element={<Collections />} />
           <Route path="/creator/collections/create" element={<CollectionCreationForm />} />
           <Route path="/creator/collections/:id/edit" element={<CollectionEditForm />} />
+          <Route path='/creator/create-post/video' element={<CreateVideoPost/>}/>
+          <Route path='/creator/create-post/text' element={<CreateTextPost/>}/>
+          ▬<Route path='/creator/create-post/audio' element={<CreateAudioPost/>}/>
           </Route>
         </Route>
       </Route>
