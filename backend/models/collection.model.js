@@ -10,7 +10,6 @@ const collectionSchema=new mongoose.Schema({
     title:{
         type:String,
         trim:true,
-        unique:true,
         min:3,
         max:30,
     },
@@ -26,7 +25,7 @@ const collectionSchema=new mongoose.Schema({
     max:100,
     }
 
-})
+},{timestamps:true})
 
 const Collection=mongoose.model("Collection",collectionSchema)
 export default Collection

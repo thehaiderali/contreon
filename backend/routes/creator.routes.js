@@ -6,15 +6,11 @@ import {
   getCreatorById,
   makeCreatorProfile,
   updateCreatorProfile,
-  creatorConnectStripe,
-  checkStripeStatus,
   createMembership,
-  getAllMembershipsForCreator,
   getMembershipById,
   updateMembership,
   deleteMembership,
 } from "../controllers/creator.controller.js";
-import stripe from "../config/stripe.js";
 const creatorRouter = Router();
 
 creatorRouter.get("/profile/me", authMiddleware,checkCreator, getMyCreatorProfile);
@@ -22,27 +18,9 @@ creatorRouter.get("/profile/:creatorId", getCreatorProfileById);
 creatorRouter.get("/:creatorId", getCreatorById);
 creatorRouter.post("/profile", authMiddleware, checkCreator, makeCreatorProfile);
 creatorRouter.put("/profile/edit", authMiddleware, checkCreator, updateCreatorProfile);
-creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,creatorConnectStripe)
 creatorRouter.post("/memberships",authMiddleware,checkCreatorExists,createMembership)
 creatorRouter.get("/memberships/:id",authMiddleware,checkCreatorExists,getMembershipById)
 creatorRouter.put("/memberships/:id",authMiddleware,checkCreatorExists,updateMembership)
 creatorRouter.delete("/memberships/:id",authMiddleware,checkCreatorExists,deleteMembership)
-creatorRouter.get("/products/me",authMiddleware,checkCreatorExists,getAllMembershipsForCreator)
-creatorRouter.get("/stripe-status",authMiddleware,checkCreatorExists,checkStripeStatus)
-creatorRouter.get("/onboarding/refresh/:accountId", async (req, res) => {
-  try {
-    const { accountId } = req.params;
-    
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
-      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
-      type: "account_onboarding",
-    });
-    
-    res.redirect(accountLink.url);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
+
 export default creatorRouter;

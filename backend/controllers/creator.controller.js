@@ -125,7 +125,7 @@ export async function makeCreatorProfile(req, res) {
       aboutPage: validatedData.aboutPage || ''
     });
 
-    await User.findByIdAndUpdate(creatorId, { onBoarded: true }, { new: true });
+    await User.findByIdAndUpdate(creatorId, { hasProfile: true }, { new: true });
 
     return res.status(201).json({
       success: true,
@@ -260,118 +260,7 @@ export async function updateCreatorProfile(req, res) {
 }
 
 
-export async function creatorConnectStripe(req,res){
-  
-  try {
-    const user=await User.findById(req.user.userId);
-      if (user.isConnected && user.connectedID) {
-      try {
-        const existingAccount = await stripe.accounts.retrieve(user.connectedID);
-        if (existingAccount.charges_enabled && existingAccount.payouts_enabled) {
-          return res.status(400).json({
-            success: false,
-            error: "Stripe account already connected and verified"
-          });
-        }
-      } catch (err) {
-        console.log("Existing Stripe account not found, creating new one");
-      }
-    }
-    const account=await stripe.accounts.create({
-      type:"express",
-      country:"US",
-      email:user.email,
-      capabilities:{
-        card_payments:{
-          requested:true,
-        },
-        transfers:{
-          requested:true,
-        }
-      },
-      business_type:"individual",
-      metadata:{
-        platform_user_id:user._id.toString()
-      }
-    })
-    const accountLink = await stripe.accountLinks.create({
-      account: account.id,
-      refresh_url: `${process.env.FRONTEND_URL}/creator/onboarding/refresh`,
-      return_url: `${process.env.FRONTEND_URL}/creator/onboarding/success`,
-      type: "account_onboarding",
-    });
-    
-  await User.findByIdAndUpdate(
-      user._id,
-      {
-        connectedID: account.id,
-        isConnected: true,
-      },
-      { new: true }
-    );
-    return res.status(200).json({
-      success:true,
-      data:{
-        accountId:account.id,
-        onboardingUrl:accountLink.url
-      }
-    })
-    
 
-  } catch (error) {
-
-    console.log("Error in Creating Creator Stripe Connect : ",error);
-    return res.status(500).json({
-      success:false,
-      error:"Internal Server Error"
-    })
-    
-  }
-
-}
-
-
-
-export async function checkStripeStatus(req, res) {
-  try {
-    const user = await User.findById(req.user.userId);
-    
-    if (!user || !user.connectedID) {
-      return res.status(200).json({
-        success: true,
-        data: {
-          onboarded: false,
-          accountId: null,
-          requirements: null,
-        },
-      });
-    }
-
-    const account = await stripe.accounts.retrieve(user.connectedID);
-
-    const isOnboarded =
-      account.charges_enabled &&
-      account.payouts_enabled &&
-      account.details_submitted;
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        accountId: account.id,
-        onboarded: isOnboarded,
-        requirements: account.requirements,
-        chargesEnabled: account.charges_enabled,
-        payoutsEnabled: account.payouts_enabled,
-      },
-    });
-  } catch (error) {
-    console.log("Error checking Stripe status:", error);
-    return res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-}
 
 export async function createMembership(req,res){
   
@@ -393,36 +282,12 @@ export async function createMembership(req,res){
       })
     }
 
-    const product=await stripe.products.create({
-      name:`${data.tierName}`,
-      metadata:{
-        creator_account:user._id.toString()
-      }
-    },{
-      stripeAccount:user.connectedID
-    })
-
-    const price=await stripe.prices.create({
-      product:product.id,
-      unit_amount:data.price*100,
-      currency:"usd",
-      recurring:{
-        interval:"month"
-      },
-      metadata:{
-        creater_account:user.connectedID
-      }
-    },{
-      stripeAccount:user.connectedID
-    })
     const newMembership=new SubscriptionTier({
       creatorId:req.user.userId.toString(),
       tierName:data.tierName,
       price:data.price,
       description:data.description,
       perks:data.perks,
-      stripeProductId:product.id,
-      stripePriceId:price.id
 
     })
     await newMembership.save()
@@ -446,44 +311,6 @@ export async function createMembership(req,res){
 
 
 
-// export async function getAllCreatorProducts(req,res){
-//    try {
-//     const creator=await User.findById(req.user.userId)
-//     const products = await stripe.products.list({
-//       limit: 100,
-//     }, {
-//       stripeAccount:creator.connectedID
-//     });
-//     const productsWithPrices = await Promise.all(
-//       products.data.map(async (product) => {
-//         const prices = await stripe.prices.list({
-//           product: product.id,
-//           active: true,
-//         }, {
-//           stripeAccount: creator.connectedID,
-//         });
-        
-//         return {
-//           ...product,
-//           prices: prices.data,
-//         };
-//       })
-//     );
-//     console.log("Stripe Response :  ",productsWithPrices)
-//    return res.status(200).json({
-//     success:true,
-//     data:{
-//       products:productsWithPrices
-//     }
-//    })
-//   } catch (error) {
-//    console.log("Error in Getting Products for Creator : ",error);
-//     return res.status(500).json({
-//       success:false,
-//       error:"Internal Server Error"
-//     })
-//   }
-// }
 
 
 export async function getAllMembershipsForCreator(req,res){
@@ -492,12 +319,6 @@ export async function getAllMembershipsForCreator(req,res){
     
     const creator =await User.findById(req.user.userId);
     const memberShips=await SubscriptionTier.find({creatorId:creator._id});
-    // if(!memberShips){
-    //   return res.status(404).json({
-    //     success:false,
-    //     error:"No Memberships Found"
-    //   })
-    // }
     return res.status(200).json({
       success:true,
       data:{
@@ -537,7 +358,7 @@ export async function getMembershipById(req,res){
 
 export async function updateMembership(req, res) {
   try {
-    const { id } = req.params; // Membership ID from URL
+    const { id } = req.params; 
     const { success, data, error: ZodError } = subscriptionTierSchema.safeParse(req.body);
     
     if (!success) {
@@ -583,65 +404,6 @@ export async function updateMembership(req, res) {
       });
     }
 
-    // Update Stripe product if tier name changed
-    if (data.tierName !== existingMembership.tierName) {
-      try {
-        await stripe.products.update(
-          existingMembership.stripeProductId,
-          {
-            name: `${data.tierName}`,
-            metadata: {
-              creator_account: user._id.toString()
-            }
-          },
-          {
-            stripeAccount: user.connectedID
-          }
-        );
-      } catch (stripeError) {
-        console.log("Error updating Stripe product:", stripeError);
-        // Don't fail the entire request if Stripe update fails
-        // but log the error for debugging
-      }
-    }
-
-    // Update Stripe price if price changed
-    let newStripePriceId = existingMembership.stripePriceId;
-    if (data.price !== existingMembership.price) {
-      try {
-        // Create a new price (Stripe doesn't allow price updates)
-        const newPrice = await stripe.prices.create({
-          product: existingMembership.stripeProductId,
-          unit_amount: data.price * 100,
-          currency: "usd",
-          recurring: {
-            interval: "month"
-          },
-          metadata: {
-            creator_account: user.connectedID
-          }
-        }, {
-          stripeAccount: user.connectedID
-        });
-        
-        newStripePriceId = newPrice.id;
-        
-        // Optional: Deactivate the old price
-        await stripe.prices.update(
-          existingMembership.stripePriceId,
-          { active: false },
-          { stripeAccount: user.connectedID }
-        );
-      } catch (stripeError) {
-        console.log("Error creating new Stripe price:", stripeError);
-        return res.status(500).json({
-          success: false,
-          error: "Failed to update pricing in Stripe"
-        });
-      }
-    }
-
-    // Update the membership in database
     const updatedMembership = await SubscriptionTier.findByIdAndUpdate(
       id,
       {
@@ -649,10 +411,9 @@ export async function updateMembership(req, res) {
         price: data.price,
         description: data.description,
         perks: data.perks,
-        stripePriceId: newStripePriceId,
         updatedAt: new Date()
       },
-      { new: true } // Return the updated document
+      { new: true } 
     );
 
     return res.status(200).json({
@@ -680,14 +441,12 @@ export async function deleteMembership(req, res) {
       _id: id,
       creatorId: req.user.userId.toString()
     });
-
     if (!membership) {
       return res.status(404).json({
         success: false,
         error: "Membership not found"
       });
     }
-
     return res.status(200).json({
       success: true,
       message: "Membership deleted successfully"
@@ -701,3 +460,4 @@ export async function deleteMembership(req, res) {
     });
   }
 }
+
