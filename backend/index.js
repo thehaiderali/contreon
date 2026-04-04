@@ -10,6 +10,7 @@ import creatorRouter from "./routes/creator.routes.js"
 import subscriptionRouter from "./routes/subscriptions.routes.js"
 import collectionRouter from "./routes/collection.routes.js";
 import membershipRouter from "./routes/membership.routes.js"
+import postRouter from "./routes/post.routes.js"
 
 const app=express()
 
@@ -45,6 +46,9 @@ app.use("/api/creators",creatorRouter)
 app.use("/api/subscriptions", subscriptionRouter);
 app.use("/api/collections", collectionRouter);
 app.use("/api/memberships",membershipRouter)
+app.use("/api/posts",postRouter)
+
+
 app.listen(envConfig.PORT,async()=>{
     if(envConfig.NODE_ENV==="developement"){
         console.log("Server Started at http://localhost:3000  ")
