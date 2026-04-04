@@ -25,6 +25,15 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
+app.use(
+  "/api/uploadthing",
+  createRouteHandler({
+    router: uploadRouter,
+    config:{
+        token:envConfig.UPLOADTHING_TOKEN
+    }
+  }),
+);
 
 app.get("/health",(req,res)=>{
     return res.status(200).json({
@@ -36,15 +45,7 @@ app.get("/health",(req,res)=>{
 
 app.use("/api/auth",authRouter);
 
-app.use(
-  "/api/uploadthing",
-  createRouteHandler({
-    router: uploadRouter,
-    config:{
-        token:envConfig.UPLOADTHING_TOKEN
-    }
-  }),
-);
+
 
 app.use("/api/creators",creatorRouter)
 app.use("/api/subscriptions", subscriptionRouter);
