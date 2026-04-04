@@ -18,6 +18,7 @@ import Library from './pages/private/creator/Library';
 import Members from './pages/private/creator/Members';
 import Insights from './pages/private/creator/Insights';
 import Payouts from './pages/private/creator/Payouts';
+import Profile from './pages/private/creator/Profile';
 
 // Protected Routes
 import { ProtectedRoutes } from './components/ProtectedRoutes';
@@ -25,6 +26,9 @@ import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
 import StripeOnboarding from './pages/private/creator/StripeOnboarding';
 import StripeSuccess from './pages/private/creator/StripeSucess';
+
+
+
 
 const App = () => {
   return (
@@ -50,6 +54,7 @@ const App = () => {
         <Route element={<CreatorRoutes />}>
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />
+            <Route path='profile' element={<Profile/>}/>
             <Route path="library" element={<Library />} />
             <Route path="members" element={<Members />} />
             <Route path="insights" element={<Insights />} />
