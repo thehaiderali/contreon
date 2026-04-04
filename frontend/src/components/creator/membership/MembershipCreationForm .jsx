@@ -29,7 +29,6 @@ const MembershipCreationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitResponse, setSubmitResponse] = useState(null);
 
-  // Validation function
   const validateForm = () => {
     const newErrors = {};
 

@@ -23,8 +23,6 @@ import Payouts from './pages/private/creator/Payouts';
 import { ProtectedRoutes } from './components/ProtectedRoutes';
 import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
-import StripeOnboarding from './pages/private/creator/StripeOnboarding';
-import StripeSuccess from './pages/private/creator/StripeSucess';
 import CreateMemberShip from './pages/private/creator/CreateMemberShip';
 import MembershipEditForm from './components/creator/membership/MemberShipEditForm';
 
@@ -59,8 +57,6 @@ const App = () => {
             <Route path="messages" element={<Chats />} />
             <Route path="settings" element={<Settings />} />
             <Route path='profile/edit' element={<EditCreatorProfile/>}/>
-            <Route path='onboarding' element={<StripeOnboarding/>}/>
-            <Route path='onboarding/success' element={<StripeSuccess/>}/>
             <Route path='memberships/create' element={<CreateMemberShip/>}/>
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} />
 
