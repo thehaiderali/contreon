@@ -26,6 +26,10 @@ import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
 import CreateMemberShip from './pages/private/creator/CreateMemberShip';
 import MembershipEditForm from './components/creator/membership/MemberShipEditForm';
+import CreatePost from './pages/private/creator/posts/CreatePost';
+import EditPost from './pages/private/creator/posts/EditPost';
+import NotFound from './pages/public/NotFound';
+import CreateTextPost from './pages/private/creator/posts/CreateTextPost';
 
 
 
@@ -64,6 +68,10 @@ const App = () => {
             <Route path='profile/edit' element={<EditCreatorProfile/>}/>
             <Route path='memberships/create' element={<CreateMemberShip/>}/>
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} />
+            <Route path='posts/create' element={<CreatePost/>}/>
+            <Route path='posts/text/create' element={<CreateTextPost/>}/>
+            <Route path='posts/:id/edit' element={<EditPost/>}/>
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Route>
       </Route>
