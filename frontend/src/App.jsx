@@ -26,25 +26,22 @@ import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
 import CreateMemberShip from './pages/private/creator/CreateMemberShip';
 import MembershipEditForm from './components/creator/membership/MemberShipEditForm';
-import CreatePost from './pages/private/creator/posts/CreatePost';
-import EditPost from './pages/private/creator/posts/EditPost';
-import NotFound from './pages/public/NotFound';
-import CreateTextPost from './pages/private/creator/posts/CreateTextPost';
 
-
-
+import Collections from './components/creator/dashboard/Collections';
+import CollectionCreationForm from './components/creator/collection/CollectionCreationForm';
+import CollectionEditForm from './components/creator/collection/CollectionEditForm';
 
 const App = () => {
   return (
     <Routes>
-      {/* Public Routes */}
+      
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
 
-      {/* Protected Routes */}
+      
       <Route element={<ProtectedRoutes />}>
-        {/* Subscriber Routes - Using shared Home layout */}
+        
         <Route path="/home" element={<Home />}>
           <Route index element={<Feed />} />
           <Route path="explore" element={<Explore />} />
@@ -54,24 +51,26 @@ const App = () => {
           <Route path="notifications" element={<Notifications />} />
         </Route>
 
-        {/* Creator Routes - Using shared Home layout with CreatorRoutes guard */}
+        
         <Route element={<CreatorRoutes />}>
+          
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />
-            <Route path='profile' element={<Profile/>}/>
+            <Route path='profile' element={<Profile />} />
+            <Route path='profile/edit' element={<EditCreatorProfile />} />
             <Route path="library" element={<Library />} />
             <Route path="members" element={<Members />} />
             <Route path="insights" element={<Insights />} />
             <Route path="payouts" element={<Payouts />} />
             <Route path="messages" element={<Chats />} />
             <Route path="settings" element={<Settings />} />
-            <Route path='profile/edit' element={<EditCreatorProfile/>}/>
-            <Route path='memberships/create' element={<CreateMemberShip/>}/>
+            <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} />
-            <Route path='posts/create' element={<CreatePost/>}/>
-            <Route path='posts/text/create' element={<CreateTextPost/>}/>
-            <Route path='posts/:id/edit' element={<EditPost/>}/>
-            <Route path="*" element={<NotFound />} />
+
+          
+          <Route path="/creator/collections" element={<Collections />} />
+          <Route path="/creator/collections/create" element={<CollectionCreationForm />} />
+          <Route path="/creator/collections/:id/edit" element={<CollectionEditForm />} />
           </Route>
         </Route>
       </Route>

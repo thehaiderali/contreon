@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,7 @@ import { UploadButton } from '@/lib/uploadthing';
 import { api } from '@/lib/api';
 import ProfileCreationSuccess from './ProfileCreationSuccess';
 
-const CreatorProfileForm = () => {
+const CreatorProfileForm = ({ onSuccess }) => {
   const { user } = useAuthStore();
 
   const [formData, setFormData] = useState({
@@ -127,6 +127,9 @@ const CreatorProfileForm = () => {
       if (response.data.success) {
         setSuccessMessage('Profile created successfully!');
         setShowForm(false);
+        if (onSuccess) {
+          onSuccess();
+        }
       } else {
         throw new Error(response.data.message || 'Failed to create profile');
       }
@@ -168,7 +171,6 @@ const CreatorProfileForm = () => {
               <CardTitle className="text-xs">Creator Profile Information</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Bio */}
               <div className="space-y-2">
                 <Label htmlFor="bio" className="text-xs">
                   Bio <span className="text-red-500">*</span>
@@ -188,7 +190,6 @@ const CreatorProfileForm = () => {
                 </div>
               </div>
 
-              {/* Page Name */}
               <div className="space-y-2">
                 <Label htmlFor="pageName" className="text-xs">
                   Page Name <span className="text-red-500">*</span>
@@ -204,7 +205,6 @@ const CreatorProfileForm = () => {
                 {errors.pageName && <p className="text-xs text-red-500">{errors.pageName}</p>}
               </div>
 
-              {/* Page URL */}
               <div className="space-y-2">
                 <Label htmlFor="pageUrl" className="text-xs">
                   Page URL <span className="text-red-500">*</span>
@@ -220,7 +220,6 @@ const CreatorProfileForm = () => {
                 {errors.pageUrl && <p className="text-xs text-red-500">{errors.pageUrl}</p>}
               </div>
 
-              {/* Profile Image */}
               <div className="space-y-2">
                 <Label className="text-xs">Profile Image</Label>
                 <div className="flex items-center gap-4">
@@ -240,7 +239,6 @@ const CreatorProfileForm = () => {
                 )}
               </div>
 
-              {/* Banner Image */}
               <div className="space-y-2">
                 <Label className="text-xs">Banner Image</Label>
                 {formData.bannerUrl && (
@@ -255,7 +253,6 @@ const CreatorProfileForm = () => {
                 />
               </div>
 
-              {/* Social Links */}
               <div className="space-y-2">
                 <Label className="text-xs">Social Links</Label>
                 {formData.socialLinks.map((link, index) => (
@@ -290,7 +287,6 @@ const CreatorProfileForm = () => {
                 </Button>
               </div>
 
-              {/* About Page */}
               <div className="space-y-2">
                 <Label htmlFor="aboutPage" className="text-xs">About Page</Label>
                 <Textarea
@@ -308,21 +304,18 @@ const CreatorProfileForm = () => {
                 </div>
               </div>
 
-              {/* Submit */}
               <div className="pt-4">
                 <Button type="submit" className="w-full text-xs" disabled={isSubmitting}>
                   {isSubmitting ? 'Submitting...' : 'Create Profile'}
                 </Button>
               </div>
 
-              {/* Success Message */}
               {successMessage && (
                 <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-lg">
                   <p className="text-xs text-green-600">{successMessage}</p>
                 </div>
               )}
 
-              {/* Submit Error */}
               {errors.submit && (
                 <div className="mt-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                   <p className="text-xs text-red-600">{errors.submit}</p>

@@ -1,40 +1,32 @@
 import React, { useState } from "react";
-import ProfileStep from "./ProfileStep";
-import FirstPostStep from "./FirstPost";
+import CreatorProfileForm from "./CreatorProfileForm";
+import { useNavigate } from 'react-router';
+
 const OnBoarding = () => {
-  const steps = ["profile", "firstpost"];
-  const [currentStep, setCurrentStep] = useState("profile");
+  const navigate = useNavigate();
+  const [step, setStep] = useState("profile");
 
-  const goNext = () => {
-    const currentIndex = steps.indexOf(currentStep);
-    const nextStep = steps[currentIndex + 1];
-
-    if (nextStep) {
-      setCurrentStep(nextStep);
-    } else {
-      console.log("Onboarding complete");
-    }
+  const handleProfileComplete = () => {
+    navigate('/creator');
   };
 
-  const renderStep = () => {
-    switch (currentStep) {
-      case "profile":
-        return <ProfileStep onNext={goNext} />;
+  if (step === "profile") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-8">
+        <div className="w-full max-w-2xl">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold">Welcome to Contreon! 🎉</h1>
+            <p className="text-muted-foreground mt-2">
+              Let's set up your creator profile first
+            </p>
+          </div>
+          <CreatorProfileForm onSuccess={handleProfileComplete} />
+        </div>
+      </div>
+    );
+  }
 
-      case "firstpost":
-        return <FirstPostStep onNext={goNext} />;
-
-      default:
-        return <div>Unknown step</div>;
-    }
-  };
-
-  return (
-    <div className="w-full min-h-screen">
-      <h1>This is the OnBoarding Flow</h1>
-      {renderStep()}
-    </div>
-  );
+  return null;
 };
 
 export default OnBoarding;

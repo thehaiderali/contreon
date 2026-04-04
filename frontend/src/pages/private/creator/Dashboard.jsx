@@ -1,24 +1,66 @@
 import React from 'react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { motion, AnimatePresence } from 'motion/react'
+import { api } from '@/lib/api';
 
 import CreatorHome from '@/src/components/creator/dashboard/Home'
-import NoCollections from './dashboard/NoCollections'
+
 import NoShop from './dashboard/NoShop'
 import Memberships from '@/src/components/creator/dashboard/Memberships'
 import NoRecommendations from './dashboard/NoRecommendations'
+import Collections from '@/src/components/creator/dashboard/Collections'
+import OnBoarding from '@/src/components/creator/onboarding/OnBoarding';
 
 export const Dashboard = () => {
 
   const navlinks = ["Home", "Collections", "Shop", "Memberships", "Recommendations"]
+  const location = useLocation();
+  const [isLoading, setIsLoading] = useState(true)
+  const [hasProfile, setHasProfile] = useState(null)
   const [currentLink, setCurrentLink] = useState("Home")
 
   const componentMap = {
     "Home": <CreatorHome />,
-    "Collections": <NoCollections />,
+    "Collections": <Collections />,
     "Shop": <NoShop />,
     "Memberships": <Memberships />,
     "Recommendations": <NoRecommendations />
+  }
+
+  useEffect(() => {
+    const checkProfile = async () => {
+      try {
+        const response = await api.get('/creators/profile/me');
+        console.log("Profile check response:", response);
+        if (response.data.success && response.data.data.profile) {
+          console.log("Profile found:", response.data.data.profile);
+          setHasProfile(true);
+        } else {
+          console.log("No profile data");
+          setHasProfile(false);
+        }
+      } catch (error) {
+        console.log("Profile check error:", error.response?.status);
+        setHasProfile(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkProfile();
+  }, [location]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!hasProfile) {
+    return <OnBoarding />;
   }
 
   const navItemVariants = {
