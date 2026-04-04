@@ -64,3 +64,7 @@ export const collectionUpdateSchema=z.object({
     title:z.string().min(3).max(30).trim().optional(),
     description:z.string().min(10).max(100).trim().optional(),
 })
+
+export const commentSchema=z.object({
+    content:z.string().min(3).max(100)
+})
