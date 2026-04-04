@@ -25,6 +25,10 @@ const userSchema=new Schema({
     enum:["creator","subscriber"],
     required:true
    },
+   hasProfile:{
+      type:Boolean,
+      default:false,
+   },
    onBoarded:{
       type:Boolean,
       default:false,
@@ -36,7 +40,21 @@ const userSchema=new Schema({
    connectedID:{
       type:String,
       default:""
-   }
+   },
+   deferredOnboarding:{
+   pendingEarnings: {type: Number, default: 0},
+   earningsCount: {type: Number, default: 0},
+   accountCreatedAt: Date,
+   verifiedAt: Date,
+   lastEarningDate: Date,
+   pendingEarningsTransferred: {type: Boolean, default: false}
+},
+stripeAccountStatus:{
+   chargesEnabled: {type: Boolean, default: false},
+   payoutsEnabled: {type: Boolean, default: false},
+   detailsSubmitted: {type: Boolean, default: false},
+   lastSyncedAt: Date
+}
 
 },{timestamps:true})
 
