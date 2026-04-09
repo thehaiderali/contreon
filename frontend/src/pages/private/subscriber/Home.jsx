@@ -3,6 +3,7 @@ import { CreatorSideBar } from "@/components/app-sidebar"
 import { Outlet } from "react-router"
 import { useAuthStore } from "@/store/authStore"
 import { SubscriberAppSidebar } from "@/components/subscriber-sidebar"
+import { Toaster } from "sonner"
 
 export default function Home() {
 
@@ -12,6 +13,7 @@ export default function Home() {
   return (
     <SidebarProvider>
       <div className="flex min-h-screen w-full">
+        <Toaster position="top-center"/>
           {user?.role==="creator" && (<CreatorSideBar/>)}
           {user?.role==="subscriber" && (<SubscriberAppSidebar/>)}
         <main className="flex-1 relative">

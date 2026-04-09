@@ -56,7 +56,6 @@ const App = () => {
 
         
         <Route element={<CreatorRoutes />}>
-          
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />
             <Route path='profile' element={<Profile />} />
@@ -69,12 +68,12 @@ const App = () => {
             <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
-          <Route path="/creator/collections" element={<Collections />} />
-          <Route path="/creator/collections/create" element={<CollectionCreationForm />} />
-          <Route path="/creator/collections/:id/edit" element={<CollectionEditForm />} />
-          <Route path='/creator/create-post/video' element={<CreateVideoPost/>}/>
-          <Route path='/creator/create-post/text' element={<CreateTextPost/>}/>
-          ▬<Route path='/creator/create-post/audio' element={<CreateAudioPost/>}/>
+          <Route path="collections" element={<Collections />} />
+          <Route path="collections/create" element={<CollectionCreationForm />} />
+          <Route path="collections/:id/edit" element={<CollectionEditForm />} />
+          <Route path='create-post/video' element={<CreateVideoPost/>}/>
+          <Route path='create-post/text' element={<CreateTextPost/>}/>
+          <Route path='create-post/audio' element={<CreateAudioPost/>}/>
           </Route>
         </Route>
       </Route>

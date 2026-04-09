@@ -1,74 +1,89 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 
 export const PostSettings = ({ onSettingsChange, onSubmit, isSubmitting, initialSettings = {} }) => {
-  // Public or Paid - mutually exclusive (not both)
   const [isPublic, setIsPublic] = useState(initialSettings.isPaid ? false : true)
   const [isPaid, setIsPaid] = useState(initialSettings.isPaid || false)
   const [price, setPrice] = useState(initialSettings.price || '')
-
-  // Comments On or Off - mutually exclusive (not both)
   const [commentsOn, setCommentsOn] = useState(initialSettings.commentsAllowed !== false)
   const [commentsOff, setCommentsOff] = useState(initialSettings.commentsAllowed === false)
 
   // Handle Public toggle
   const handlePublicChange = (checked) => {
+    setIsPublic(checked)
     if (checked) {
-      setIsPublic(true)
       setIsPaid(false)
       setPrice('')
-    } else {
-      setIsPublic(false)
     }
+    // Immediately send updated settings to parent
+    onSettingsChange({
+      isPaid: isPaid && !checked ? isPaid : false,
+      commentsAllowed: commentsOn,
+      price: undefined
+    })
   }
 
   // Handle Paid toggle
   const handlePaidChange = (checked) => {
+    setIsPaid(checked)
     if (checked) {
-      setIsPaid(true)
       setIsPublic(false)
     } else {
-      setIsPaid(false)
       setPrice('')
     }
+    // Immediately send updated settings to parent
+    onSettingsChange({
+      isPaid: checked,
+      commentsAllowed: commentsOn,
+      price: checked ? parseFloat(price) || undefined : undefined
+    })
+  }
+
+  // Handle Price input
+  const handlePriceChange = (e) => {
+    const newPrice = e.target.value
+    setPrice(newPrice)
+    // Immediately send updated settings to parent
+    onSettingsChange({
+      isPaid: isPaid,
+      commentsAllowed: commentsOn,
+      price: isPaid ? parseFloat(newPrice) || undefined : undefined
+    })
   }
 
   // Handle Comments On toggle
   const handleCommentsOnChange = (checked) => {
+    setCommentsOn(checked)
     if (checked) {
-      setCommentsOn(true)
       setCommentsOff(false)
-    } else {
-      setCommentsOn(false)
     }
+    // Immediately send updated settings to parent
+    onSettingsChange({
+      isPaid: isPaid,
+      commentsAllowed: checked,
+      price: isPaid ? parseFloat(price) || undefined : undefined
+    })
   }
 
   // Handle Comments Off toggle
   const handleCommentsOffChange = (checked) => {
+    setCommentsOff(checked)
     if (checked) {
-      setCommentsOff(true)
       setCommentsOn(false)
-    } else {
-      setCommentsOff(false)
     }
+    // Immediately send updated settings to parent
+    onSettingsChange({
+      isPaid: isPaid,
+      commentsAllowed: !checked,
+      price: isPaid ? parseFloat(price) || undefined : undefined
+    })
   }
 
-  // Send settings to parent
-  useEffect(() => {
-    if (onSettingsChange) {
-      onSettingsChange({
-        isPaid,
-        commentsAllowed: commentsOn,
-        price: isPaid ? parseFloat(price) : undefined
-      })
-    }
-  }, [isPaid, commentsOn, price, onSettingsChange])
-
   return (
-    <Card className="w-full max-w-md mx-auto border-2 border-black dark:border-white">
+    <Card className="w-full border-2 border-black dark:border-white">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm font-semibold text-center">
           Post Settings
@@ -124,8 +139,8 @@ export const PostSettings = ({ onSettingsChange, onSubmit, isSubmitting, initial
                 step="0.01"
                 min="0"
                 value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                className="w-full mt-1 px-2 py-1 text-[11px] border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                onChange={handlePriceChange}
+                className="w-full mt-1 px-2 py-1 text-[11px] border rounded-md dark:bg-gray-800 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="Enter price"
                 required
               />
