@@ -1,14 +1,14 @@
 // CreateTextPost.jsx
 import Editor from '@/src/components/creator/posts/Editor'
-import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom' // Change this line
+import React, { useEffect, useState, useRef } from 'react'
+import { useNavigate } from 'react-router'
 import { PostSettings } from './PostSettings'
 import PostCreatedModal from './PostCreated'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 
 const CreateTextPost = () => {
-  const navigate = useNavigate() // Add this
+  const navigate = useNavigate()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
   const [postSettings, setPostSettings] = useState({
@@ -18,6 +18,16 @@ const CreateTextPost = () => {
   })
   const [editorContent, setEditorContent] = useState(null)
   const [title, setTitle] = useState('')
+  
+  // Use ref to track if component is mounted
+  const isMountedRef = useRef(true)
+
+  useEffect(() => {
+    return () => {
+      // Cleanup on unmount
+      isMountedRef.current = false
+    }
+  }, [])
 
   const generateSlug = (title) => {
     return title
@@ -57,43 +67,53 @@ const CreateTextPost = () => {
       
       const response = await api.post("/creators/posts", postData)
       if (!response.data.success) {
-        console.log("Error : ",response.data)
+        console.log("Error : ", response.data)
+        throw new Error(response.data.message || 'Failed to create post')
       }
-      toast("Redirecting to Library")
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      window.location.href = 'http://localhost:5173/creator/library';
+        toast("Post Created Successfully. Navigating to Library")
+      await new Promise((resolve,reject)=>setTimeout(resolve,3000))
+       navigate("/creator/library") 
+        setIsSubmitting(false)
       
     } catch (error) {
       console.error("Error creating post:", error)
-      toast.error(error.message || 'Failed to create post. Please try again.')
-    } finally {
-      setIsSubmitting(false)
+      // Only show error if component is still mounted
+      if (isMountedRef.current) {
+        toast.error(error.message || 'Failed to create post. Please try again.')
+        setIsSubmitting(false)
+      }
     }
   }
 
   const handleCloseModal = () => {
     setShowSuccessModal(false)
-    navigate('/creator/library') // This will now work
+    navigate('/creator/library')
   }
 
   const handleSettingsChange = (settings) => {
-    setPostSettings(settings)
+    // Only update if component is mounted
+    if (isMountedRef.current) {
+      setPostSettings(settings)
+    }
   }
 
   const handleEditorChange = (content) => {
-    setEditorContent(content)
+    // Only update if component is mounted
+    if (isMountedRef.current) {
+      setEditorContent(content)
+    }
   }
 
   return (
-    <div className='w-full h-screen overflow-scroll'>
+    <div className='w-full'>
       <div className='container mx-auto px-4 py-6'>
         <h1 className='text-2xl text-center mb-6'>
           Create Text Post
         </h1>
         
         {/* Title Input */}
-        <div className='mb-4'>
+        <div className='mb-6'>
+          <label className='block text-sm font-medium mb-2'>Post Title</label>
           <input
             type="text"
             placeholder="Enter post title..."
@@ -104,15 +124,19 @@ const CreateTextPost = () => {
           />
         </div>
 
-        <div className='flex flex-col lg:flex-row gap-5'>
-          <div className='flex-3/4'>
+        {/* Main Content Layout */}
+        <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+          {/* Editor - Takes 2/3 on desktop, full width on mobile */}
+          <div className='lg:col-span-2'>
             <Editor 
               editable={true} 
               initialContent=""
               onChange={handleEditorChange}
             />
           </div>
-          <div className='flex-1/4'>
+          
+          {/* Settings - Takes 1/3 on desktop, full width on mobile */}
+          <div className='lg:col-span-1'>
             <PostSettings 
               onSettingsChange={handleSettingsChange}
               onSubmit={handleSubmit}

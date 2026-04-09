@@ -54,7 +54,7 @@ const postSchema = new mongoose.Schema({
       return this.type === "audio" || this.type==="video";
     }
   }
-});
+},{timestamps:true});
 
 
 const Post=mongoose.model("Post",postSchema)
