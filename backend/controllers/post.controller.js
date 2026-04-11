@@ -91,7 +91,6 @@ export const createPost = async (req, res) => {
       commentsAllowed: commentsAllowed !== undefined ? commentsAllowed : true,
       description: description || ""
     });
-    console.log("Post : ",post)
 
     await post.save();
 
@@ -206,6 +205,7 @@ export const getPostById = async (req, res) => {
 // @desc    Update a post
 // @route   PUT /api/creators/posts/:id
 // @access  Private
+
 export const updatePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -251,16 +251,6 @@ export const updatePost = async (req, res) => {
       });
       if (existingPost) {
         updates.slug = `${updates.slug}-${Date.now()}`;
-      }
-    }
-
-    // Validate price for paid content
-    if (updates.isPaid !== undefined && updates.isPaid === true) {
-      if (!updates.price || updates.price <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Valid price is required for paid content"
-        });
       }
     }
 
