@@ -35,7 +35,6 @@ creatorRouter.get("/memberships/me",authMiddleware,checkCreatorExists,getAllMemb
 creatorRouter.get("/memberships/:id", authMiddleware, checkCreatorExists, getMembershipById);
 creatorRouter.put("/memberships/:id", authMiddleware, checkCreatorExists, updateMembership);
 creatorRouter.delete("/memberships/:id", authMiddleware, checkCreatorExists, deleteMembership);
-
 creatorRouter.post("/posts", authMiddleware, checkCreatorExists, createPost);
 creatorRouter.get("/posts/my-posts", authMiddleware, checkCreatorExists, getMyPosts);
 creatorRouter.get("/posts/stats", authMiddleware, checkCreatorExists, getPostStats);
