@@ -10,6 +10,7 @@ import {
   getMembershipById,
   updateMembership,
   deleteMembership,
+  getAllMembershipsForCreator,
 } from "../controllers/creator.controller.js";
 import {
   createPost,
@@ -30,11 +31,10 @@ creatorRouter.get("/:creatorId", getCreatorById);
 creatorRouter.post("/profile", authMiddleware, checkCreator, makeCreatorProfile);
 creatorRouter.put("/profile/edit", authMiddleware, checkCreator, updateCreatorProfile);
 creatorRouter.post("/memberships", authMiddleware, checkCreatorExists, createMembership);
+creatorRouter.get("/memberships/me",authMiddleware,checkCreatorExists,getAllMembershipsForCreator)
 creatorRouter.get("/memberships/:id", authMiddleware, checkCreatorExists, getMembershipById);
 creatorRouter.put("/memberships/:id", authMiddleware, checkCreatorExists, updateMembership);
 creatorRouter.delete("/memberships/:id", authMiddleware, checkCreatorExists, deleteMembership);
-
-// New post routes
 creatorRouter.post("/posts", authMiddleware, checkCreatorExists, createPost);
 creatorRouter.get("/posts/my-posts", authMiddleware, checkCreatorExists, getMyPosts);
 creatorRouter.get("/posts/stats", authMiddleware, checkCreatorExists, getPostStats);

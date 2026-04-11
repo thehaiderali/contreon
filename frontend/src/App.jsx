@@ -33,6 +33,7 @@ import CollectionEditForm from './components/creator/collection/CollectionEditFo
 import CreateVideoPost from './pages/private/creator/posts/CreateVideoPost';
 import CreateTextPost from './pages/private/creator/posts/CreateTextPost';
 import CreateAudioPost from './pages/private/creator/posts/CreateAudioPost';
+import RecommendationSearch from './pages/private/creator/recommendations/RecommendationsSearch';
 
 const App = () => {
   return (
@@ -68,6 +69,7 @@ const App = () => {
             <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
+            <Route path='recommendations/create' element={<RecommendationSearch/>}/>
           <Route path="collections" element={<Collections />} />
           <Route path="collections/create" element={<CollectionCreationForm />} />
           <Route path="collections/:id/edit" element={<CollectionEditForm />} />

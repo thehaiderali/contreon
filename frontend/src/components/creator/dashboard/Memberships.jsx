@@ -3,6 +3,7 @@ import MembershipCard from '../membership/MembershipCard';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
+import NoMemberships from '@/src/pages/private/creator/dashboard/NoMemberships';
 
 const Memberships = () => {
     const [data, setData] = useState(null);
@@ -13,9 +14,9 @@ const Memberships = () => {
         setIsLoading(true);
         setError(null);
         try {
-            const response = await api.get("/creators/products/me");
+            const response = await api.get("/creators/memberships/me");
             console.log("Response : ", response);
-            setData(response.data.data);
+            setData(response.data.data.memberShips);
         } catch (err) {
             setError(err.message || "Failed to fetch memberships");
             console.error("Error fetching data:", err);
@@ -31,6 +32,9 @@ const Memberships = () => {
     const handleRefresh = () => {
         fetchData();
     };
+
+    // Check if data is an empty array
+    const isEmptyMemberships = Array.isArray(data) && data.length === 0;
 
     return (
         <div className="space-y-4">
@@ -53,10 +57,9 @@ const Memberships = () => {
                 </div>
             )}
 
-            {data && !error && (
+            {!isLoading && !error && data && !isEmptyMemberships && (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {/* Map through your memberships data */}
-                    {data.memberShips?.map((membership) => (
+                    {data.map((membership) => (
                         <MembershipCard
                             key={membership._id}
                             id={membership._id}
@@ -70,10 +73,12 @@ const Memberships = () => {
                 </div>
             )}
             
-            {data === null && !isLoading && !error && (
-                <div>No Memberships Found</div>
+            {/* Show NoMemberships component when memberships array is empty */}
+            {!isLoading && !error && data && isEmptyMemberships && (
+                <NoMemberships />
             )}
 
+            {/* Show loading state */}
             {isLoading && (
                 <div className="flex justify-center items-center p-8">
                     <RotateCw className="h-6 w-6 animate-spin text-gray-500" />

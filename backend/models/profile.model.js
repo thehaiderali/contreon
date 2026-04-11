@@ -19,6 +19,12 @@ const profileSchema=new Schema({
         min:3,
         max:20,
     },
+    interests:[
+        {
+            type:String,
+        }
+
+    ],
     pageUrl:{
         type:String,
         unique:true,
