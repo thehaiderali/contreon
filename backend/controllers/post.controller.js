@@ -14,7 +14,7 @@ export const createPost = async (req, res) => {
       type, 
       content, 
       isPaid, 
-      price, 
+      tierId,
       commentsAllowed, 
       isPublished,
       thumbnailUrl,
@@ -57,11 +57,11 @@ export const createPost = async (req, res) => {
       });
     }
 
-    // Validate price for paid content
-    if (isPaid && (!price || price <= 0)) {
+    // Validate tier for paid content
+    if (isPaid && !tierId) {
       return res.status(400).json({
         success: false,
-        message: "Valid price is required for paid content"
+        message: "Tier selection is required for paid content"
       });
     }
 
@@ -85,17 +85,20 @@ export const createPost = async (req, res) => {
       content: content || "",
       creatorId,
       isPaid: isPaid || false,
-      price: isPaid ? price : undefined,
+      tierId: isPaid ? tierId : undefined,
       isPublished: isPublished || false,
       thumbnailUrl: thumbnailUrl || "",
       commentsAllowed: commentsAllowed !== undefined ? commentsAllowed : true,
       description: description || ""
     });
+    console.log("Post : ",post)
 
     await post.save();
 
-    // Populate creator info for response
-    const populatedPost = await Post.findById(post._id).populate("creatorId", "fullName email");
+    // Populate creator info and tier info for response
+    const populatedPost = await Post.findById(post._id)
+      .populate("creatorId", "fullName email")
+      .populate("tierId", "name price benefits");
 
     res.status(201).json({
       success: true,
