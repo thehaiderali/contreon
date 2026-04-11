@@ -7,6 +7,13 @@ const postSchema = new mongoose.Schema({
     max: 30,
     required: true
   },
+  tierId:{
+    type:mongoose.Schema.Types.ObjectId,
+    ref:"SubscriptionTier",
+    required:function(){
+      return this.isPaid===true
+    }
+  },
   type:{
     type:String,
     enum:["text","audio","video"],
@@ -30,12 +37,6 @@ const postSchema = new mongoose.Schema({
   isPaid: {
     type: Boolean,
     default: false
-  },
-  price: {
-    type: Number,
-    required: function () {
-      return this.isPaid === true;
-    }
   },
   isPublished:{
     type:Boolean,

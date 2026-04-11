@@ -14,7 +14,7 @@ export const createPost = async (req, res) => {
       type, 
       content, 
       isPaid, 
-      price, 
+      tierId,
       commentsAllowed, 
       isPublished,
       thumbnailUrl,
@@ -57,11 +57,11 @@ export const createPost = async (req, res) => {
       });
     }
 
-    // Validate price for paid content
-    if (isPaid && (!price || price <= 0)) {
+    // Validate tier for paid content
+    if (isPaid && !tierId) {
       return res.status(400).json({
         success: false,
-        message: "Valid price is required for paid content"
+        message: "Tier selection is required for paid content"
       });
     }
 
@@ -85,7 +85,7 @@ export const createPost = async (req, res) => {
       content: content || "",
       creatorId,
       isPaid: isPaid || false,
-      price: isPaid ? price : undefined,
+      tierId: isPaid ? tierId : undefined,
       isPublished: isPublished || false,
       thumbnailUrl: thumbnailUrl || "",
       commentsAllowed: commentsAllowed !== undefined ? commentsAllowed : true,
@@ -94,8 +94,10 @@ export const createPost = async (req, res) => {
 
     await post.save();
 
-    // Populate creator info for response
-    const populatedPost = await Post.findById(post._id).populate("creatorId", "fullName email");
+    // Populate creator info and tier info for response
+    const populatedPost = await Post.findById(post._id)
+      .populate("creatorId", "fullName email")
+      .populate("tierId", "name price benefits");
 
     res.status(201).json({
       success: true,
@@ -116,6 +118,7 @@ export const createPost = async (req, res) => {
 // @desc    Get all posts of logged-in creator
 // @route   GET /api/creators/posts/my-posts
 // @access  Private
+
 export const getMyPosts = async (req, res) => {
   try {
     const creatorId = req.user.userId;
@@ -202,6 +205,7 @@ export const getPostById = async (req, res) => {
 // @desc    Update a post
 // @route   PUT /api/creators/posts/:id
 // @access  Private
+
 export const updatePost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -247,16 +251,6 @@ export const updatePost = async (req, res) => {
       });
       if (existingPost) {
         updates.slug = `${updates.slug}-${Date.now()}`;
-      }
-    }
-
-    // Validate price for paid content
-    if (updates.isPaid !== undefined && updates.isPaid === true) {
-      if (!updates.price || updates.price <= 0) {
-        return res.status(400).json({
-          success: false,
-          message: "Valid price is required for paid content"
-        });
       }
     }
 

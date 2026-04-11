@@ -1,4 +1,5 @@
 import CreateMenu from '@/src/components/creator/dashboard/CreateMenu'
+import PostTable from '@/src/components/creator/posts/PostTable'
 import React from 'react'
 
 const Library = () => {
@@ -9,6 +10,7 @@ const Library = () => {
         <h1 className='text-xl text-left font-semibold'>Library</h1>
         <h1 className='w-fit mr-40'><CreateMenu/></h1>
       </div>
+      <PostTable/>
     </div>
   )
 }

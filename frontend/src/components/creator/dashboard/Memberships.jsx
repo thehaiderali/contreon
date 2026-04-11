@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RotateCw } from 'lucide-react';
 import NoMemberships from '@/src/pages/private/creator/dashboard/NoMemberships';
+import { Link } from 'react-router';
 
 const Memberships = () => {
     const [data, setData] = useState(null);
@@ -40,15 +41,22 @@ const Memberships = () => {
         <div className="space-y-4">
             <div className="flex justify-between items-center">
                 <h2 className="text-2xl font-bold">Memberships</h2>
-                <Button 
-                    onClick={handleRefresh} 
-                    disabled={isLoading}
-                    variant="outline"
-                    size="sm"
-                >
-                    <RotateCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
-                    {isLoading ? 'Refreshing...' : 'Refresh'}
-                </Button>
+                <div className="flex gap-2">
+                    <Link to="/creator/memberships/create">
+                        <Button variant="default" size="sm">
+                            Create Membership
+                        </Button>
+                    </Link>
+                    <Button 
+                        onClick={handleRefresh} 
+                        disabled={isLoading}
+                        variant="outline"
+                        size="sm"
+                    >
+                        <RotateCw className={`h-4 w-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
+                        {isLoading ? 'Refreshing...' : 'Refresh'}
+                    </Button>
+                </div>
             </div>
 
             {error && (
