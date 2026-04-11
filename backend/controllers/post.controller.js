@@ -119,6 +119,7 @@ export const createPost = async (req, res) => {
 // @desc    Get all posts of logged-in creator
 // @route   GET /api/creators/posts/my-posts
 // @access  Private
+
 export const getMyPosts = async (req, res) => {
   try {
     const creatorId = req.user.userId;
