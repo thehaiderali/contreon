@@ -69,16 +69,9 @@ export async function updateComment(req,res){
                 error:errorParser(Zoderror)
             })
         }
-        const id=req.params.postId;
-        const post=await Post.findById(id);
-        if(!post){
-            return res.status(404).json({
-                success:false,
-                error:"Post not found"
-            })
-        }
+        const id=req.params.id;
         const user=await User.findById(req.user.Id);
-        const alreadyComment=Comment.findOne({postId:id,authorId:user._id})
+        const alreadyComment=Comment.findById(id);
         if(!alreadyComment){
             return res.status(400).json({
                 success:false,
@@ -152,5 +145,136 @@ export async function deleteComment(req, res) {
             success: false,
             error: "Internal Server Error"
         });
+    }
+}
+
+export async function getAllCommentsForPost(req,res){
+    try {
+     
+     const id=req.params.id;
+     const post=await Post.findById(id);
+     if(!post){
+        return res.status(404).json({
+            success:false,
+            error:"Post Not Found"
+        })
+     }
+     if(post.creatorId!==req.user.userId){
+        return res.status(403).json({
+            success:false,
+            error:"Unauthorized Cannot Access Other Creator's Post Data"
+        })
+     }   
+     
+     const comments=Comment.find({
+        postId:post._id 
+     })
+
+     return res.status(200).json({
+        success:true,
+        data:{
+            comments
+        }
+     })
+
+
+    } catch (error) {
+        console.log("Error in Gettings Comments for a Post : ",error)
+        return res.status(500).json({
+            success:true,
+            error:"Internal Server Error"
+        })
+        
+    }
+}
+
+export async function creatorDeleteComment(req,res){
+    try {
+       
+      const id=req.params.id;
+      const commentId=req.params.commentId;
+      const post=await Post.findById(id);
+     if(!post){
+        return res.status(404).json({
+            success:false,
+            error:"Post Not Found"
+        })
+     }
+     if(post.creatorId!==req.user.userId){
+         return res.status(403).json({
+            success:false,
+            error:"Unauthorized Cannot Access Other Creator's Post Data"
+        })
+     }
+     const comment=await Comment.findById(commentId);
+     if(!comment){
+        return res.status(404).json({
+            success:false,
+            error:"Comment not Found"
+        })
+     }
+
+     await Comment.findByIdAndDelete(commentId);
+
+     return res.status(200).json({
+        success:true,
+        message:"Comment Delete Successfully"
+     })
+
+    } catch (error) {
+
+       console.log("Error in Deleting Comment By Creator for a Post : ",error)
+        return res.status(500).json({
+            success:true,
+            error:"Internal Server Error"
+        })
+
+    }
+}
+
+
+export async function creatorFeaturedCommentToggle(req,res){
+    try {
+       
+      const id=req.params.id;
+      const commentId=req.params.commentId;
+      const post=await Post.findById(id);
+     if(!post){
+        return res.status(404).json({
+            success:false,
+            error:"Post Not Found"
+        })
+     }
+     if(post.creatorId!==req.user.userId){
+         return res.status(403).json({
+            success:false,
+            error:"Unauthorized Cannot Access Other Creator's Post Data"
+        })
+     }
+     const comment=await Comment.findById(commentId);
+     if(!comment){
+        return res.status(404).json({
+            success:false,
+            error:"Comment not Found"
+        })
+     }
+
+     await Comment.findByIdAndUpdate(commentId,{
+        featured:!comment.featured,
+     });
+
+     return res.status(200).json({
+        success:true,
+        message:"Comment Featured Toggle Successfully"
+     })
+
+    } catch (error) {
+
+       console.log("Error in Toggle Featuring Comment By Creator for a Post : ",error)
+        return res.status(500).json({
+            success:true,
+            error:"Internal Server Error"
+        })
+
     }
 }

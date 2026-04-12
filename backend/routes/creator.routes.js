@@ -21,11 +21,10 @@ import {
   togglePublishStatus,
   getPostStats
 } from "../controllers/post.controller.js";
-import {  createTranscription, getTranscriptionStatus } from "../controllers/transcription.controller.js";
+import { creatorDeleteComment, creatorFeaturedComment, creatorFeaturedCommentToggle, getAllCommentsForPost } from "../controllers/comment.controller.js";
 
 const creatorRouter = Router();
 
-// Existing routes
 creatorRouter.get("/profile/me", authMiddleware, checkCreator, getMyCreatorProfile);
 creatorRouter.get("/profile/:creatorId", getCreatorProfileById);
 creatorRouter.get("/:creatorId", getCreatorById);
@@ -43,6 +42,10 @@ creatorRouter.get("/posts/:id", authMiddleware, checkCreatorExists, getPostById)
 creatorRouter.put("/posts/:id", authMiddleware, checkCreatorExists, updatePost);
 creatorRouter.delete("/posts/:id", authMiddleware, checkCreatorExists, deletePost);
 creatorRouter.patch("/posts/:id/publish", authMiddleware, checkCreatorExists, togglePublishStatus);
+creatorRouter.get("/posts/:id/comments",authMiddleware,checkCreatorExists,getAllCommentsForPost);
+creatorRouter.delete("/posts/:id/comments/:commentId",authMiddleware,checkCreatorExists,creatorDeleteComment);
+creatorRouter.post("/posts/:id/comments/:commentId/feature-toggle",authMiddleware,checkCreatorExists,creatorFeaturedCommentToggle);
+
 
 
 export default creatorRouter;
