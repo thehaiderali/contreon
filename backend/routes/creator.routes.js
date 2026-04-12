@@ -21,6 +21,7 @@ import {
   togglePublishStatus,
   getPostStats
 } from "../controllers/post.controller.js";
+import {  createTranscription, getTranscriptionStatus } from "../controllers/transcription.controller.js";
 
 const creatorRouter = Router();
 
@@ -42,5 +43,6 @@ creatorRouter.get("/posts/:id", authMiddleware, checkCreatorExists, getPostById)
 creatorRouter.put("/posts/:id", authMiddleware, checkCreatorExists, updatePost);
 creatorRouter.delete("/posts/:id", authMiddleware, checkCreatorExists, deletePost);
 creatorRouter.patch("/posts/:id/publish", authMiddleware, checkCreatorExists, togglePublishStatus);
+
 
 export default creatorRouter;
