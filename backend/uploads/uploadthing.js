@@ -16,4 +16,16 @@ export const uploadRouter = {
   }).onUploadComplete((data) => {
     console.log("Upload Complete")
   }),
+  audioUploader:f({
+      audio:{
+        maxFileCount:1,
+        maxFileSize:"64MB"
+      }
+  }),
+  transcriptionUploader:f({
+    text:{
+      maxFileCount:1,
+      maxFileSize:"64MB"
+    }
+  })
 } 

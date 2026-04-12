@@ -54,7 +54,26 @@ const postSchema = new mongoose.Schema({
     required: function () {
       return this.type === "audio" || this.type==="video";
     }
+  },
+  transcriptionUrl:{
+    type:String,
+    required:function(){
+     return this.type==="audio"
+    }
+  },
+  audioUrl:{
+    type:String,
+    required:function(){
+     return this.type==="audio"
+    }
+  },
+  videoUrl:{
+    type:String,
+    required:function(){
+     return this.type==="video"
+    }
   }
+
 },{timestamps:true});
 
 
