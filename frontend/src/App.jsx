@@ -56,7 +56,6 @@ const App = () => {
           <Route path="notifications" element={<Notifications />} />
         </Route>
 
-        
         <Route element={<CreatorRoutes />}>
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />
