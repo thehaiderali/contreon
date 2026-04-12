@@ -66,5 +66,5 @@ export const collectionUpdateSchema=z.object({
 })
 
 export const commentSchema=z.object({
-    content:z.string().min(3).max(100)
+    content:z.string().min(3).max(150)
 })

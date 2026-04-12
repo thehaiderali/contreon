@@ -12,7 +12,21 @@ const commentSchema=new mongoose.Schema({
         type:String,
         trim:true,
         min:3,
-        max:100,
+        max:150,
+    },
+    likes:{
+        type:Number,
+        default:0,
+        min:0
+    },
+    dislikes:{
+        type:Number,
+        default:0,
+        min:0
+    },
+    featured:{
+        type:Boolean,
+        default:false,
     }
 
 },{timestamps:true})
