@@ -19,12 +19,10 @@ const profileSchema=new Schema({
         min:3,
         max:20,
     },
-    interests:[
-        {
-            type:String,
-        }
-
-    ],
+    category:{
+        type:String,
+         enum:["Tech","Sports","Music","Art","Other","Business"],
+    },
     pageUrl:{
         type:String,
         unique:true,
