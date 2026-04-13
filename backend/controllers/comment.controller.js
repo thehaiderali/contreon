@@ -1,4 +1,4 @@
-import Comment from "../models/comment.model";
+import Comment from "../models/comment.model.js";
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js"
 import { commentSchema, errorParser } from "../validation/zod.js";

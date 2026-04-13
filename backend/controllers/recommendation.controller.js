@@ -1,4 +1,3 @@
-// routes/creatorRoutes.js
 import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Recommendation from "../models/recommendation.model.js";

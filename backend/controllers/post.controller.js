@@ -18,7 +18,9 @@ export const createPost = async (req, res) => {
       commentsAllowed, 
       isPublished,
       thumbnailUrl,
-      description 
+      description,
+      audioUrl,
+      transcriptionUrl, 
     } = req.body;
     
     const creatorId = req.user.userId;
@@ -89,7 +91,9 @@ export const createPost = async (req, res) => {
       isPublished: isPublished || false,
       thumbnailUrl: thumbnailUrl || "",
       commentsAllowed: commentsAllowed !== undefined ? commentsAllowed : true,
-      description: description || ""
+      description: description || "",
+      transcriptionUrl,
+      audioUrl,
     });
 
     await post.save();

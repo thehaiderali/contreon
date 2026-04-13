@@ -29,6 +29,12 @@ const userSchema=new Schema({
       type:Boolean,
       default:false,
    },
+   interests:[
+        {
+            type:String,
+            enum:["Tech","Sports","Music","Art","Other","Business"],
+        }
+    ],
    onBoarded:{
       type:Boolean,
       default:false,

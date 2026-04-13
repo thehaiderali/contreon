@@ -168,7 +168,7 @@ const MembershipEditForm = () => {
         
         // Navigate back after 2 seconds
         setTimeout(() => {
-          navigate('/creator/memberships');
+          navigate('/creator');
         }, 2000);
       } else {
         setSubmitResponse({
@@ -205,7 +205,7 @@ const MembershipEditForm = () => {
         });
         
         setTimeout(() => {
-          navigate('/creator/');
+          navigate('/creator');
         }, 2000);
       } else {
         setSubmitResponse({

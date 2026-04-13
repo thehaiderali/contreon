@@ -35,6 +35,7 @@ import CreateTextPost from './pages/private/creator/posts/CreateTextPost';
 import CreateAudioPost from './pages/private/creator/posts/CreateAudioPost';
 import RecommendationSearch from './pages/private/creator/recommendations/RecommendationsSearch';
 import EditTextPost from './pages/private/creator/posts/EditTextPost';
+import EditAudioPost from './pages/private/creator/posts/EditAudioPost ';
 
 const App = () => {
   return (
@@ -75,6 +76,7 @@ const App = () => {
           <Route path="collections/:id/edit" element={<CollectionEditForm />} />
           <Route path='create-post/video' element={<CreateVideoPost/>}/>
           <Route path='posts/text/:postId/edit' element={<EditTextPost/>}/>
+          <Route path='posts/audio/:id/edit' element={<EditAudioPost/>}/>
           <Route path='create-post/text' element={<CreateTextPost/>}/>
           <Route path='create-post/audio' element={<CreateAudioPost/>}/>
           </Route>
