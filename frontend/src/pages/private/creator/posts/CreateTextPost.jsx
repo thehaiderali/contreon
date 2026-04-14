@@ -1,7 +1,7 @@
 // CreateTextPost.jsx
 import Editor from '@/src/components/creator/posts/Editor'
 import React, { useEffect, useState, useRef } from 'react'
-import { useNavigate } from 'react-router'
+import { useNavigate, useLocation } from 'react-router'
 import { PostSettings } from './PostSettings'
 import PostCreatedModal from './PostCreated'
 import { toast } from 'sonner'
@@ -9,58 +9,56 @@ import { api } from '@/lib/api'
 
 const CreateTextPost = () => {
   const navigate = useNavigate()
+  const location = useLocation()
+  
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showSuccessModal, setShowSuccessModal] = useState(false)
-  const [postSettings, setPostSettings] = useState({
-    isPaid: false,
-    commentsAllowed: true,
-    tierId: undefined
-  })
-  const [editorContent, setEditorContent] = useState(null)
+  const [creatorTiers, setCreatorTiers] = useState([])
+  const [isLoadingTiers, setIsLoadingTiers] = useState(false)
   const [title, setTitle] = useState('')
-  const [creatorTiers,setCreatorTiers]=useState([])
+  const [editorContent, setEditorContent] = useState(null)
+  const [isPaid, setIsPaid] = useState(false)
+  const [selectedTierId, setSelectedTierId] = useState('')
+  const [commentsAllowed, setCommentsAllowed] = useState(true)
   
-  // Use ref to track if component is mounted
   const isMountedRef = useRef(true)
 
   useEffect(() => {
     return () => {
-      // Cleanup on unmount
       isMountedRef.current = false
     }
   }, [])
-// CreateTextPost.jsx - Add loading state
-const [isLoadingTiers, setIsLoadingTiers] = useState(false)
 
-// Update fetchCreatorTiers function
-useEffect(() => {
-  const fetchCreatorTiers = async () => {
-    setIsLoadingTiers(true)
-    try {
-      const response = await api.get("/creators/memberships/me")
-      console.log("Response:", response)
-      
-      if (response.data.success) {
-        const tiers = response.data.data.memberShips.map(membership => ({
-          _id: membership._id,
-          tierName: membership.tierName,
-          price: membership.price,
-          perks: membership.perks,
-          description: membership.description,
-          isActive: membership.isActive
-        }))
-        setCreatorTiers(tiers)
+
+  // Update fetchCreatorTiers function
+  useEffect(() => {
+    const fetchCreatorTiers = async () => {
+      setIsLoadingTiers(true)
+      try {
+        const response = await api.get("/creators/memberships/me")
+        console.log("Response:", response)
+        
+        if (response.data.success) {
+          const tiers = response.data.data.memberShips.map(membership => ({
+            _id: membership._id,
+            tierName: membership.tierName,
+            price: membership.price,
+            perks: membership.perks,
+            description: membership.description,
+            isActive: membership.isActive
+          }))
+          setCreatorTiers(tiers)
+        }
+      } catch (error) {
+        console.error("Error fetching tiers:", error)
+        toast.error("Failed to load membership tiers")
+      } finally {
+        setIsLoadingTiers(false)
       }
-    } catch (error) {
-      console.error("Error fetching tiers:", error)
-      toast.error("Failed to load membership tiers")
-    } finally {
-      setIsLoadingTiers(false)
     }
-  }
 
-  fetchCreatorTiers()
-}, [])
+    fetchCreatorTiers()
+  }, [])
 
   const generateSlug = (title) => {
     return title
@@ -69,81 +67,74 @@ useEffect(() => {
       .replace(/^-+|-+$/g, '')
   }
 
-// CreateTextPost.jsx - Update handleSubmit function
-const handleSubmit = async (settingsFromChild = null) => {
-  // Use settings from child if provided, otherwise use state
-  const currentSettings = settingsFromChild || postSettings;
-  
-  if (!title.trim()) {
-    toast.error('Please enter a title')
-    return
-  }
 
-  // REMOVE THIS - You don't have a price field in your settings
-  // if (currentSettings.isPaid && (!currentSettings.price || currentSettings.price <= 0)) {
-  //   toast.error('Please enter a valid price for paid content')
-  //   return
-  // }
+  //Update handleSubmit function
+  const handleSubmit = async () => {
+    
+    
+    setIsSubmitting(true);
+    
+    try {
+      const formData = {
+        title: title.trim(),
+        type: "text",
+        slug: generateSlug(title),
+        content: editorContent,
+        isPaid: isPaid,
+        tierId: isPaid ? selectedTierId : undefined,
+        commentsAllowed: commentsAllowed,
+        isPublished: true
+      }
+      
+      const response = await api.post('/creators/posts', formData);
+      
+      if (response.data.success) {
+        const newPost = response.data.data;
+        
+        if (location.state?.collectionId) {
+          try {
+            await api.post(`/collections/${location.state.collectionId}/posts/${newPost._id}`);
+            toast.success('Post created and added to collection');
+          } catch (err) {
+            toast.success('Post created but collection add failed');
+          }
+        } else {
+          toast.success('Post created successfully');
+        }
+        
+        setShowSuccessModal(true)
+        
+        setTimeout(() => {
+          if (location.state?.returnTo) {
+            navigate(location.state.returnTo);
+          } else {
+            setShowSuccessModal(false)
+            navigate('/creator/library');
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to create post');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
-  // Validate tier selection for paid posts
-  if (currentSettings.isPaid && !currentSettings.tierId) {
-    toast.error('Please select a membership tier for paid content')
-    return
-  }
-
-  setIsSubmitting(true)
-
-  try {
-    const slug = generateSlug(title)
-    
-    const postData = {
-      title: title.trim(),
-      type: "text",
-      slug: slug,
-      content: JSON.stringify(editorContent),
-      isPaid: currentSettings.isPaid,
-      tierId: currentSettings.isPaid ? currentSettings.tierId : undefined,
-      commentsAllowed: currentSettings.commentsAllowed,
-      isPublished: true
-    }
-    
-    console.log("Submitting post data:", postData)
-    
-    const response = await api.post("/creators/posts", postData)
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to create post')
-    }
-    
-    toast.success("Post Created Successfully! Navigate to Library to Check")
-    setShowSuccessModal(true) // You had this commented, uncomment it
-    
-  } catch (error) {
-    console.error("Error creating post:", error)
-    if (isMountedRef.current) {
-      toast.error(error.message || 'Failed to create post. Please try again.')
-    }
-  } finally {
-    if (isMountedRef.current) {
-      setIsSubmitting(false)
-    }
-  }
-}
   const handleCloseModal = () => {
     setShowSuccessModal(false)
     navigate('/creator/library')
   }
 
   const handleSettingsChange = (settings) => {
-    // Only update if component is mounted
-     console.log('Received in parent:', settings) // Debug
     if (isMountedRef.current) {
-      setPostSettings(settings)
+      console.log('Received in parent:', settings)
+      setIsPaid(settings.isPaid)
+      setSelectedTierId(settings.tierId)
+      setCommentsAllowed(settings.commentsAllowed)
     }
   }
 
   const handleEditorChange = (content) => {
-    // Only update if component is mounted
     if (isMountedRef.current) {
       setEditorContent(content)
     }
@@ -186,7 +177,7 @@ const handleSubmit = async (settingsFromChild = null) => {
               onSettingsChange={handleSettingsChange}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
-              initialSettings={postSettings}
+              initialSettings={{ isPaid, commentsAllowed, tierId: selectedTierId }}
               creatorTiers={creatorTiers}
               isLoadingTiers={isLoadingTiers}
             />

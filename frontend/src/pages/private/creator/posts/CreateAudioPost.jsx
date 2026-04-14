@@ -27,8 +27,11 @@ import {
 import { uploadFiles } from '@/lib/uploadthing';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { useLocation, useNavigate } from 'react-router';
 
 const CreateAudioPost = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState('upload');
   const [audioFile, setAudioFile] = useState(null);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -221,108 +224,119 @@ const CreateAudioPost = () => {
       .replace(/^-+|-+$/g, '');
   };
 
-  const handleCreatePost = async () => {
-    console.log('Creating post with data:', {
-      postTitle,
-      audioUrl,
-      transcriptUrl,
-      isPaid,
-      selectedTierId,
-      commentsAllowed
-    });
+const handleCreatePost = async () => {
+  console.log('Creating post with data:', {
+    postTitle,
+    audioUrl,
+    transcriptUrl,
+    isPaid,
+    selectedTierId,
+    commentsAllowed
+  });
+  
+  if (!postTitle.trim()) {
+    setError('Please enter a post title');
+    return;
+  }
+
+  if (postTitle.length < 3 || postTitle.length > 30) {
+    setError('Title must be between 3 and 30 characters');
+    return;
+  }
+
+  if (!postDescription || postDescription.trim() === "") {
+    setError('Description is required for audio posts');
+    return;
+  }
+
+  if (!audioUrl) {
+    setError('Audio URL is missing. Please upload audio again.');
+    return;
+  }
+
+  if (!transcriptUrl) {
+    setError('Transcription URL is missing. Please save the transcription first.');
+    return;
+  }
+
+  if (isPaid && !selectedTierId) {
+    setError('Please select a membership tier for paid content');
+    return;
+  }
+
+  setIsSubmitting(true);
+
+  try {
+    const slug = generateSlug(postTitle);
     
-    // Validate all required fields
-    if (!postTitle.trim()) {
-      setError('Please enter a post title');
-      return;
+    const postData = {
+      title: postTitle.trim(),
+      type: "audio",
+      slug: slug,
+      content: JSON.stringify({
+        transcriptionText: editedTranscription,
+        audioDuration: transcriptionData?.audio_duration || 0
+      }),
+      description: postDescription.trim(),
+      thumbnailUrl: thumbnailUrl || "",
+      audioUrl: audioUrl,
+      transcriptionUrl: transcriptUrl,
+      isPaid: isPaid,
+      tierId: isPaid ? selectedTierId : undefined,
+      commentsAllowed: commentsAllowed,
+      isPublished: true
+    };
+    
+    const response = await api.post('/creators/posts', postData);
+    
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to create post');
     }
-
-    if (postTitle.length < 3 || postTitle.length > 30) {
-      setError('Title must be between 3 and 30 characters');
-      return;
-    }
-
-    if (!postDescription || postDescription.trim() === "") {
-      setError('Description is required for audio posts');
-      return;
-    }
-
-    if (!audioUrl) {
-      setError('Audio URL is missing. Please upload audio again.');
-      return;
-    }
-
-    if (!transcriptUrl) {
-      setError('Transcription URL is missing. Please save the transcription first.');
-      return;
-    }
-
-    // Validate tier selection for paid posts
-    if (isPaid && !selectedTierId) {
-      setError('Please select a membership tier for paid content');
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      const slug = generateSlug(postTitle);
-      
-      const postData = {
-        title: postTitle.trim(),
-        type: "audio",
-        slug: slug,
-        content: JSON.stringify({
-          transcriptionText: editedTranscription,
-          audioDuration: transcriptionData?.audio_duration || 0
-        }),
-        description: postDescription.trim(),
-        thumbnailUrl: thumbnailUrl || "",
-        audioUrl: audioUrl,
-        transcriptionUrl: transcriptUrl,
-        isPaid: isPaid,
-        tierId: isPaid ? selectedTierId : undefined,
-        commentsAllowed: commentsAllowed,
-        isPublished: true
-      };
-      
-      console.log("Submitting audio post data:", postData);
-      
-      const response = await api.post('/creators/posts', postData);
-      
-      console.log('Post creation response:', response.data);
-      
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to create post');
+    
+    const newPost = response.data.data;
+    
+    // 🔥 AUTO-ADD TO COLLECTION
+    if (location.state?.collectionId) {
+      try {
+        await api.post(`/collections/${location.state.collectionId}/posts/${newPost._id}`);
+        toast.success('Post created and added to collection!');
+      } catch (err) {
+        console.error('Failed to add to collection:', err);
+        toast.success('Post created but failed to add to collection');
       }
-      
+    } else {
       toast.success('Audio post created successfully!');
-      setCurrentStep('publishing');
-      
-      // Reset form after successful creation
-      setTimeout(() => {
-        setCurrentStep('upload');
-        setAudioFile(null);
-        setAudioUrl(null);
-        setTranscriptionData(null);
-        setEditedTranscription(null);
-        setTranscriptUrl(null);
-        setPostTitle('');
-        setPostDescription('');
-        setThumbnailUrl('');
-        setIsPaid(false);
-        setCommentsAllowed(true);
-        setSelectedTierId('');
-        setError(null);
-      }, 2000);
-      
-    } catch (err) {
-      console.error('Error creating post:', err);
-      setError(err.message || 'Failed to create post. Please try again.');
-    } finally {
-      setIsSubmitting(false);
     }
-  };
+    
+    setCurrentStep('publishing');
+    
+    setTimeout(() => {
+      setCurrentStep('upload');
+      setAudioFile(null);
+      setAudioUrl(null);
+      setTranscriptionData(null);
+      setEditedTranscription(null);
+      setTranscriptUrl(null);
+      setPostTitle('');
+      setPostDescription('');
+      setThumbnailUrl('');
+      setIsPaid(false);
+      setCommentsAllowed(true);
+      setSelectedTierId('');
+      setError(null);
+      
+      if (location.state?.returnTo) {
+        navigate(location.state.returnTo);
+      }
+    }, 2000);
+    
+  } catch (err) {
+    console.error('Error creating post:', err);
+    setError(err.message || 'Failed to create post. Please try again.');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const getUtterancesByTime = () => {
     if (!transcriptionData?.utterances) return [];
