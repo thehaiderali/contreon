@@ -219,7 +219,7 @@ const CollectionEditForm = () => {
                 />
               </div>
             </CardContent>
-            <CardFooter className="flex justify-between gap-2">
+            <CardFooter className=" py-4 flex justify-between gap-2">
               <Button type="button" variant="destructive" onClick={handleDelete} disabled={isSubmitting}>
                 Delete Collection
               </Button>
@@ -241,13 +241,13 @@ const CollectionEditForm = () => {
             <CardTitle className="flex justify-between items-center">
               <span>Collection's Posts</span>
               {formData.posts.length > 0 && (
-                <div className="flex gap-2">
+                <div className="pl-2 scale-90 flex gap-3">
                   <Button size="sm" variant="outline" onClick={() => setShowPostSelector(!showPostSelector)} disabled={availablePosts.length === 0}>
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-3 w-3 mr-1" />
                     Add Existing
                   </Button>
                   <Button size="sm" onClick={() => navigate('/creator/create-post/text', { state: { collectionId: id, returnTo: window.location.pathname } })}>
-                    <Plus className="h-4 w-4 mr-1" />
+                    <Plus className="h-3 w-3 mr-1" />
                     New Post
                   </Button>
                 </div>

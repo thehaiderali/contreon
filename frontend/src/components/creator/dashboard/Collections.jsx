@@ -139,7 +139,7 @@ const Collections = () => {
                         title={collection.title}
                         description={collection.description}
                         posts={collection.posts || []}
-                        postCount={collection.postCount}
+                        postCount={collection.posts.length}
                         publishedPostCount={collection.publishedPostCount}
                         createdAt={collection.createdAt}
                         onDelete={handleDeleteCollection}
