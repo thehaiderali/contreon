@@ -325,7 +325,7 @@ const SubscriptionsTable = () => {
             setStatusFilter(value);
             setCurrentPage(1);
           }}>
-            <SelectTrigger className="w-[160px] h-9 text-sm">
+            <SelectTrigger className="w-40 h-9 text-sm">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>

@@ -243,7 +243,7 @@ const EditAudioPost = () => {
   
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen from-slate-50 to-slate-100 flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-blue-600 animate-spin mx-auto mb-4" />
           <p className="text-slate-600">Loading post data...</p>
@@ -253,7 +253,7 @@ const EditAudioPost = () => {
   }
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-6">
+    <div className="min-h-screen  from-slate-50 to-slate-100 p-6">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
@@ -425,7 +425,7 @@ const EditAudioPost = () => {
                   <Textarea
                     value={editedTranscription}
                     onChange={(e) => setEditedTranscription(e.target.value)}
-                    className="font-mono text-sm min-h-[200px]"
+                    className="font-mono text-sm min-h-52"
                     placeholder="Your transcription will appear here..."
                   />
                   <p className="text-xs text-slate-600">
