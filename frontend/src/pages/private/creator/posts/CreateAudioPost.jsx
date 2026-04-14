@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, Music, Check, AlertCircle, Loader2, Edit2, Save, DollarSign, MessageSquare, Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';

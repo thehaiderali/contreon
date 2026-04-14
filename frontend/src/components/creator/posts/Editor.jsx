@@ -1,3 +1,4 @@
+// Updated Editor component to support onChange prop
 import { useCreateBlockNote } from '@blocknote/react'
 import { BlockNoteView } from '@blocknote/shadcn'
 import { uploadFiles } from '@/lib/uploadthing'
@@ -5,32 +6,9 @@ import React, { useEffect, useRef } from 'react'
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/shadcn/style.css";
 
-const Editor = ({ editable = true, initialContent = [], onChange }) => {
-    // Clean initial content: remove empty paragraph blocks at the end
-    const cleanInitialContent = (content) => {
-        if (!Array.isArray(content) || content.length === 0) {
-            return undefined; // Let BlockNote use default
-        }
-        
-        // Filter out trailing empty paragraphs
-        let cleaned = [...content];
-        while (cleaned.length > 0) {
-            const lastBlock = cleaned[cleaned.length - 1];
-            // Check if it's an empty paragraph
-            if (lastBlock.type === 'paragraph' && 
-                (!lastBlock.content || lastBlock.content.length === 0)) {
-                cleaned.pop();
-            } else {
-                break;
-            }
-        }
-        
-        // If nothing left, return undefined to use BlockNote default
-        return cleaned.length > 0 ? cleaned : undefined;
-    };
-
+const Editor = ({ editable = true, initialContent = "", onChange }) => {
     const editor = useCreateBlockNote({
-        initialContent: cleanInitialContent(initialContent),
+        initialContent: initialContent ? JSON.parse(initialContent) : undefined,
         uploadFile: async (file) => {
             const response = await uploadFiles("imageUploader", {
                 files: [file],
@@ -46,7 +24,7 @@ const Editor = ({ editable = true, initialContent = [], onChange }) => {
     // Only notify parent of changes, don't store blocks in state
     const handleChange = () => {
         const currentContent = editor.document;
-        if (onChange && currentContent) {
+        if (onChange) {
             onChange(currentContent);
         }
     }
@@ -54,6 +32,15 @@ const Editor = ({ editable = true, initialContent = [], onChange }) => {
     // Handle initial content if needed
     useEffect(() => {
         if (isInitialMount.current && initialContent && editor) {
+            try {
+                const parsed = JSON.parse(initialContent);
+                if (parsed && parsed.length > 0) {
+                    // Optional: replace content if needed
+                    // editor.replaceBlocks(editor.document, parsed);
+                }
+            } catch (e) {
+                console.error("Error parsing initial content", e);
+            }
             isInitialMount.current = false;
         }
     }, [initialContent, editor]);
@@ -64,7 +51,7 @@ const Editor = ({ editable = true, initialContent = [], onChange }) => {
                 <BlockNoteView  
                     editor={editor}
                     editable={editable}
-                    onChange={handleChange}
+                    onChange={handleChange}  // ✅ Direct callback, no state
                 />
             </div>
         </div>
