@@ -34,7 +34,18 @@ if(!process.env.PLATFORM_FEE){
 if(!process.env.ASSEMBLY_API_KEY){
     throw new Error("ASSEMBLY_API_KEY not defined")
 }
-
+if(!process.env.MUX_SECRET_KEY){
+    throw new Error("MUX_SECRET_KEY not defined")
+}
+if(!process.env.MUX_ACCESS_TOKEN){
+    throw new Error("MUX_ACCESS_TOKEN not defined")
+}
+if(!process.env.MUX_SIGNING_KEY_ID){
+    throw new Error("MUX_SIGNING_KEY_ID not defined")
+}
+if(!process.env.MUX_SIGNING_PRIVATE_KEY){
+    throw new Error("MUX_SIGNING_PRIVATE_KEY not defined")
+}
 
 
 export const envConfig={
@@ -49,6 +60,9 @@ export const envConfig={
    STRIPE_SECRET_KEY:process.env.STRIPE_SECRET_KEY,
    STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
    PLATFORM_FEE:process.env.PLATFORM_FEE,
-   ASSEMBLY_API_KEY:process.env.ASSEMBLY_API_KEY
-
+   ASSEMBLY_API_KEY:process.env.ASSEMBLY_API_KEY,
+    MUX_ACCESS_TOKEN:process.env.MUX_ACCESS_TOKEN,
+    MUX_SECRET_KEY:process.env.MUX_SECRET_KEY,
+    MUX_SIGNING_PRIVATE_KEY:process.env.MUX_SIGNING_PRIVATE_KEY,
+    MUX_SIGNING_KEY_ID:process.env.MUX_SIGNING_KEY_ID
 }

@@ -67,11 +67,25 @@ const postSchema = new mongoose.Schema({
      return this.type==="audio"
     }
   },
-  videoUrl:{
-    type:String,
-    required:function(){
-     return this.type==="video"
+   playbackId: {
+    type: String,
+    required: function() {
+      return this.type === "video";
     }
+  },
+  assetId: {
+    type: String,
+    required: function() {
+      return this.type === "video";
+    }
+  },
+  videoDuration: {
+    type: Number,
+    default: 0
+  },
+  signedUrlExpiresAt: {
+    type: Date,
+    default: null
   }
 
 },{timestamps:true});

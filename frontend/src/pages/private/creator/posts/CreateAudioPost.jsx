@@ -47,7 +47,7 @@ const CreateAudioPost = () => {
   const [thumbnailUrl, setThumbnailUrl] = useState('');
   const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
   
-  // Post settings (now directly in this component)
+  // Post settings
   const [isPaid, setIsPaid] = useState(false);
   const [commentsAllowed, setCommentsAllowed] = useState(true);
   const [selectedTierId, setSelectedTierId] = useState('');
@@ -59,14 +59,12 @@ const CreateAudioPost = () => {
   const audioRef = useRef(null);
   const thumbnailInputRef = useRef(null);
 
-  // Debug logging to track state changes
   useEffect(() => {
     console.log('State updated - audioUrl:', audioUrl);
     console.log('State updated - transcriptUrl:', transcriptUrl);
     console.log('State updated - currentStep:', currentStep);
   }, [audioUrl, transcriptUrl, currentStep]);
 
-  // Fetch creator tiers
   useEffect(() => {
     const fetchCreatorTiers = async () => {
       setIsLoadingTiers(true);
@@ -172,7 +170,6 @@ const CreateAudioPost = () => {
       
       console.log('Saving edited transcription...');
       
-      // Create updated transcription JSON object with edited text
       const updatedTranscription = {
         ...transcriptionData,
         text: editedTranscription,
@@ -182,20 +179,14 @@ const CreateAudioPost = () => {
         }))
       };
       
-      // Convert the updated transcription object to JSON string
       const transcriptJSON = JSON.stringify(updatedTranscription, null, 2);
-      
-      // Create a Blob from the JSON string
       const blob = new Blob([transcriptJSON], { type: 'application/json' });
-      
-      // Create a File from the Blob
       const transcriptFile = new File(
         [blob], 
         `${audioFileName.replace(/\.[^/.]+$/, '')}_transcript.json`, 
         { type: 'application/json' }
       );
       
-      // Upload to UploadThing
       const uploadResult = await uploadFiles("transcriptionUploader", {
         files: [transcriptFile]
       });
@@ -222,119 +213,118 @@ const CreateAudioPost = () => {
       .replace(/^-+|-+$/g, '');
   };
 
-const handleCreatePost = async () => {
-  console.log('Creating post with data:', {
-    postTitle,
-    audioUrl,
-    transcriptUrl,
-    isPaid,
-    selectedTierId,
-    commentsAllowed
-  });
-  
-  if (!postTitle.trim()) {
-    setError('Please enter a post title');
-    return;
-  }
-
-  if (postTitle.length < 3 || postTitle.length > 30) {
-    setError('Title must be between 3 and 30 characters');
-    return;
-  }
-
-  if (!postDescription || postDescription.trim() === "") {
-    setError('Description is required for audio posts');
-    return;
-  }
-
-  if (!audioUrl) {
-    setError('Audio URL is missing. Please upload audio again.');
-    return;
-  }
-
-  if (!transcriptUrl) {
-    setError('Transcription URL is missing. Please save the transcription first.');
-    return;
-  }
-
-  if (isPaid && !selectedTierId) {
-    setError('Please select a membership tier for paid content');
-    return;
-  }
-
-  setIsSubmitting(true);
-
-  try {
-    const slug = generateSlug(postTitle);
+  const handleCreatePost = async () => {
+    console.log('Creating post with data:', {
+      postTitle,
+      audioUrl,
+      transcriptUrl,
+      isPaid,
+      selectedTierId,
+      commentsAllowed
+    });
     
-    const postData = {
-      title: postTitle.trim(),
-      type: "audio",
-      slug: slug,
-      content: JSON.stringify({
-        transcriptionText: editedTranscription,
-        audioDuration: transcriptionData?.audio_duration || 0
-      }),
-      description: postDescription.trim(),
-      thumbnailUrl: thumbnailUrl || "",
-      audioUrl: audioUrl,
-      transcriptionUrl: transcriptUrl,
-      isPaid: isPaid,
-      tierId: isPaid ? selectedTierId : undefined,
-      commentsAllowed: commentsAllowed,
-      isPublished: true
-    };
-    
-    const response = await api.post('/creators/posts', postData);
-    
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to create post');
+    if (!postTitle.trim()) {
+      setError('Please enter a post title');
+      return;
     }
-    
-    const newPost = response.data.data;
-    
-    // 🔥 AUTO-ADD TO COLLECTION
-    if (location.state?.collectionId) {
-      try {
-        await api.post(`/collections/${location.state.collectionId}/posts/${newPost._id}`);
-        toast.success('Post created and added to collection!');
-      } catch (err) {
-        console.error('Failed to add to collection:', err);
-        toast.success('Post created but failed to add to collection');
-      }
-    } else {
-      toast.success('Audio post created successfully!');
+
+    if (postTitle.length < 3 || postTitle.length > 30) {
+      setError('Title must be between 3 and 30 characters');
+      return;
     }
-    
-    setCurrentStep('publishing');
-    
-    setTimeout(() => {
-      setCurrentStep('upload');
-      setAudioFile(null);
-      setAudioUrl(null);
-      setTranscriptionData(null);
-      setEditedTranscription(null);
-      setTranscriptUrl(null);
-      setPostTitle('');
-      setPostDescription('');
-      setThumbnailUrl('');
-      setIsPaid(false);
-      setCommentsAllowed(true);
-      setSelectedTierId('');
-      setError(null);
+
+    if (!postDescription || postDescription.trim() === "") {
+      setError('Description is required for audio posts');
+      return;
+    }
+
+    if (!audioUrl) {
+      setError('Audio URL is missing. Please upload audio again.');
+      return;
+    }
+
+    if (!transcriptUrl) {
+      setError('Transcription URL is missing. Please save the transcription first.');
+      return;
+    }
+
+    if (isPaid && !selectedTierId) {
+      setError('Please select a membership tier for paid content');
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const slug = generateSlug(postTitle);
       
-      if (location.state?.returnTo) {
-        navigate(location.state.returnTo);
+      const postData = {
+        title: postTitle.trim(),
+        type: "audio",
+        slug: slug,
+        content: JSON.stringify({
+          transcriptionText: editedTranscription,
+          audioDuration: transcriptionData?.audio_duration || 0
+        }),
+        description: postDescription.trim(),
+        thumbnailUrl: thumbnailUrl || "",
+        audioUrl: audioUrl,
+        transcriptionUrl: transcriptUrl,
+        isPaid: isPaid,
+        tierId: isPaid ? selectedTierId : undefined,
+        commentsAllowed: commentsAllowed,
+        isPublished: true
+      };
+      
+      const response = await api.post('/creators/posts', postData);
+      
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to create post');
       }
-    }, 2000);
-    
-  } catch (err) {
-    console.error('Error creating post:', err);
-    setError(err.message || 'Failed to create post. Please try again.');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+      
+      const newPost = response.data.data;
+      
+      if (location.state?.collectionId) {
+        try {
+          await api.post(`/collections/${location.state.collectionId}/posts/${newPost._id}`);
+          toast.success('Post created and added to collection!');
+        } catch (err) {
+          console.error('Failed to add to collection:', err);
+          toast.success('Post created but failed to add to collection');
+        }
+      } else {
+        toast.success('Audio post created successfully!');
+      }
+      
+      setCurrentStep('publishing');
+      
+      setTimeout(() => {
+        setCurrentStep('upload');
+        setAudioFile(null);
+        setAudioUrl(null);
+        setTranscriptionData(null);
+        setEditedTranscription(null);
+        setTranscriptUrl(null);
+        setPostTitle('');
+        setPostDescription('');
+        setThumbnailUrl('');
+        setIsPaid(false);
+        setCommentsAllowed(true);
+        setSelectedTierId('');
+        setError(null);
+        
+        if (location.state?.returnTo) {
+          navigate(location.state.returnTo);
+        }
+      }, 2000);
+      
+    } catch (err) {
+      console.error('Error creating post:', err);
+      setError(err.message || 'Failed to create post. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const getUtterancesByTime = () => {
     if (!transcriptionData?.utterances) return [];
@@ -347,9 +337,9 @@ const handleCreatePost = async () => {
 
   const getSpeakerLabel = (speaker) => {
     const labels = {
-      A: { bg: 'bg-blue-100', text: 'text-blue-800', label: 'Speaker A' },
-      B: { bg: 'bg-purple-100', text: 'text-purple-800', label: 'Speaker B' },
-      C: { bg: 'bg-green-100', text: 'text-green-800', label: 'Speaker C' },
+      A: { bg: 'bg-primary/10', text: 'text-primary', label: 'Speaker A' },
+      B: { bg: 'bg-secondary/10', text: 'text-secondary-foreground', label: 'Speaker B' },
+      C: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Speaker C' },
     };
     return labels[speaker] || labels.A;
   };
@@ -361,15 +351,15 @@ const handleCreatePost = async () => {
   };
 
   return (
-    <div className="min-h-screen from-slate-50 to-slate-100 p-6">
+    <div className="container mx-auto py-6">
       <div className="mx-auto max-w-4xl">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Music className="w-8 h-8 text-blue-600" />
-            <h1 className="text-3xl font-bold text-slate-900">Create Audio Post</h1>
+            <Music className="w-8 h-8" />
+            <h1 className="text-3xl font-bold">Create Audio Post</h1>
           </div>
-          <p className="text-slate-600">Upload, transcribe, and edit your audio content</p>
+          <p className="text-muted-foreground">Upload, transcribe, and edit your audio content</p>
         </div>
 
         {/* Progress Steps */}
@@ -386,19 +376,21 @@ const handleCreatePost = async () => {
                     <div
                       className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-colors ${
                         isCompleted
-                          ? 'bg-green-500 text-white'
+                          ? 'bg-primary text-primary-foreground'
                           : isActive
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-slate-300 text-slate-600'
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
                       }`}
                     >
                       {isCompleted ? <Check className="w-5 h-5" /> : idx + 1}
                     </div>
-                    <span className="text-xs text-slate-600 mt-2 capitalize">{step}</span>
+                    <span className="text-xs text-muted-foreground mt-2 capitalize">{step}</span>
                   </div>
                   {idx < 4 && (
                     <div
-                      className={`flex-1 h-1 mx-2 ${isCompleted ? 'bg-green-500' : isActive ? 'bg-blue-600' : 'bg-slate-300'}`}
+                      className={`flex-1 h-px mx-2 ${
+                        isCompleted ? 'bg-primary' : isActive ? 'bg-primary' : 'bg-muted'
+                      }`}
                     />
                   )}
                 </React.Fragment>
@@ -409,9 +401,9 @@ const handleCreatePost = async () => {
 
         {/* Error Alert */}
         {error && (
-          <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertCircle className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">{error}</AlertDescription>
+          <Alert variant="destructive" className="mb-6">
+            <AlertCircle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
           </Alert>
         )}
 
@@ -423,10 +415,10 @@ const handleCreatePost = async () => {
               <CardDescription>Select an audio file to transcribe</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-12 text-center hover:border-blue-500 transition-colors">
-                <Upload className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-900 mb-2">Upload Audio File</h3>
-                <p className="text-slate-600 mb-6">Drag and drop or click to select</p>
+              <div className="border-2 border-dashed rounded-lg p-12 text-center">
+                <Upload className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Upload Audio File</h3>
+                <p className="text-muted-foreground mb-6">Drag and drop or click to select</p>
                 <input
                   type="file"
                   id="audio-upload"
@@ -438,7 +430,6 @@ const handleCreatePost = async () => {
                 <label htmlFor="audio-upload">
                   <Button
                     asChild
-                    className="bg-blue-600 hover:bg-blue-700 cursor-pointer"
                     disabled={isLoading}
                   >
                     <span>
@@ -456,7 +447,7 @@ const handleCreatePost = async () => {
                     </span>
                   </Button>
                 </label>
-                <p className="text-xs text-slate-500 mt-4">MP3, WAV, M4A, OGG (Max 2GB)</p>
+                <p className="text-xs text-muted-foreground mt-4">MP3, WAV, M4A, OGG (Max 2GB)</p>
               </div>
             </CardContent>
           </Card>
@@ -470,8 +461,8 @@ const handleCreatePost = async () => {
               <CardDescription>{audioFileName}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col items-center justify-center py-12">
-              <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-              <p className="text-slate-600 text-center">
+              <Loader2 className="w-12 h-12 animate-spin mb-4" />
+              <p className="text-center">
                 Processing your audio with Assembly AI...
               </p>
             </CardContent>
@@ -496,7 +487,7 @@ const handleCreatePost = async () => {
                     className="w-full"
                     onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
                   />
-                  <div className="flex justify-between text-xs text-slate-600">
+                  <div className="flex justify-between text-xs text-muted-foreground">
                     <span>{formatTime(currentTime)}</span>
                     <span>
                       {formatTime(
@@ -522,9 +513,7 @@ const handleCreatePost = async () => {
                       return (
                         <div
                           key={idx}
-                          className={`p-4 rounded-lg border-l-4 border-blue-500 cursor-pointer hover:bg-slate-50 transition-colors ${
-                            label.bg
-                          }`}
+                          className={`p-4 rounded-lg border-l-4 border-primary cursor-pointer hover:bg-muted transition-colors`}
                           onClick={() => {
                             if (audioRef.current) {
                               audioRef.current.currentTime = (utterance.start || 0) / 1000;
@@ -533,15 +522,15 @@ const handleCreatePost = async () => {
                           }}
                         >
                           <div className="flex items-start gap-3">
-                            <Badge className={`${label.bg} ${label.text} border-0`}>
+                            <Badge variant="secondary">
                               {label.label}
                             </Badge>
                             <div className="flex-1">
-                              <p className="text-sm font-medium text-slate-600">
+                              <p className="text-sm font-medium text-muted-foreground">
                                 {formatTime((utterance.start || 0) / 1000)}
                               </p>
-                              <p className="text-slate-900 mt-1">{utterance.text}</p>
-                              <p className="text-xs text-slate-500 mt-2">
+                              <p className="mt-1">{utterance.text}</p>
+                              <p className="text-xs text-muted-foreground mt-2">
                                 Confidence: {(utterance.confidence * 100).toFixed(1)}%
                               </p>
                             </div>
@@ -553,8 +542,8 @@ const handleCreatePost = async () => {
 
                   {/* Full Text View */}
                   <TabsContent value="continuous" className="mt-6">
-                    <div className="bg-slate-50 p-6 rounded-lg border max-h-96 overflow-y-auto">
-                      <p className="text-slate-900 leading-relaxed">
+                    <div className="bg-muted p-6 rounded-lg border max-h-96 overflow-y-auto">
+                      <p className="leading-relaxed">
                         {transcriptionData.text}
                       </p>
                     </div>
@@ -566,21 +555,21 @@ const handleCreatePost = async () => {
                       transcriptionData.auto_highlights_result.results.slice(0, 10).map((highlight, idx) => (
                         <div
                           key={idx}
-                          className="p-4 bg-amber-50 rounded-lg border border-amber-200"
+                          className="p-4 bg-muted rounded-lg border"
                         >
                           <div className="flex items-start justify-between mb-2">
-                            <p className="font-semibold text-slate-900">{highlight.text}</p>
+                            <p className="font-semibold">{highlight.text}</p>
                             <Badge variant="outline" className="ml-2">
                               {highlight.count}x
                             </Badge>
                           </div>
-                          <p className="text-xs text-slate-600">
+                          <p className="text-xs text-muted-foreground">
                             Relevance: {(highlight.rank * 100).toFixed(1)}%
                           </p>
                         </div>
                       ))
                     ) : (
-                      <p className="text-slate-600">No key highlights found</p>
+                      <p className="text-muted-foreground">No key highlights found</p>
                     )}
                   </TabsContent>
                 </Tabs>
@@ -598,7 +587,7 @@ const handleCreatePost = async () => {
               </Button>
               <Button
                 onClick={() => setCurrentStep('edit')}
-                className="flex-1 bg-blue-600 hover:bg-blue-700"
+                className="flex-1"
               >
                 <Edit2 className="w-4 h-4 mr-2" />
                 Continue to Edit
@@ -620,44 +609,42 @@ const handleCreatePost = async () => {
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-3">
-                  <label className="block text-sm font-medium text-slate-900">
-                    Transcription Text
-                  </label>
+                  <Label>Transcription Text</Label>
                   <Textarea
                     value={editedTranscription || ''}
                     onChange={(e) => setEditedTranscription(e.target.value)}
                     className="font-mono text-sm h-64"
                     placeholder="Your transcription will appear here..."
                   />
-                  <p className="text-xs text-slate-600">
+                  <p className="text-xs text-muted-foreground">
                     {editedTranscription?.split(/\s+/).length || 0} words
                   </p>
                 </div>
 
                 {/* Summary Stats */}
                 <div className="grid grid-cols-3 gap-4">
-                  <Card className="bg-slate-50 border-0">
+                  <Card>
                     <CardContent className="pt-6 text-center">
-                      <p className="text-2xl font-bold text-blue-600">
+                      <p className="text-2xl font-bold text-primary">
                         {transcriptionData?.speakers_expected || 2}
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">Speakers</p>
+                      <p className="text-xs text-muted-foreground mt-1">Speakers</p>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-50 border-0">
+                  <Card>
                     <CardContent className="pt-6 text-center">
-                      <p className="text-2xl font-bold text-green-600">
+                      <p className="text-2xl font-bold text-primary">
                         {(transcriptionData?.language_confidence * 100).toFixed(0)}%
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">Confidence</p>
+                      <p className="text-xs text-muted-foreground mt-1">Confidence</p>
                     </CardContent>
                   </Card>
-                  <Card className="bg-slate-50 border-0">
+                  <Card>
                     <CardContent className="pt-6 text-center">
-                      <p className="text-2xl font-bold text-purple-600">
+                      <p className="text-2xl font-bold text-primary">
                         {Math.floor((transcriptionData?.audio_duration || 0) / 60)}m
                       </p>
-                      <p className="text-xs text-slate-600 mt-1">Duration</p>
+                      <p className="text-xs text-muted-foreground mt-1">Duration</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -667,7 +654,6 @@ const handleCreatePost = async () => {
                   <Button
                     onClick={handleSaveTranscript}
                     disabled={isLoading || !editedTranscription}
-                    className="bg-blue-600 hover:bg-blue-700"
                   >
                     {isLoading ? (
                       <>
@@ -685,9 +671,9 @@ const handleCreatePost = async () => {
 
                 {/* Show message if transcription is saved */}
                 {transcriptUrl && (
-                  <Alert className="border-green-200 bg-green-50">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <AlertDescription className="text-green-800">
+                  <Alert>
+                    <Check className="h-4 w-4" />
+                    <AlertDescription>
                       Transcription saved successfully! You can now proceed to add post details.
                     </AlertDescription>
                   </Alert>
@@ -706,25 +692,20 @@ const handleCreatePost = async () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-900">
-                        Post Title * (3-30 characters)
-                      </label>
+                      <Label>Post Title * (3-30 characters)</Label>
                       <Input
                         value={postTitle}
                         onChange={(e) => setPostTitle(e.target.value)}
                         placeholder="Enter post title..."
-                        className="text-base"
                         maxLength={30}
                       />
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         {postTitle.length}/30 characters
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-900">
-                        Description * (Required for audio posts)
-                      </label>
+                      <Label>Description * (Required for audio posts)</Label>
                       <Textarea
                         value={postDescription}
                         onChange={(e) => setPostDescription(e.target.value)}
@@ -732,15 +713,13 @@ const handleCreatePost = async () => {
                         className="h-24"
                         required
                       />
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Describe what listeners will learn from this audio
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="block text-sm font-medium text-slate-900">
-                        Thumbnail (Optional)
-                      </label>
+                      <Label>Thumbnail (Optional)</Label>
                       <div className="flex items-center gap-4">
                         <input
                           type="file"
@@ -774,7 +753,7 @@ const handleCreatePost = async () => {
                           </div>
                         )}
                       </div>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-muted-foreground">
                         Recommended size: 1280x720px (16:9 ratio)
                       </p>
                       {thumbnailUrl && (
@@ -790,7 +769,7 @@ const handleCreatePost = async () => {
                   </CardContent>
                 </Card>
 
-                {/* Post Settings Card - Replacing PostSettings component with direct inputs */}
+                {/* Post Settings Card */}
                 <Card>
                   <CardHeader>
                     <CardTitle>Post Settings</CardTitle>
@@ -801,12 +780,12 @@ const handleCreatePost = async () => {
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <DollarSign className="h-4 w-4 text-slate-600" />
-                          <Label htmlFor="paid-content" className="font-semibold">
+                          <DollarSign className="h-4 w-4" />
+                          <Label className="font-semibold">
                             Paid Content
                           </Label>
                         </div>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-muted-foreground">
                           Charge subscribers to access this content
                         </p>
                       </div>
@@ -821,17 +800,17 @@ const handleCreatePost = async () => {
                     {isPaid && (
                       <div className="space-y-3 rounded-lg border p-4">
                         <div className="space-y-1">
-                          <Label htmlFor="tier-select" className="font-semibold">
+                          <Label className="font-semibold">
                             Select Membership Tier
                           </Label>
-                          <p className="text-sm text-slate-600">
+                          <p className="text-sm text-muted-foreground">
                             Choose which membership tier can access this content
                           </p>
                         </div>
                         
                         {isLoadingTiers ? (
                           <div className="flex items-center justify-center py-4">
-                            <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                            <Loader2 className="h-6 w-6 animate-spin" />
                           </div>
                         ) : creatorTiers.length === 0 ? (
                           <Alert>
@@ -842,7 +821,7 @@ const handleCreatePost = async () => {
                           </Alert>
                         ) : (
                           <Select value={selectedTierId} onValueChange={setSelectedTierId}>
-                            <SelectTrigger className="w-full">
+                            <SelectTrigger>
                               <SelectValue placeholder="Select a membership tier" />
                             </SelectTrigger>
                             <SelectContent>
@@ -850,7 +829,7 @@ const handleCreatePost = async () => {
                                 <SelectItem key={tier._id} value={tier._id}>
                                   <div className="flex flex-col">
                                     <span className="font-medium">{tier.tierName}</span>
-                                    <span className="text-xs text-slate-500">
+                                    <span className="text-xs text-muted-foreground">
                                       ${tier.price}/month
                                     </span>
                                   </div>
@@ -866,12 +845,12 @@ const handleCreatePost = async () => {
                     <div className="flex items-center justify-between rounded-lg border p-4">
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">
-                          <MessageSquare className="h-4 w-4 text-slate-600" />
-                          <Label htmlFor="comments-allowed" className="font-semibold">
+                          <MessageSquare className="h-4 w-4" />
+                          <Label className="font-semibold">
                             Allow Comments
                           </Label>
                         </div>
-                        <p className="text-sm text-slate-600">
+                        <p className="text-sm text-muted-foreground">
                           Let subscribers comment on this post
                         </p>
                       </div>
@@ -883,18 +862,18 @@ const handleCreatePost = async () => {
                     </div>
 
                     {/* Preview Information */}
-                    <div className="rounded-lg bg-slate-50 p-4">
+                    <div className="rounded-lg bg-muted p-4">
                       <div className="flex items-start gap-3">
-                        <Lock className="h-5 w-5 text-slate-500 mt-0.5" />
+                        <Lock className="h-5 w-5 mt-0.5" />
                         <div className="space-y-1">
-                          <p className="text-sm font-medium text-slate-900">Post Visibility</p>
-                          <p className="text-sm text-slate-600">
+                          <p className="text-sm font-medium">Post Visibility</p>
+                          <p className="text-sm text-muted-foreground">
                             {isPaid 
                               ? `This post will be locked behind a paywall. Only subscribers of the selected tier can access it.`
                               : `This post will be publicly accessible to all subscribers.`}
                           </p>
                           {isPaid && !selectedTierId && (
-                            <p className="text-sm text-amber-600 mt-2">
+                            <p className="text-sm text-destructive mt-2">
                               ⚠️ Please select a membership tier before publishing
                             </p>
                           )}
@@ -914,7 +893,7 @@ const handleCreatePost = async () => {
                       <Button
                         onClick={handleCreatePost}
                         disabled={isSubmitting || (isPaid && !selectedTierId)}
-                        className="flex-1 bg-blue-600 hover:bg-blue-700"
+                        className="flex-1"
                       >
                         {isSubmitting ? (
                           <>
@@ -938,20 +917,19 @@ const handleCreatePost = async () => {
 
         {/* Step 5: Success */}
         {currentStep === 'publishing' && (
-          <Card className="bg-green-50 border-green-200">
+          <Card>
             <CardContent className="pt-12 pb-12 text-center">
               <div className="flex justify-center mb-4">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
-                  <Check className="w-8 h-8 text-green-600" />
+                <div className="w-16 h-16 bg-muted rounded-full flex items-center justify-center">
+                  <Check className="w-8 h-8" />
                 </div>
               </div>
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">Post Published!</h2>
-              <p className="text-slate-600 mb-6">
+              <h2 className="text-2xl font-bold mb-2">Post Published!</h2>
+              <p className="text-muted-foreground mb-6">
                 Your audio post has been successfully created and published.
               </p>
               <Button
                 onClick={() => setCurrentStep('upload')}
-                className="bg-blue-600 hover:bg-blue-700"
               >
                 Create Another Post
               </Button>

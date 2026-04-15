@@ -23,9 +23,12 @@ import {
 } from "../controllers/post.controller.js";
 import { creatorDeleteComment,  creatorFeaturedCommentToggle, getAllCommentsForPost } from "../controllers/comment.controller.js";
 import { createTranscription } from "../controllers/transcription.controller.js";
+import { checkMuxUploadStatus, getSignedPlaybackUrl, MuxUploadUrl } from "../controllers/mux.controller.js";
 
 const creatorRouter = Router();
-
+creatorRouter.post("/mux-upload-url",authMiddleware,checkCreatorExists,MuxUploadUrl)
+creatorRouter.get("/mux-upload-status/:uploadId",authMiddleware,checkCreatorExists,checkMuxUploadStatus)
+creatorRouter.get("/mux-playback-url/:playbackId",authMiddleware,checkCreatorExists,getSignedPlaybackUrl)
 creatorRouter.get("/profile/me", authMiddleware, checkCreator, getMyCreatorProfile);
 creatorRouter.get("/profile/:creatorId", getCreatorProfileById);
 creatorRouter.get("/:creatorId", getCreatorById);
@@ -47,6 +50,5 @@ creatorRouter.get("/posts/:id/comments",authMiddleware,checkCreatorExists,getAll
 creatorRouter.delete("/posts/:id/comments/:commentId",authMiddleware,checkCreatorExists,creatorDeleteComment);
 creatorRouter.post("/posts/:id/comments/:commentId/feature-toggle",authMiddleware,checkCreatorExists,creatorFeaturedCommentToggle);
 creatorRouter.post("/transcribe",authMiddleware,checkCreatorExists,createTranscription)
-
 
 export default creatorRouter;

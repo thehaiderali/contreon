@@ -21,6 +21,8 @@ export const createPost = async (req, res) => {
       description,
       audioUrl,
       transcriptionUrl, 
+      assetId,
+      playbackId,
     } = req.body;
     
     const creatorId = req.user.userId;
@@ -94,6 +96,8 @@ export const createPost = async (req, res) => {
       description: description || "",
       transcriptionUrl,
       audioUrl,
+      assetId,
+      playbackId,
     });
 
     await post.save();
@@ -118,6 +122,7 @@ export const createPost = async (req, res) => {
     });
   }
 };
+
 
 // @desc    Get all posts of logged-in creator
 // @route   GET /api/creators/posts/my-posts
