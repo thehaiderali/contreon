@@ -20,7 +20,7 @@ export const loginSchema=z.object({
 
 })
 
-
+// Update creatorProfileSchema to include category
 export const creatorProfileSchema = z.object({
     bio: z.string().min(10).max(80),
     pageName: z.string().min(3).max(20),
@@ -29,19 +29,20 @@ export const creatorProfileSchema = z.object({
     bannerUrl: z.url().optional(),
     socialLinks: z.array(z.url()).optional(),
     aboutPage: z.string().max(200).optional(),
+    category: z.enum(["Tech", "Sports", "Music", "Art", "Other", "Business"]).optional(),
 })
 
+// Create update schema that makes category optional
 export const updateCreatorProfileSchema = z.object({
     bio: z.string().min(10).max(80).optional(),
     pageName: z.string().min(3).max(20).optional(),
     pageUrl: z.string().min(3).max(30).optional(),
-    profileImageUrl: z.string().url().optional(),
-    bannerUrl: z.string().url().optional(),
-    socialLinks: z.array(z.string().url()).optional(),
+    profileImageUrl: z.url().optional(),
+    bannerUrl: z.url().optional(),
+    socialLinks: z.array(z.url()).optional(),
     aboutPage: z.string().max(200).optional(),
-}).refine(data => Object.keys(data).length > 0, {
-    message: "At least one field must be provided for update"
-});
+    category: z.enum(["Tech", "Sports", "Music", "Art", "Other", "Business"]).optional(),
+})
 
 export const subscriptionTierSchema = z.object({
     tierName: z.string().min(3).max(30),
