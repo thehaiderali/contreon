@@ -1,18 +1,13 @@
-// App.jsx
 import { Routes, Route } from 'react-router';
 import HomePage from './components/HomePage';
 import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import Home from './pages/private/subscriber/Home';
-
-// Subscriber Pages
 import Explore from './pages/private/subscriber/Explore';
 import Chats from './pages/private/subscriber/Chats';
 import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
 import Feed from './components/Feed';
-
-// Creator Pages
 import { Dashboard } from './pages/private/creator/Dashboard';
 import Library from './pages/private/creator/Library';
 import Members from './pages/private/creator/Members';

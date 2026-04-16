@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Plus, X } from 'lucide-react';
 import { useAuthStore } from '@/store/authStore';
@@ -20,7 +21,8 @@ const CreatorProfileForm = ({ onSuccess }) => {
     profileImageUrl: '',
     bannerUrl: '',
     socialLinks: [''],
-    aboutPage: ''
+    aboutPage: '',
+    category: ''
   });
 
   const [errors, setErrors] = useState({});
@@ -59,6 +61,10 @@ const CreatorProfileForm = ({ onSuccess }) => {
       newErrors.aboutPage = 'About page must not exceed 200 characters';
     }
 
+    if (!formData.category) {
+      newErrors.category = 'Category is required';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -68,6 +74,13 @@ const CreatorProfileForm = ({ onSuccess }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const handleCategoryChange = (value) => {
+    setFormData(prev => ({ ...prev, category: value }));
+    if (errors.category) {
+      setErrors(prev => ({ ...prev, category: '' }));
     }
   };
 
@@ -115,6 +128,7 @@ const CreatorProfileForm = ({ onSuccess }) => {
       bio: formData.bio,
       pageName: formData.pageName,
       pageUrl: formData.pageUrl,
+      category: formData.category,
       ...(formData.profileImageUrl && { profileImageUrl: formData.profileImageUrl }),
       ...(formData.bannerUrl && { bannerUrl: formData.bannerUrl }),
       ...(filteredSocialLinks.length > 0 && { socialLinks: filteredSocialLinks }),
@@ -218,6 +232,27 @@ const CreatorProfileForm = ({ onSuccess }) => {
                   className={`${errors.pageUrl ? 'border-red-500' : ''} text-xs`}
                 />
                 {errors.pageUrl && <p className="text-xs text-red-500">{errors.pageUrl}</p>}
+              </div>
+
+              {/* Category Field */}
+              <div className="space-y-2">
+                <Label htmlFor="category" className="text-xs">
+                  Category <span className="text-red-500">*</span>
+                </Label>
+                <Select onValueChange={handleCategoryChange} value={formData.category}>
+                  <SelectTrigger className={`${errors.category ? 'border-red-500' : ''} text-xs`}>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Tech">Tech</SelectItem>
+                    <SelectItem value="Sports">Sports</SelectItem>
+                    <SelectItem value="Music">Music</SelectItem>
+                    <SelectItem value="Art">Art</SelectItem>
+                    <SelectItem value="Business">Business</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.category && <p className="text-xs text-red-500">{errors.category}</p>}
               </div>
 
               <div className="space-y-2">

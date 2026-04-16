@@ -22,6 +22,7 @@ const profileSchema=new Schema({
     category:{
         type:String,
          enum:["Tech","Sports","Music","Art","Other","Business"],
+         required:true
     },
     pageUrl:{
         type:String,

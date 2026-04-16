@@ -184,7 +184,7 @@ export async function getSignedPlaybackUrl(req, res) {
         });
         
     } catch (error) {
-        console.error("❌ Unexpected error in getSignedPlaybackUrl:", error);
+        console.error(" Unexpected error in getSignedPlaybackUrl:", error);
         console.error("  Stack:", error.stack);
         return res.status(500).json({
             success: false,
