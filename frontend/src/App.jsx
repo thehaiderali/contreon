@@ -32,6 +32,7 @@ import RecommendationSearch from './pages/private/creator/recommendations/Recomm
 import EditTextPost from './pages/private/creator/posts/EditTextPost';
 import EditAudioPost from './pages/private/creator/posts/EditAudioPost ';
 import EditVideoPost from './pages/private/creator/posts/EditVideoPost';
+import CreatorPage from './components/creator/creatore-page/CreatorPage';
 
 const App = () => {
   return (
@@ -40,8 +41,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
-
-      
+      <Route path="/c/:creatorUrl" element={<CreatorPage/>}/>
       <Route element={<ProtectedRoutes />}>
         
         <Route path="/home" element={<Home />}>
