@@ -166,6 +166,50 @@ export const getMyPosts = async (req, res) => {
   }
 };
 
+export const getCreatorPostsByCreatorId = async (req, res) => {
+  try {
+    const creatorId = req.params.creatorId;
+    const { page = 1, limit = 10, status } = req.query;
+
+    const query = { creatorId };
+    
+    // Filter by published status if provided
+    if (status === "published") {
+      query.isPublished = true;
+    } else if (status === "draft") {
+      query.isPublished = false;
+    }
+
+    const posts = await Post.find(query)
+      .sort({ createdAt: -1 })
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .populate("creatorId", "fullName email");
+
+    const total = await Post.countDocuments(query);
+
+    // Fix: Return posts directly without nested success property
+    res.status(200).json({
+      success: true,
+      data: posts,  // This should be an array
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total,
+        pages: Math.ceil(total / limit)
+      }
+    });
+
+  } catch (error) {
+    console.error("Error fetching posts:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching posts",
+      error: error.message
+    });
+  }
+};
+
 // @desc    Get single post by ID
 // @route   GET /api/creators/posts/:id
 // @access  Private

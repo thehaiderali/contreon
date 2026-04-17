@@ -1,4 +1,3 @@
-import { envConfig } from "../config/env.js";
 import stripe from "../config/stripe.js";
 import Subscription from "../models/subscription.model.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
@@ -46,19 +45,19 @@ export async function createSubscription(req, res) {
     }
 
     // Check if Stripe account exists but may not be fully verified
-    let stripeAccountExists = true;
-    try {
-      await stripe.accounts.retrieve(creator.connectedID);
-    } catch (err) {
-      stripeAccountExists = false;
-    }
+    // let stripeAccountExists = true;
+    // try {
+    //   await stripe.accounts.retrieve(creator.connectedID);
+    // } catch (err) {
+    //   stripeAccountExists = false;
+    // }
     
-    if (!stripeAccountExists) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Creator Stripe account not found" 
-      });
-    }
+    // if (!stripeAccountExists) {
+    //   return res.status(400).json({ 
+    //     success: false, 
+    //     error: "Creator Stripe account not found" 
+    //   });
+    // }
 
     // Rest of the subscription creation code remains the same...
     // Stripe will still accept payments even if account isn't fully verified
@@ -67,23 +66,23 @@ export async function createSubscription(req, res) {
     const subscriber = await User.findById(subscriberId);
     let customer;
 
-    const existingCustomers = await stripe.customers.list(
-      { email: subscriber.email, limit: 1 },
-      { stripeAccount: creator.connectedID }
-    );
+    // const existingCustomers = await stripe.customers.list(
+    //   { email: subscriber.email, limit: 1 },
+    //   { stripeAccount: creator.connectedID }
+    // );
 
-    if (existingCustomers.data.length > 0) {
-      customer = existingCustomers.data[0];
-    } else {
-      customer = await stripe.customers.create(
-        {
-          email: subscriber.email,
-          name: subscriber.fullName,
-          metadata: { subscriberId: subscriberId.toString() }
-        },
-        { stripeAccount: creator.connectedID }
-      );
-    }
+    // if (existingCustomers.data.length > 0) {
+    //   customer = existingCustomers.data[0];
+    // } else {
+    //   customer = await stripe.customers.create(
+    //     {
+    //       email: subscriber.email,
+    //       name: subscriber.fullName,
+    //       metadata: { subscriberId: subscriberId.toString() }
+    //     },
+    //     { stripeAccount: creator.connectedID }
+    //   );
+    // }
 
 
     const newSubscription = new Subscription({

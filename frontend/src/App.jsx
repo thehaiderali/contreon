@@ -36,6 +36,7 @@ import CreateAudioPost from './pages/private/creator/posts/CreateAudioPost';
 import RecommendationSearch from './pages/private/creator/recommendations/RecommendationsSearch';
 import EditTextPost from './pages/private/creator/posts/EditTextPost';
 import EditAudioPost from './pages/private/creator/posts/EditAudioPost ';
+import CreatorPage from './pages/private/creator/creator-pages/CreatorPage';
 
 const App = () => {
   return (
@@ -44,6 +45,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path='/c/:creatorUrl' element={<CreatorPage/>}/>
 
       
       <Route element={<ProtectedRoutes />}>
@@ -56,7 +58,7 @@ const App = () => {
           <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
         </Route>
-
+        
         <Route element={<CreatorRoutes />}>
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />

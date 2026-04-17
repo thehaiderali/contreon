@@ -336,6 +336,30 @@ export async function getAllMembershipsForCreator(req,res){
 
 }
 
+
+export async function getAllMembershipsForCreatorPage(req,res){
+
+  try {
+    
+    const {creatorId}=req.params;
+    const memberShips=await SubscriptionTier.find({creatorId});
+    return res.status(200).json({
+      success:true,
+      data:{
+        memberShips
+      }
+    })
+
+  } catch (error) {
+    console.log("Error in Getting Memberships for Creator : ",error);
+    return res.status(500).json({
+      success:false,
+      error:"Internal Server Error"
+    })
+  }
+
+}
+
 export async function getMembershipById(req,res){
   try {
     const id=req.params.id;

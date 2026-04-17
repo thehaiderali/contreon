@@ -11,6 +11,7 @@ import {
   updateMembership,
   deleteMembership,
   getAllMembershipsForCreator,
+  getAllMembershipsForCreatorPage,
 } from "../controllers/creator.controller.js";
 import {
   createPost,
@@ -19,16 +20,21 @@ import {
   updatePost,
   deletePost,
   togglePublishStatus,
-  getPostStats
+  getPostStats,
+  getCreatorPostsByCreatorId
 } from "../controllers/post.controller.js";
 import { creatorDeleteComment,  creatorFeaturedCommentToggle, getAllCommentsForPost } from "../controllers/comment.controller.js";
 import { createTranscription } from "../controllers/transcription.controller.js";
+import { getCreatorProfileForPage } from "../controllers/page.controller.js";
 
 const creatorRouter = Router();
 
 creatorRouter.get("/profile/me", authMiddleware, checkCreator, getMyCreatorProfile);
 creatorRouter.get("/profile/:creatorId", getCreatorProfileById);
+creatorRouter.get("/:creatorId/memberships",getAllMembershipsForCreatorPage)
+creatorRouter.get("/page/:creatorUrl/profile",getCreatorProfileForPage)
 creatorRouter.get("/:creatorId", getCreatorById);
+creatorRouter.get("/:creatorId/posts",getCreatorPostsByCreatorId);
 creatorRouter.post("/profile", authMiddleware, checkCreator, makeCreatorProfile);
 creatorRouter.put("/profile/edit", authMiddleware, checkCreator, updateCreatorProfile);
 creatorRouter.post("/memberships", authMiddleware, checkCreatorExists, createMembership);

@@ -483,7 +483,7 @@ const EditCreatorProfile = () => {
         variant="outline"
         size="lg"
       >
-        <Link to={`/${formData.pageUrl}`}>
+        <Link to={`/c/${formData.pageUrl}`}>
           <ExternalLink className="w-4 h-4 mr-2" />
           View Your Page
         </Link>
