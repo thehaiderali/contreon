@@ -41,7 +41,7 @@ const App = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/c/:creatorUrl" element={<CreatorPage/>}/>
+      <Route path="/c/:creatorUrl/*" element={<CreatorPage/>}/>
       <Route element={<ProtectedRoutes />}>
         
         <Route path="/home" element={<Home />}>
