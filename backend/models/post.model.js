@@ -86,7 +86,13 @@ const postSchema = new mongoose.Schema({
   signedUrlExpiresAt: {
     type: Date,
     default: null
-  }
+  },
+  speakers:[
+    {
+      name:String,
+      order:Number,
+    }
+  ]
 
 },{timestamps:true});
 

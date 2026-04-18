@@ -17,15 +17,15 @@ export async function createTranscription(req,res){
      
      const params = {
         audio: audioUrl,
-        "language_detection": true,
-        // Uses universal-3-pro for en, es, de, fr, it, pt. Else uses universal-2 for support across all other languages
-        "speech_models": ["universal-3-pro"]
+        speech_models: ["universal-3-pro", "universal-2"],
+        language_detection: true,
+         speaker_labels: true,
         };
 
     const transcript = await client.transcripts.transcribe(params);
 
-    console.log( "Transcription : ",transcript.text);
-    console.log("Transcription JSON : ",transcript)
+    // console.log( "Transcription : ",transcript.text);
+    // console.log("Transcription JSON : ",transcript)
 
     return res.status(200).json({
         success:true,

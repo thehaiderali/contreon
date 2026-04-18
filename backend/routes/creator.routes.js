@@ -29,8 +29,13 @@ import SubscriptionTier from "../models/subscriptionTier.model.js";
 import { creatorDeleteComment, creatorFeaturedCommentToggle, getAllCommentsForPost } from "../controllers/comment.controller.js";
 import { createTranscription } from "../controllers/transcription.controller.js";
 import { checkMuxUploadStatus, getSignedPlaybackUrl, MuxUploadUrl } from "../controllers/mux.controller.js";
+import { createConnectedAccount } from "../controllers/stripe.controller.js";
 
 const creatorRouter = Router();
+
+//Stripe
+
+creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,createConnectedAccount);
 
 // Mux routes
 creatorRouter.post("/mux-upload-url", authMiddleware, checkCreatorExists, MuxUploadUrl);
@@ -50,6 +55,7 @@ creatorRouter.get("/memberships/me", authMiddleware, checkCreatorExists, getAllM
 creatorRouter.get("/memberships/:id", authMiddleware, checkCreatorExists, getMembershipById);
 creatorRouter.put("/memberships/:id", authMiddleware, checkCreatorExists, updateMembership);
 creatorRouter.delete("/memberships/:id", authMiddleware, checkCreatorExists, deleteMembership);
+
 
 // Post routes (creator only)
 creatorRouter.post("/posts", authMiddleware, checkCreatorExists, createPost);

@@ -25,72 +25,12 @@ export async function createSubscription(req, res) {
       return res.status(400).json({ success: false, error: "Already subscribed to this creator" });
     }
 
-    const creator = await User.findById(tier.creatorId);
-    
-    // ✅ CHANGE: Allow subscriptions even if not fully onboarded
-    if (!creator || !creator.connectedID) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Creator not set up for payments" 
-      });
-    }
-
-        try {
-      const account = await stripe.accounts.retrieve(creator.connectedID);
-      // Account exists, continue
-    } catch (err) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Creator's Stripe account is invalid" 
-      });
-    }
-
-    // Check if Stripe account exists but may not be fully verified
-    let stripeAccountExists = true;
-    try {
-      await stripe.accounts.retrieve(creator.connectedID);
-    } catch (err) {
-      stripeAccountExists = false;
-    }
-    
-    if (!stripeAccountExists) {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Creator Stripe account not found" 
-      });
-    }
-
-    // Rest of the subscription creation code remains the same...
-    // Stripe will still accept payments even if account isn't fully verified
-    // Funds will accumulate but payouts will be blocked until verification
-    
-    const subscriber = await User.findById(subscriberId);
-    let customer;
-
-    const existingCustomers = await stripe.customers.list(
-      { email: subscriber.email, limit: 1 },
-      { stripeAccount: creator.connectedID }
-    );
-
-    if (existingCustomers.data.length > 0) {
-      customer = existingCustomers.data[0];
-    } else {
-      customer = await stripe.customers.create(
-        {
-          email: subscriber.email,
-          name: subscriber.fullName,
-          metadata: { subscriberId: subscriberId.toString() }
-        },
-        { stripeAccount: creator.connectedID }
-      );
-    }
-
-
     const newSubscription = new Subscription({
       subscriberId,
+      tierId:membershipId,
       creatorId: tier.creatorId,
       tierType: tier.tierName,
-      status: "incomplete",
+      status: "active",
       startDate: new Date(),
       nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });

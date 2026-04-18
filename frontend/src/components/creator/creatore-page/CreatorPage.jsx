@@ -9,7 +9,6 @@ import CreatorCollections from './CreatorCollections';
 import CreatorMembership from './CreatorMembership';
 import CreatorAbout from './CreatorAbout';
 import PostViewer from './PostViewer';
-
 const NAV_LINKS = [
   { label: 'Home', path: '' },
   { label: 'Posts', path: 'posts' },

@@ -23,6 +23,7 @@ export const createPost = async (req, res) => {
       transcriptionUrl, 
       assetId,
       playbackId,
+      speakers
     } = req.body;
     
     const creatorId = req.user.userId;
@@ -98,6 +99,7 @@ export const createPost = async (req, res) => {
       audioUrl,
       assetId,
       playbackId,
+      speakers
     });
 
     await post.save();

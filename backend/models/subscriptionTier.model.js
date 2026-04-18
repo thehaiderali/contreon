@@ -25,12 +25,18 @@ const subscriptionTierSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    stripePrices: [{ 
+    interval: String, 
+    priceId: String,
+    isActive: { type: Boolean, default: true }
+  }],
     stripeProductId:{
       type:String
     },
     stripePriceId:{
       type:String,
-    }
+    },
+   currency: { type: String, default: 'usd' },
   },
   { timestamps: true }
 );

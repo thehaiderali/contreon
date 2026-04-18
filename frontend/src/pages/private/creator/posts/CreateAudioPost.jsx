@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Upload, Music, Check, AlertCircle, Loader2, Edit2, Save, DollarSign, MessageSquare, Lock } from 'lucide-react';
+import { Upload, Music, Check, AlertCircle, Loader2, Edit2, Save, DollarSign, MessageSquare, Lock, User, Pencil, X, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { uploadFiles } from '@/lib/uploadthing';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -51,6 +60,14 @@ const CreateAudioPost = () => {
   const [isPaid, setIsPaid] = useState(false);
   const [commentsAllowed, setCommentsAllowed] = useState(true);
   const [selectedTierId, setSelectedTierId] = useState('');
+  
+  // Speaker management
+  const [speakerOverrides, setSpeakerOverrides] = useState({});
+  const [customSpeakers, setCustomSpeakers] = useState([]);
+  const [isEditingSpeakers, setIsEditingSpeakers] = useState(false);
+  const [editingSpeaker, setEditingSpeaker] = useState(null);
+  const [newSpeakerName, setNewSpeakerName] = useState('');
+  const [newSpeakerColor, setNewSpeakerColor] = useState('#3b82f6');
   
   const [creatorTiers, setCreatorTiers] = useState([]);
   const [isLoadingTiers, setIsLoadingTiers] = useState(false);
@@ -154,6 +171,23 @@ const CreateAudioPost = () => {
       console.log('Transcription received:', data.id);
       setTranscriptionData(data);
       setEditedTranscription(data.text);
+      
+      // Initialize speaker overrides from detected speakers
+      if (data.utterances) {
+        const detectedSpeakers = [...new Set(data.utterances.map(u => u.speaker))];
+        const overrides = {};
+        detectedSpeakers.forEach(speaker => {
+          if (speaker) {
+            overrides[speaker] = {
+              displayName: `Speaker ${speaker}`,
+              originalId: speaker,
+              color: getSpeakerColor(speaker)
+            };
+          }
+        });
+        setSpeakerOverrides(overrides);
+      }
+      
       setCurrentStep('preview');
     } catch (err) {
       setError('Failed to transcribe audio. Please try again.');
@@ -164,19 +198,35 @@ const CreateAudioPost = () => {
     }
   };
 
+  const getSpeakerColor = (speakerId) => {
+    const colors = {
+      'A': '#3b82f6',
+      'B': '#10b981',
+      'C': '#f59e0b',
+      'D': '#ef4444',
+      'E': '#8b5cf6',
+      'F': '#ec4899'
+    };
+    return colors[speakerId] || '#6b7280';
+  };
+
   const handleSaveTranscript = async () => {
     try {
       setIsLoading(true);
       
-      console.log('Saving edited transcription...');
+      // Update transcription with speaker overrides
+      const updatedUtterances = transcriptionData.utterances?.map(utterance => ({
+        ...utterance,
+        speaker: speakerOverrides[utterance.speaker]?.displayName || utterance.speaker,
+        speakerOriginalId: utterance.speaker
+      }));
       
       const updatedTranscription = {
         ...transcriptionData,
         text: editedTranscription,
-        words: transcriptionData?.words?.map(word => ({
-          ...word,
-          text: editedTranscription.includes(word.text) ? word.text : word.text
-        }))
+        utterances: updatedUtterances,
+        speakerOverrides: speakerOverrides,
+        customSpeakers: customSpeakers
       };
       
       const transcriptJSON = JSON.stringify(updatedTranscription, null, 2);
@@ -204,6 +254,76 @@ const CreateAudioPost = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleUpdateSpeakerName = (speakerId, newName, color) => {
+    setSpeakerOverrides(prev => ({
+      ...prev,
+      [speakerId]: {
+        ...prev[speakerId],
+        displayName: newName,
+        color: color
+      }
+    }));
+    setEditingSpeaker(null);
+    setNewSpeakerName('');
+  };
+
+  const handleAddCustomSpeaker = () => {
+    if (newSpeakerName.trim()) {
+      const newSpeaker = {
+        id: `custom_${Date.now()}`,
+        name: newSpeakerName.trim(),
+        color: newSpeakerColor
+      };
+      setCustomSpeakers(prev => [...prev, newSpeaker]);
+      setNewSpeakerName('');
+      toast.success(`Speaker "${newSpeakerName}" added successfully!`);
+    }
+  };
+
+  const handleRemoveCustomSpeaker = (speakerId) => {
+    setCustomSpeakers(prev => prev.filter(s => s.id !== speakerId));
+  };
+
+  const getUtterancesByTime = () => {
+    if (!transcriptionData?.utterances) return [];
+    return transcriptionData.utterances.filter((u) => {
+      const start = (u.start || 0) / 1000;
+      const end = (u.end || 0) / 1000;
+      return start <= currentTime && currentTime <= end;
+    });
+  };
+
+  const getSpeakerDisplay = (speakerId) => {
+    if (speakerOverrides[speakerId]) {
+      return {
+        name: speakerOverrides[speakerId].displayName,
+        color: speakerOverrides[speakerId].color,
+        isOverridden: true
+      };
+    }
+    return {
+      name: `Speaker ${speakerId}`,
+      color: getSpeakerColor(speakerId),
+      isOverridden: false
+    };
+  };
+
+  const getSpeakerLabel = (speaker) => {
+    const display = getSpeakerDisplay(speaker);
+    return {
+      bg: `bg-[${display.color}]/10`,
+      text: `text-[${display.color}]`,
+      label: display.name,
+      color: display.color
+    };
+  };
+
+  const formatTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   const generateSlug = (title) => {
@@ -258,13 +378,31 @@ const CreateAudioPost = () => {
     try {
       const slug = generateSlug(postTitle);
       
+      // Extract speakers from transcription with overrides
+      const speakers = [];
+      if (transcriptionData?.utterances) {
+        const uniqueSpeakers = [...new Set(transcriptionData.utterances.map(u => u.speaker))];
+        uniqueSpeakers.forEach((speaker, index) => {
+          const display = getSpeakerDisplay(speaker);
+          speakers.push({
+            name: display.name,
+            order: index,
+            originalId: speaker,
+            color: display.color
+          });
+        });
+      }
+      
       const postData = {
         title: postTitle.trim(),
         type: "audio",
         slug: slug,
         content: JSON.stringify({
           transcriptionText: editedTranscription,
-          audioDuration: transcriptionData?.audio_duration || 0
+          audioDuration: transcriptionData?.audio_duration || 0,
+          speakerOverrides: speakerOverrides,
+          customSpeakers: customSpeakers,
+          speakers: speakers
         }),
         description: postDescription.trim(),
         thumbnailUrl: thumbnailUrl || "",
@@ -273,7 +411,8 @@ const CreateAudioPost = () => {
         isPaid: isPaid,
         tierId: isPaid ? selectedTierId : undefined,
         commentsAllowed: commentsAllowed,
-        isPublished: true
+        isPublished: true,
+        speakers: speakers // Add speakers array to the post
       };
       
       const response = await api.post('/creators/posts', postData);
@@ -311,6 +450,8 @@ const CreateAudioPost = () => {
         setIsPaid(false);
         setCommentsAllowed(true);
         setSelectedTierId('');
+        setSpeakerOverrides({});
+        setCustomSpeakers([]);
         setError(null);
         
         if (location.state?.returnTo) {
@@ -324,30 +465,6 @@ const CreateAudioPost = () => {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const getUtterancesByTime = () => {
-    if (!transcriptionData?.utterances) return [];
-    return transcriptionData.utterances.filter((u) => {
-      const start = (u.start || 0) / 1000;
-      const end = (u.end || 0) / 1000;
-      return start <= currentTime && currentTime <= end;
-    });
-  };
-
-  const getSpeakerLabel = (speaker) => {
-    const labels = {
-      A: { bg: 'bg-primary/10', text: 'text-primary', label: 'Speaker A' },
-      B: { bg: 'bg-secondary/10', text: 'text-secondary-foreground', label: 'Speaker B' },
-      C: { bg: 'bg-muted', text: 'text-muted-foreground', label: 'Speaker C' },
-    };
-    return labels[speaker] || labels.A;
-  };
-
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -474,8 +591,20 @@ const CreateAudioPost = () => {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Audio Preview & Transcription</CardTitle>
-                <CardDescription>Listen and review the transcription</CardDescription>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>Audio Preview & Transcription</CardTitle>
+                    <CardDescription>Listen and review the transcription</CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setIsEditingSpeakers(!isEditingSpeakers)}
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    {isEditingSpeakers ? "View Transcription" : "Manage Speakers"}
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent className="space-y-6">
                 {/* Audio Player */}
@@ -497,82 +626,167 @@ const CreateAudioPost = () => {
                   </div>
                 </div>
 
-                {/* Tabs for Different Views */}
-                <Tabs defaultValue="speakers" className="w-full">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="speakers">By Speaker</TabsTrigger>
-                    <TabsTrigger value="continuous">Full Text</TabsTrigger>
-                    <TabsTrigger value="highlights">Key Points</TabsTrigger>
-                  </TabsList>
+                {isEditingSpeakers ? (
+                  /* Speaker Management Interface */
+                  <div className="space-y-6">
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-3">Detected Speakers</h3>
+                      <div className="space-y-3">
+                        {Object.entries(speakerOverrides).map(([speakerId, speaker]) => (
+                          <div key={speakerId} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-4 h-4 rounded-full" 
+                                style={{ backgroundColor: speaker.color }}
+                              />
+                              <div>
+                                <p className="font-medium">{speaker.displayName}</p>
+                                <p className="text-xs text-muted-foreground">Original: Speaker {speaker.originalId}</p>
+                              </div>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingSpeaker(speakerId);
+                                setNewSpeakerName(speaker.displayName);
+                              }}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
 
-                  {/* By Speaker View */}
-                  <TabsContent value="speakers" className="space-y-4 mt-6 max-h-96 overflow-y-auto">
-                    {transcriptionData.utterances?.map((utterance, idx) => {
-                      const speaker = utterance.speaker || 'A';
-                      const label = getSpeakerLabel(speaker);
-                      return (
-                        <div
-                          key={idx}
-                          className={`p-4 rounded-lg border-l-4 border-primary cursor-pointer hover:bg-muted transition-colors`}
-                          onClick={() => {
-                            if (audioRef.current) {
-                              audioRef.current.currentTime = (utterance.start || 0) / 1000;
-                              audioRef.current.play();
-                            }
-                          }}
-                        >
-                          <div className="flex items-start gap-3">
-                            <Badge variant="secondary">
-                              {label.label}
-                            </Badge>
-                            <div className="flex-1">
-                              <p className="text-sm font-medium text-muted-foreground">
-                                {formatTime((utterance.start || 0) / 1000)}
-                              </p>
-                              <p className="mt-1">{utterance.text}</p>
-                              <p className="text-xs text-muted-foreground mt-2">
-                                Confidence: {(utterance.confidence * 100).toFixed(1)}%
-                              </p>
+                    <div className="bg-muted/50 p-4 rounded-lg">
+                      <h3 className="font-semibold mb-3">Custom Speakers</h3>
+                      <div className="space-y-3">
+                        {customSpeakers.map((speaker) => (
+                          <div key={speaker.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                            <div className="flex items-center gap-3">
+                              <div 
+                                className="w-4 h-4 rounded-full" 
+                                style={{ backgroundColor: speaker.color }}
+                              />
+                              <span className="font-medium">{speaker.name}</span>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRemoveCustomSpeaker(speaker.id)}
+                            >
+                              <X className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ))}
+                        
+                        <div className="flex gap-2 mt-4">
+                          <Input
+                            placeholder="Speaker name"
+                            value={newSpeakerName}
+                            onChange={(e) => setNewSpeakerName(e.target.value)}
+                            className="flex-1"
+                          />
+                          <input
+                            type="color"
+                            value={newSpeakerColor}
+                            onChange={(e) => setNewSpeakerColor(e.target.value)}
+                            className="w-12 h-10 rounded border"
+                          />
+                          <Button onClick={handleAddCustomSpeaker} size="sm">
+                            <Plus className="w-4 h-4 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  /* Tabs for Different Views */
+                  <Tabs defaultValue="speakers" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="speakers">By Speaker</TabsTrigger>
+                      <TabsTrigger value="continuous">Full Text</TabsTrigger>
+                      <TabsTrigger value="highlights">Key Points</TabsTrigger>
+                    </TabsList>
+
+                    {/* By Speaker View */}
+                    <TabsContent value="speakers" className="space-y-4 mt-6 max-h-96 overflow-y-auto">
+                      {transcriptionData.utterances?.map((utterance, idx) => {
+                        const display = getSpeakerDisplay(utterance.speaker);
+                        return (
+                          <div
+                            key={idx}
+                            className={`p-4 rounded-lg border-l-4 cursor-pointer hover:bg-muted transition-colors`}
+                            style={{ borderLeftColor: display.color }}
+                            onClick={() => {
+                              if (audioRef.current) {
+                                audioRef.current.currentTime = (utterance.start || 0) / 1000;
+                                audioRef.current.play();
+                              }
+                            }}
+                          >
+                            <div className="flex items-start gap-3">
+                              <Badge 
+                                variant="secondary"
+                                style={{ 
+                                  backgroundColor: `${display.color}20`,
+                                  color: display.color,
+                                  borderColor: display.color
+                                }}
+                              >
+                                {display.name}
+                              </Badge>
+                              <div className="flex-1">
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  {formatTime((utterance.start || 0) / 1000)}
+                                </p>
+                                <p className="mt-1">{utterance.text}</p>
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Confidence: {(utterance.confidence * 100).toFixed(1)}%
+                                </p>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      );
-                    })}
-                  </TabsContent>
+                        );
+                      })}
+                    </TabsContent>
 
-                  {/* Full Text View */}
-                  <TabsContent value="continuous" className="mt-6">
-                    <div className="bg-muted p-6 rounded-lg border max-h-96 overflow-y-auto">
-                      <p className="leading-relaxed">
-                        {transcriptionData.text}
-                      </p>
-                    </div>
-                  </TabsContent>
+                    {/* Full Text View */}
+                    <TabsContent value="continuous" className="mt-6">
+                      <div className="bg-muted p-6 rounded-lg border max-h-96 overflow-y-auto">
+                        <p className="leading-relaxed">
+                          {transcriptionData.text}
+                        </p>
+                      </div>
+                    </TabsContent>
 
-                  {/* Key Points View */}
-                  <TabsContent value="highlights" className="mt-6 space-y-3 max-h-96 overflow-y-auto">
-                    {transcriptionData.auto_highlights_result?.results?.length > 0 ? (
-                      transcriptionData.auto_highlights_result.results.slice(0, 10).map((highlight, idx) => (
-                        <div
-                          key={idx}
-                          className="p-4 bg-muted rounded-lg border"
-                        >
-                          <div className="flex items-start justify-between mb-2">
-                            <p className="font-semibold">{highlight.text}</p>
-                            <Badge variant="outline" className="ml-2">
-                              {highlight.count}x
-                            </Badge>
+                    {/* Key Points View */}
+                    <TabsContent value="highlights" className="mt-6 space-y-3 max-h-96 overflow-y-auto">
+                      {transcriptionData.auto_highlights_result?.results?.length > 0 ? (
+                        transcriptionData.auto_highlights_result.results.slice(0, 10).map((highlight, idx) => (
+                          <div
+                            key={idx}
+                            className="p-4 bg-muted rounded-lg border"
+                          >
+                            <div className="flex items-start justify-between mb-2">
+                              <p className="font-semibold">{highlight.text}</p>
+                              <Badge variant="outline" className="ml-2">
+                                {highlight.count}x
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              Relevance: {(highlight.rank * 100).toFixed(1)}%
+                            </p>
                           </div>
-                          <p className="text-xs text-muted-foreground">
-                            Relevance: {(highlight.rank * 100).toFixed(1)}%
-                          </p>
-                        </div>
-                      ))
-                    ) : (
-                      <p className="text-muted-foreground">No key highlights found</p>
-                    )}
-                  </TabsContent>
-                </Tabs>
+                        ))
+                      ) : (
+                        <p className="text-muted-foreground">No key highlights found</p>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                )}
               </CardContent>
             </Card>
 
@@ -595,6 +809,45 @@ const CreateAudioPost = () => {
             </div>
           </div>
         )}
+
+        {/* Speaker Edit Dialog */}
+        <Dialog open={!!editingSpeaker} onOpenChange={() => setEditingSpeaker(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Speaker Name</DialogTitle>
+              <DialogDescription>
+                Change the display name for this speaker
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Speaker Name</Label>
+                <Input
+                  value={newSpeakerName}
+                  onChange={(e) => setNewSpeakerName(e.target.value)}
+                  placeholder="Enter speaker name..."
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Speaker Color</Label>
+                <input
+                  type="color"
+                  value={newSpeakerColor}
+                  onChange={(e) => setNewSpeakerColor(e.target.value)}
+                  className="w-full h-10 rounded border"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setEditingSpeaker(null)}>
+                Cancel
+              </Button>
+              <Button onClick={() => handleUpdateSpeakerName(editingSpeaker, newSpeakerName, newSpeakerColor)}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Step 4: Edit Transcription & Post Details */}
         {currentStep === 'edit' && (
@@ -626,7 +879,7 @@ const CreateAudioPost = () => {
                   <Card>
                     <CardContent className="pt-6 text-center">
                       <p className="text-2xl font-bold text-primary">
-                        {transcriptionData?.speakers_expected || 2}
+                        {Object.keys(speakerOverrides).length}
                       </p>
                       <p className="text-xs text-muted-foreground mt-1">Speakers</p>
                     </CardContent>

@@ -1,0 +1,90 @@
+// stores/membershipStore.js
+import { create } from 'zustand';
+import axios from 'axios';
+
+const useMembershipStore = create((set, get) => ({
+  subscriptions: [],
+  isLoading: false,
+  error: null,
+
+  hasAccess: (tierId) => {
+    const { subscriptions } = get();
+    return subscriptions.some(
+      sub => sub.tierId === tierId && sub.status === 'active'
+    );
+  },
+  hasAccessToCreator: (creatorId) => {
+    const { subscriptions } = get();
+    return subscriptions.some(
+      sub => sub.creatorId === creatorId && sub.status === 'active'
+    );
+  },
+
+  getSubscriptionByTierId: (tierId) => {
+    const { subscriptions } = get();
+    return subscriptions.find(sub => sub.tierId === tierId);
+  },
+
+  fetchMySubscriptions: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.get('/subscriptions/my');
+      set({ subscriptions: response.data.data.subscriptions, isLoading: false });
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.error || 'Failed to fetch subscriptions',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  createSubscription: async (membershipId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.post('/subscriptions/create', { membershipId });
+      if (response.data.data?.subscription) {
+        set((state) => ({ 
+          subscriptions: [...state.subscriptions, response.data.data.subscription],
+          isLoading: false 
+        }));
+      }
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.error || 'Failed to create subscription',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  cancelSubscription: async (subscriptionId) => {
+    set({ isLoading: true, error: null });
+    try {
+      const response = await axios.put(`/subscriptions/cancel/${subscriptionId}`);
+      set((state) => ({
+        subscriptions: state.subscriptions.map(sub => 
+          sub._id === subscriptionId 
+            ? { ...sub, status: 'cancelled', cancelDate: new Date(), autoRenew: false }
+            : sub
+        ),
+        isLoading: false
+      }));
+      return response.data;
+    } catch (error) {
+      set({ 
+        error: error.response?.data?.error || 'Failed to cancel subscription',
+        isLoading: false 
+      });
+      throw error;
+    }
+  },
+
+  clearSubscriptions: () => {
+    set({ subscriptions: [], error: null });
+  }
+}));
+
+export default useMembershipStore;

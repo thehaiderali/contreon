@@ -4,6 +4,7 @@ import { api } from '@/lib/api';
 import { Lock, ArrowLeft, Play, Music, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import AudioPost from './post-view/AudioPost';
 
 const PostViewer = () => {
   const { creatorUrl, postId } = useParams();
@@ -51,7 +52,7 @@ const PostViewer = () => {
   }
 
   return (
-    <div className="max-w-3xl mx-auto">
+    <div className="w-full mx-auto">
       {/* Back button */}
       <button
         onClick={() => navigate(`/c/${creatorUrl}/posts`)}
@@ -69,7 +70,7 @@ const PostViewer = () => {
             Members only
           </Badge>
         )}
-        <h1 className="text-3xl md:text-4xl font-bold mb-3">{post.title}</h1>
+        {/* <h1 className="text-3xl md:text-4xl font-bold mb-3">{post.title}</h1> */}
         <p className="text-sm text-muted-foreground">
           {new Date(post.createdAt).toLocaleDateString('en-US', {
             month: 'long',
@@ -115,10 +116,7 @@ const PostViewer = () => {
         {post.type === 'audio' && (
           <div className="rounded-xl bg-muted p-6">
             {post.audioUrl ? (
-              <audio controls className="w-full">
-                <source src={post.audioUrl} />
-                Your browser does not support the audio element.
-              </audio>
+             <AudioPost post={post}/>
             ) : (
               <div className="flex items-center justify-center gap-3">
                 <Music className="h-8 w-8 text-muted-foreground" />

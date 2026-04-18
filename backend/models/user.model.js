@@ -39,10 +39,6 @@ const userSchema=new Schema({
       type:Boolean,
       default:false,
    },
-   isConnected:{
-      type:Boolean,
-      default:false
-   },
    connectedID:{
       type:String,
       default:""

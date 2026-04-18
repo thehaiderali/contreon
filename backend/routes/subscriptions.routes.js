@@ -8,11 +8,13 @@ import {
   resumeSubscription,
   checkSubscriptionStatus
 } from "../controllers/subscriptions.controller.js";
+import { createSubscriberCheckout } from "../controllers/stripe.controller.js";
 
 const subscriptionRouter = Router();
 
 // Subscriber routes
 subscriptionRouter.post("/create", authMiddleware,checkSubscriberExists, createSubscription);
+subscriptionRouter.post("/create-checkout",authMiddleware,checkSubscriberExists,createSubscriberCheckout)
 subscriptionRouter.get("/my", authMiddleware,checkSubscriberExists, getMySubscriptions);
 subscriptionRouter.get("/check/:creatorId", authMiddleware,checkSubscriberExists, checkSubscriptionStatus);
 subscriptionRouter.post("/:subscriptionId/cancel", authMiddleware,checkSubscriberExists,checkSubscriberExists, cancelSubscription);
