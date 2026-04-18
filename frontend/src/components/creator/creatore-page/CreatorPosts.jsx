@@ -70,13 +70,13 @@ const PostRow = ({ post, creatorUrl }) => {
 const UpgradeSidebar = ({ creator }) => (
   <aside className="w-64 shrink-0 hidden lg:block space-y-5">
     <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
-      <p className="font-semibold text-sm">Upgrade to paid</p>
+      <p className="font-semibold text-sm">Join Membership</p>
       <p className="text-xs text-muted-foreground leading-relaxed">
         Become a paid member to unlock exclusive posts, chats and more from{' '}
         <span className="text-foreground font-medium">{creator?.displayName ?? 'this creator'}</span>.
       </p>
       <Button size="sm" className="w-full font-semibold">
-        Upgrade
+        Join
       </Button>
     </div>
   </aside>

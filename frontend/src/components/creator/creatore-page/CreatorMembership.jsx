@@ -2,12 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { RotateCw, Check, Crown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/authStore';
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return '';
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-};
 
 const TierCard = ({ tier, currentTierId, onUpgrade }) => {
   const isCurrentTier = currentTierId === tier._id;
@@ -41,7 +35,7 @@ const TierCard = ({ tier, currentTierId, onUpgrade }) => {
           className="w-full"
           onClick={() => onUpgrade(tier._id)}
         >
-          Upgrade
+          Subscribe
         </Button>
       )}
 
