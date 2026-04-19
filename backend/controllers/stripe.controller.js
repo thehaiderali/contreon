@@ -3,6 +3,7 @@ import User from "../models/user.model.js"
 import Subscription from "../models/subscription.model.js"
 import { envConfig } from "../config/env.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
+import Payment from "../models/payment.model.js";
 
 export async function createConnectedAccount(req,res){
 
@@ -117,6 +118,20 @@ export async function createSubscriberCheckout(req, res) {
       });
     }
 
+
+    const newSubscription = new Subscription({
+          subscriberId:subscriber._id,
+          tierId:tierId,
+          creatorId: tier.creatorId,
+          tierType: tier.tierName,
+          status: "incomplete",
+          startDate: new Date(),
+          nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        });
+    
+     await newSubscription.save();
+
+   
     let creatorAccountId = creator.connectedID;
     let useDirectConnect = false;
 
@@ -189,6 +204,15 @@ export async function createSubscriberCheckout(req, res) {
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams);
+
+     const payment= new Payment({
+        tierId:tier._id,
+        subscriptionId:newSubscription._id,
+        sessionId:session.id,
+        status:"pending",
+    })    
+
+    await payment.save()
 
     return res.status(200).json({
       success: true,

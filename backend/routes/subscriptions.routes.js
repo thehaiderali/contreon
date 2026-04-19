@@ -9,6 +9,7 @@ import {
   checkSubscriptionStatus
 } from "../controllers/subscriptions.controller.js";
 import { createSubscriberCheckout } from "../controllers/stripe.controller.js";
+import { setPaymentCancel, setPaymentSuccess } from "../controllers/payment.controller.js";
 
 const subscriptionRouter = Router();
 
@@ -19,7 +20,8 @@ subscriptionRouter.get("/my", authMiddleware,checkSubscriberExists, getMySubscri
 subscriptionRouter.get("/check/:creatorId", authMiddleware,checkSubscriberExists, checkSubscriptionStatus);
 subscriptionRouter.post("/:subscriptionId/cancel", authMiddleware,checkSubscriberExists,checkSubscriberExists, cancelSubscription);
 subscriptionRouter.post("/:subscriptionId/resume", authMiddleware,checkSubscriberExists, resumeSubscription);
-
+subscriptionRouter.post("/stripe-success",authMiddleware,checkSubscriberExists,setPaymentSuccess);
+subscriptionRouter.post("/stripe-cancell",authMiddleware,checkSubscriberExists,setPaymentCancel);
 // Creator routes
 subscriptionRouter.get("/creator/subscribers", authMiddleware, getCreatorSubscribers);
 

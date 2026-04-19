@@ -35,6 +35,8 @@ import EditVideoPost from './pages/private/creator/posts/EditVideoPost';
 import CreatorPage from './components/creator/creatore-page/CreatorPage';
 import { useEffect } from 'react';
 import useMembershipStore from '@/store/memberShipStore';
+import PaymentSuccess from './pages/private/stripe/SuccessPage';
+import PaymentCancel from './pages/private/stripe/CancelPage';
 
 const App = () => {
 
@@ -52,6 +54,8 @@ const App = () => {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/c/:creatorUrl/*" element={<CreatorPage/>}/>
+       <Route path="/payment/success" element={<PaymentSuccess />} />
+       <Route path="/payment/cancel" element={<PaymentCancel />} />
       <Route element={<ProtectedRoutes />}>
         
         <Route path="/home" element={<Home />}>

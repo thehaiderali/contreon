@@ -30,7 +30,7 @@ export async function createSubscription(req, res) {
       tierId:membershipId,
       creatorId: tier.creatorId,
       tierType: tier.tierName,
-      status: "active",
+      status: "incomplete",
       startDate: new Date(),
       nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     });

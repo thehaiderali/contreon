@@ -6,6 +6,7 @@ import { subscriptionTierSchema } from "../validation/zod.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
 
 import stripe from "../config/stripe.js";
+import Subscription from "../models/subscription.model.js";
 
 export async function getCreatorProfileById(req, res) {
   try {
@@ -590,33 +591,6 @@ export async function updateMembership(req, res) {
   }
 }
 
-// export async function deleteMembership(req, res) {
-//   try {
-//     const { id } = req.params;
-
-//     const membership = await SubscriptionTier.findOneAndDelete({
-//       _id: id,
-//       creatorId: req.user.userId.toString()
-//     });
-//     if (!membership) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Membership not found"
-//       });
-//     }
-//     return res.status(200).json({
-//       success: true,
-//       message: "Membership deleted successfully"
-//     });
-
-//   } catch (error) {
-//     console.log("Error in Deleting Membership: ", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: "Internal Server Error"
-//     });
-//   }
-// }
 
 
 export async function deleteMembership(req, res) {
