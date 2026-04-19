@@ -4,7 +4,6 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import Home from './pages/private/subscriber/Home';
 import Explore from './pages/private/subscriber/Explore';
-import Chats from './pages/private/subscriber/Chats';
 import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
 import Feed from './components/Feed';
@@ -14,8 +13,8 @@ import Members from './pages/private/creator/Members';
 import Insights from './pages/private/creator/Insights';
 import Payouts from './pages/private/creator/Payouts';
 import Profile from './pages/private/creator/Profile';
+import ChatContainer from './components/chat/ChatContainer';
 
-// Protected Routes
 import { ProtectedRoutes } from './components/ProtectedRoutes';
 import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
@@ -38,27 +37,25 @@ import useMembershipStore from '@/store/memberShipStore';
 
 const App = () => {
 
-
-   const { fetchMySubscriptions } = useMembershipStore();
+  const { fetchMySubscriptions } = useMembershipStore();
   
   useEffect(() => {
-    // Load user's subscriptions when app loads
     fetchMySubscriptions().catch(console.error);
   }, [fetchMySubscriptions]);
+  
   return (
     <Routes>
-      
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/c/:creatorUrl/*" element={<CreatorPage/>}/>
+      
       <Route element={<ProtectedRoutes />}>
-        
         <Route path="/home" element={<Home />}>
           <Route index element={<Feed />} />
           <Route path="explore" element={<Explore />} />
-          <Route path="chat" element={<Chats />} />
-          <Route path="messages" element={<Chats />} />
+          <Route path="chat" element={<ChatContainer />} />
+          <Route path="messages" element={<ChatContainer />} />
           <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
         </Route>
@@ -72,20 +69,20 @@ const App = () => {
             <Route path="members" element={<Members />} />
             <Route path="insights" element={<Insights />} />
             <Route path="payouts" element={<Payouts />} />
-            <Route path="messages" element={<Chats />} />
+            <Route path="messages" element={<ChatContainer />} />
             <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
             <Route path='recommendations/create' element={<RecommendationSearch/>}/>
-          <Route path="collections" element={<Collections />} />
-          <Route path="collections/create" element={<CollectionCreationForm />} />
-          <Route path="collections/:id/edit" element={<CollectionEditForm />} />
-          <Route path='create-post/video' element={<CreateVideoPost/>}/>
-          <Route path='posts/text/:postId/edit' element={<EditTextPost/>}/>
-          <Route path='posts/audio/:id/edit' element={<EditAudioPost/>}/>
-          <Route path='posts/video/:id/edit' element={<EditVideoPost/>}/>
-          <Route path='create-post/text' element={<CreateTextPost/>}/>
-          <Route path='create-post/audio' element={<CreateAudioPost/>}/>
+            <Route path="collections" element={<Collections />} />
+            <Route path="collections/create" element={<CollectionCreationForm />} />
+            <Route path="collections/:id/edit" element={<CollectionEditForm />} />
+            <Route path='create-post/video' element={<CreateVideoPost/>}/>
+            <Route path='posts/text/:postId/edit' element={<EditTextPost/>}/>
+            <Route path='posts/audio/:id/edit' element={<EditAudioPost/>}/>
+            <Route path='posts/video/:id/edit' element={<EditVideoPost/>}/>
+            <Route path='create-post/text' element={<CreateTextPost/>}/>
+            <Route path='create-post/audio' element={<CreateAudioPost/>}/>
           </Route>
         </Route>
       </Route>
