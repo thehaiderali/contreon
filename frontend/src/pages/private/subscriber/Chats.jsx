@@ -1,9 +1,8 @@
-import React from 'react'
+import React from 'react';
+import ChatContainer from '@/components/chat/ChatContainer';
 
 const Chats = () => {
-  return (
-    <div>Chats</div>
-  )
-}
+  return <ChatContainer />;
+};
 
-export default Chats
+export default Chats;
