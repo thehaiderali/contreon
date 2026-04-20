@@ -70,13 +70,13 @@ const postSchema = new mongoose.Schema({
    playbackId: {
     type: String,
     required: function() {
-      return this.type === "video";
+      return this.type === "video" && this.isPaid==true;
     }
   },
   assetId: {
     type: String,
     required: function() {
-      return this.type === "video";
+      return this.type === "video" && this.isPaid==true;
     }
   },
   videoDuration: {
@@ -92,7 +92,13 @@ const postSchema = new mongoose.Schema({
       name:String,
       order:Number,
     }
-  ]
+  ],
+  videoUrl:{
+    type:String,
+    required:function(){
+      return this.type=="video" && this.isPaid==false
+    }
+  }
 
 },{timestamps:true});
 

@@ -32,11 +32,12 @@ export const uploadRouter = {
   }).onUploadComplete((data) => {
     console.log("Transcription upload complete", data);
   }),
-
-  // videoUploader:f({
-  //   video:{
-  //     maxFileCount:1,
-  //     maxFileSize:"128MB"
-  //   }
-  // })
+videoUploader: f({
+    video: {
+      maxFileCount: 1,
+      maxFileSize: "512MB",
+    },
+  }).onUploadComplete((data) => {
+    console.log("Video upload complete", data);
+  }),
 };
