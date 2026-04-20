@@ -4,10 +4,9 @@ import { authMiddleware, checkSubscriberExists } from "../middleware/auth.js";
 const commentRouter=Router()
 
 
-commentRouter.post("/",authMiddleware,checkSubscriberExists,createComment);
+commentRouter.post("/:postId",authMiddleware,checkSubscriberExists,createComment);
 commentRouter.put("/:id",authMiddleware,checkSubscriberExists,updateComment);
 commentRouter.delete("/:id",authMiddleware,checkSubscriberExists,deleteComment);
-
 
 
 export default commentRouter;

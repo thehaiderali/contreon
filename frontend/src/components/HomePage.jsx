@@ -3,6 +3,8 @@ import Hero from './Hero';
 import Navbar from './Navbar';
 import Lenis from 'lenis';
 import Grainient from '@/components/Grainient';
+import FeaturesSection from './FeaturesSection';
+import PricingSection from './PricingSection';
 
 const HomePage = () => {
   const lenisRef = useRef(null);
@@ -55,6 +57,8 @@ const HomePage = () => {
     className='fixed top-0 -z-10 max-h-screen rounded-2xl'
   />
   <Hero/>
+  <FeaturesSection/>
+  <PricingSection/>  
 </div>
   );
 };

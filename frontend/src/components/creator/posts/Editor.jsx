@@ -2,10 +2,13 @@ import { useCreateBlockNote } from '@blocknote/react'
 import { BlockNoteView } from '@blocknote/shadcn'
 import { uploadFiles } from '@/lib/uploadthing'
 import React, { useEffect, useRef } from 'react'
+import { useTheme } from '@/hooks/use-theme'
 import "@blocknote/core/fonts/inter.css";
 import "@blocknote/shadcn/style.css";
 
 const Editor = ({ editable = true, initialContent = [], onChange }) => {
+
+    const {theme}=useTheme();
     // Clean initial content: remove empty paragraph blocks at the end
     const cleanInitialContent = (content) => {
         if (!Array.isArray(content) || content.length === 0) {
@@ -62,6 +65,7 @@ const Editor = ({ editable = true, initialContent = [], onChange }) => {
         <div className='w-full h-full flex gap-5'>
             <div className='w-full h-full rounded-md'>
                 <BlockNoteView  
+                   theme={theme}
                     editor={editor}
                     editable={editable}
                     onChange={handleChange}

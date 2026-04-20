@@ -73,10 +73,8 @@ creatorRouter.get("/posts/:id/comments", authMiddleware, checkCreatorExists, get
 creatorRouter.delete("/posts/:id/comments/:commentId", authMiddleware, checkCreatorExists, creatorDeleteComment);
 creatorRouter.post("/posts/:id/comments/:commentId/feature-toggle", authMiddleware, checkCreatorExists, creatorFeaturedCommentToggle);
 
-// Transcription route
 creatorRouter.post("/transcribe", authMiddleware, checkCreatorExists, createTranscription);
 
-// ========== PUBLIC ROUTES FOR CREATOR PAGES ==========
 
 // Get creator by pageUrl
 creatorRouter.get("/by-url/:pageUrl", async (req, res) => {

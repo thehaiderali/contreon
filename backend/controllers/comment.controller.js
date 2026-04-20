@@ -1,9 +1,8 @@
 import Comment from "../models/comment.model.js";
 import Post from "../models/post.model.js";
+import Subscription from "../models/subscription.model.js";
 import User from "../models/user.model.js"
 import { commentSchema, errorParser } from "../validation/zod.js";
-
-
 
 export async function createComment(req,res){
 
@@ -24,6 +23,17 @@ export async function createComment(req,res){
             })
         }
         const user=await User.findById(req.user.Id);
+        const subscription=await Subscription.findOne({
+            subscriberId:user._id,
+            tierId:post.tierId,
+            status:"active"
+        })
+        if(!subscription){
+            return res.status(400).json({
+                success:false,
+                error:"Only Members can comment on Paid Posts"
+            })
+        }
         const alreadyComment=Comment.findOne({postId:id,authorId:user._id})
         if(alreadyComment){
             return res.status(400).json({
@@ -70,12 +80,18 @@ export async function updateComment(req,res){
             })
         }
         const id=req.params.id;
-        const user=await User.findById(req.user.Id);
-        const alreadyComment=Comment.findById(id);
+        const alreadyComment=await Comment.findById(id);
+        const user=await User.findById(req.user.userId)
         if(!alreadyComment){
             return res.status(400).json({
                 success:false,
                 error:"Comment not Found"
+            })
+        }
+        if(alreadyComment.authorId!==user._id){
+            return res.status(403).json({
+                success:false,
+                error:"Unauthorized Access . Cannot Update Other's Comments"
             })
         }
        const newComment= await Comment.findByIdAndUpdate(alreadyComment._id,{
@@ -148,6 +164,7 @@ export async function deleteComment(req, res) {
     }
 }
 
+
 export async function getAllCommentsForPost(req,res){
     try {
      
@@ -158,13 +175,7 @@ export async function getAllCommentsForPost(req,res){
             success:false,
             error:"Post Not Found"
         })
-     }
-     if(post.creatorId!==req.user.userId){
-        return res.status(403).json({
-            success:false,
-            error:"Unauthorized Cannot Access Other Creator's Post Data"
-        })
-     }   
+     }  
      
      const comments=Comment.find({
         postId:post._id 
