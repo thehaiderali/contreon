@@ -87,25 +87,21 @@ export const useAuthStore = create(
         }
       },
 
-      // 👤 GET CURRENT USER
+      // 👤 GET CURRENT USER - ✅ FIXED: Don't set loading for checkAuth (it's just a refresh)
       checkAuth: async () => {
         try {
-          set({ loading: true, error: null });
-
           const res = await api.get("/auth/me");
           
           if(res.data.success) {
             set({
               user: res.data.data?.user || null,
               isAuthenticated: true,
-              loading: false,
               error: null,
             });
           } else {
             set({
               user: null,
               isAuthenticated: false,
-              loading: false,
               error: res.data?.error || "Not authenticated"
             });
           }
@@ -114,8 +110,7 @@ export const useAuthStore = create(
           set({
             user: null,
             isAuthenticated: false,
-            loading: false,
-            error: err, // Don't show error for checkAuth failures
+            error: err,
           });
         }
       },

@@ -37,9 +37,10 @@ export async function createConnectedAccount(req,res){
   },
     })
 
-    
+
     const updated=await User.findByIdAndUpdate(creator._id,{
-        connectedID:account.id
+        connectedID:account.id,
+        isConnected:true
     })
     return res.status(200).json({
         success:true,
