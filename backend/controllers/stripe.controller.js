@@ -31,12 +31,13 @@ export async function createConnectedAccount(req,res){
         settings: {
         payouts: {
          schedule: {
-        interval: "manual", // Key: Manual payouts until full onboarding
+        interval: "manual", 
       },
     },
   },
     })
 
+    
     const updated=await User.findByIdAndUpdate(creator._id,{
         connectedID:account.id
     })

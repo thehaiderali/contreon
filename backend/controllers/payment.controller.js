@@ -24,6 +24,12 @@ export async function setPaymentSuccess(req, res) {
                 error: "Payment with Following Session Id not Found"
             });
         }
+        if(existingPayment.status=="success"){
+            return res.status(400).json({
+                success:false,
+                error:"Payment already Successfull"
+            })
+        }
 
         const updatedPayment = await Payment.findByIdAndUpdate(existingPayment._id, {
             status: "success"

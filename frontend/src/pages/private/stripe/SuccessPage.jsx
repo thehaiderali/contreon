@@ -10,9 +10,7 @@ export default function PaymentSuccess() {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [paymentData, setPaymentData] = useState(null);
     const [error, setError] = useState(null);
-    const [retryCount, setRetryCount] = useState(0);
 
     const sessionId = searchParams.get('session_id');
 
@@ -44,9 +42,6 @@ export default function PaymentSuccess() {
 
     }, [sessionId]);
 
-    const handleRetry = () => {
-        setRetryCount(prev => prev + 1);
-    };
 
     if (loading) {
         return (
@@ -60,7 +55,7 @@ export default function PaymentSuccess() {
         );
     }
 
-    if (error && !paymentData) {
+    if (error ) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-black p-4">
                 <Card className="max-w-md w-full bg-white">
@@ -76,12 +71,6 @@ export default function PaymentSuccess() {
                         </CardDescription>
                     </CardHeader>
                     <CardFooter className="flex flex-col space-y-2">
-                        <Button 
-                            onClick={handleRetry}
-                            className="w-full bg-black text-white hover:bg-gray-800"
-                        >
-                            Try Again
-                        </Button>
                         <Button 
                             onClick={() => navigate('/home')} 
                             variant="outline"
@@ -125,18 +114,6 @@ export default function PaymentSuccess() {
                                 <span className="text-gray-600">Status</span>
                                 <span className="font-semibold text-green-600">Completed</span>
                             </div>
-                            {paymentData?.tier && (
-                                <>
-                                    <div className="flex justify-between mb-2">
-                                        <span className="text-gray-600">Plan</span>
-                                        <span className="font-semibold">{paymentData.tier.name}</span>
-                                    </div>
-                                    <div className="flex justify-between mb-2">
-                                        <span className="text-gray-600">Amount</span>
-                                        <span className="font-semibold">${paymentData.tier.price}</span>
-                                    </div>
-                                </>
-                            )}
                             <div className="flex justify-between">
                                 <span className="text-gray-600">Date</span>
                                 <span className="font-semibold">

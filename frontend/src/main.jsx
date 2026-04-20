@@ -6,11 +6,11 @@ import App from './App.jsx'
 import { ThemeProvider } from '@/context/theme-provider'
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
+  // <StrictMode>
     <BrowserRouter>
     <ThemeProvider>
       <App/>
     </ThemeProvider>
     </BrowserRouter>
-  </StrictMode>,
+  // </StrictMode>,
 )

@@ -239,7 +239,7 @@ const MembershipEditForm = () => {
     <div className="container max-w-2xl mx-auto py-8">
       <Button
         variant="ghost"
-        onClick={() => navigate('/creator/memberships')}
+        onClick={() => navigate('/creator/')}
         className="mb-4 gap-2"
       >
         <ArrowLeft className="h-4 w-4" />
