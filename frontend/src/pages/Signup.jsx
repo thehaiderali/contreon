@@ -12,8 +12,6 @@ export default function SignupPage() {
   const error = useAuthStore((state) => state.error);
 
   console.log("📊 SignupPage render - isAuthenticated:", isAuthenticated);
-
-  // ✅ SINGLE EFFECT: Redirect if already authenticated OR after successful signup
   useEffect(() => {
     console.log("🔄 SignupPage useEffect - isAuthenticated:", isAuthenticated);
     if (isAuthenticated === true) {

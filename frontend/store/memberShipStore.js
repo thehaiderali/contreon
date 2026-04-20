@@ -1,8 +1,7 @@
-// stores/membershipStore.js
 import { create } from 'zustand';
-import axios from 'axios';
+import { api } from '@/lib/api';
 
-const useMembershipStore = create((set, get) => ({
+const useSubscriptionStore = create((set, get) => ({
   subscriptions: [],
   isLoading: false,
   error: null,
@@ -28,7 +27,7 @@ const useMembershipStore = create((set, get) => ({
   fetchMySubscriptions: async () => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.get('/subscriptions/my');
+      const response = await api.get('/subscriptions/my');
       set({ subscriptions: response.data.data.subscriptions, isLoading: false });
       return response.data;
     } catch (error) {
@@ -43,7 +42,7 @@ const useMembershipStore = create((set, get) => ({
   createSubscription: async (membershipId) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.post('/subscriptions/create', { membershipId });
+      const response = await api.post('/subscriptions/create', { membershipId });
       if (response.data.data?.subscription) {
         set((state) => ({ 
           subscriptions: [...state.subscriptions, response.data.data.subscription],
@@ -63,7 +62,7 @@ const useMembershipStore = create((set, get) => ({
   cancelSubscription: async (subscriptionId) => {
     set({ isLoading: true, error: null });
     try {
-      const response = await axios.put(`/subscriptions/cancel/${subscriptionId}`);
+      const response = await api.put(`/subscriptions/cancel/${subscriptionId}`);
       set((state) => ({
         subscriptions: state.subscriptions.map(sub => 
           sub._id === subscriptionId 
@@ -87,4 +86,4 @@ const useMembershipStore = create((set, get) => ({
   }
 }));
 
-export default useMembershipStore;
+export default useSubscriptionStore;

@@ -19,6 +19,7 @@
     "@stripe/stripe-js": "^9.2.0",
     "@tailwindcss/vite": "^4.2.1",
     "@uploadthing/react": "^7.3.3",
+    "@videojs/react": "^10.0.0-beta.22",
     "axios": "^1.13.6",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",

@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useLocation, useNavigate } from 'react-router';
 import { api } from '@/lib/api';
-
 import AccessTypeStep from './AccessTypeStep';
 import FreeVideoUploadStep from './FreeVideoUploadStep';
 import PaidVideoUploadStep from './PaidVideoUploadStep';
@@ -16,8 +15,6 @@ const CreateVideoPost = () => {
 
   // Step management
   const [currentStep, setCurrentStep] = useState('access-type');
-
-  // Access type
   const [accessType, setAccessType] = useState(null);
 
   // Video data

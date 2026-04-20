@@ -5,6 +5,8 @@ import { Lock, ArrowLeft, Play, Music, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AudioPost from './post-view/AudioPost';
+import PublicVideoPlayer from './video/PublicVideoPlayer';
+import Editor from '../posts/Editor';
 
 const PostViewer = () => {
   const { creatorUrl, postId } = useParams();
@@ -83,36 +85,32 @@ const PostViewer = () => {
       {/* Post content based on type */}
       <div className="prose prose-neutral dark:prose-invert max-w-none">
         {post.type === 'text' && (
-          <div 
-            className="text-foreground leading-relaxed"
-            dangerouslySetInnerHTML={{ __html: post.content || post.description }}
-          />
+          <div className='w-full h-full  p-10 '>
+              <Editor editable={false} initialContent={JSON.parse(post.content)} />
+          </div>
+        
         )}
 
-        {post.type === 'video' && (
-          <div className="aspect-video rounded-xl overflow-hidden bg-black">
-            {post.playbackId ? (
-              <video
-                src={`https://stream.mux.com/${post.playbackId}.m3u8`}
-                controls
-                className="w-full h-full"
-                poster={post.thumbnailUrl}
-              />
-            ) : post.videoUrl ? (
-              <video
-                src={post.videoUrl}
-                controls
-                className="w-full h-full"
-                poster={post.thumbnailUrl}
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-muted">
-                <Play className="h-12 w-12 text-muted-foreground" />
-              </div>
-            )}
+
+    {post.type === 'video' && (
+      <div className="aspect-video rounded-xl overflow-hidden bg-black">
+        {post.playbackId ? (
+          <></>
+        ) : post.videoUrl ? (
+          <>
+            {/* Debug: Check what's rendering */}
+            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs p-1 z-50">
+              Video.js Player
+            </div>
+            <PublicVideoPlayer videoUrl={post.videoUrl}/>
+          </>
+        ) : (
+          <div className="w-full h-full flex items-center justify-center bg-muted">
+            <Play className="h-12 w-12 text-muted-foreground" />
           </div>
         )}
-
+      </div>
+    )}
         {post.type === 'audio' && (
           <div className="rounded-xl bg-muted p-6">
             {post.audioUrl ? (

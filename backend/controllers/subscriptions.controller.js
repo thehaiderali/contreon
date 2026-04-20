@@ -55,7 +55,7 @@ export async function getMySubscriptions(req, res) {
     const subscriptions = await Subscription.find({ subscriberId: req.user.userId })
       .populate("creatorId", "fullName email")
       .sort({ createdAt: -1 });
-
+    
     return res.status(200).json({
       success: true,
       data: { subscriptions }

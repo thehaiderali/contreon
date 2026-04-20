@@ -6,6 +6,7 @@ import { PostSettings } from './PostSettings'
 import PostCreatedModal from './PostCreated'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
+import { UploadButton } from '@/lib/uploadthing'
 
 const CreateTextPost = () => {
   const navigate = useNavigate()
@@ -20,7 +21,7 @@ const CreateTextPost = () => {
   const [isPaid, setIsPaid] = useState(false)
   const [selectedTierId, setSelectedTierId] = useState('')
   const [commentsAllowed, setCommentsAllowed] = useState(true)
-  
+  const [thumbnailUrl,setThumbnailUrl]=useState("")
   const isMountedRef = useRef(true)
 
   useEffect(() => {
@@ -83,7 +84,8 @@ const CreateTextPost = () => {
         isPaid: isPaid,
         tierId: isPaid ? selectedTierId : undefined,
         commentsAllowed: commentsAllowed,
-        isPublished: true
+        isPublished: true,
+        thumbnailUrl:thumbnailUrl
       }
       
       const response = await api.post('/creators/posts', formData);
@@ -159,6 +161,16 @@ const CreateTextPost = () => {
             required
           />
         </div>
+        <div className='mb-3'>
+          <label className='block text-sm font-medium mb-2'>Post Thumbnail</label>
+          {thumbnailUrl && (
+            <div className='w-full h-full'>
+              <img src={thumbnailUrl} alt="" srcset="" className='w-1/2 h-1/2' />
+            </div>
+          )}
+          <UploadButton endpoint={"imageUploader"} onClientUploadComplete={(res)=>setThumbnailUrl(res[0].ufsUrl)}/>
+        </div>
+
 
         {/* Main Content Layout */}
         <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>

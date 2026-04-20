@@ -226,7 +226,7 @@ export const createPost = async (req, res) => {
       title: title.trim(),
       type,
       slug,
-      content: content || "",
+      content: JSON.stringify(content),
       creatorId,
       isPaid: isPaid || false,
       tierId: isPaid ? tierId : undefined,
