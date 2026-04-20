@@ -35,6 +35,7 @@ import {
   RefreshCw,
   CheckCircle,
 } from 'lucide-react';
+import { api } from '@/lib/api';
 
 const SubscriptionsTable = () => {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -43,201 +44,50 @@ const SubscriptionsTable = () => {
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [totalItems, setTotalItems] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
 
-  // Dummy Data
-  const dummySubscriptions = [
-    {
-      _id: '1',
-      subscriberId: { _id: 'u1', name: 'John Doe', email: 'john@example.com' },
-      creatorId: { _id: 'c1', name: 'Creator One', email: 'creator1@example.com' },
-      tierType: 'Premium',
-      stripeSubscriptionId: 'sub_123456',
-      stripePriceId: 'price_123',
-      status: 'active',
-      startDate: new Date('2024-01-15'),
-      nextBillingDate: new Date('2024-02-15'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-15'),
-      updatedAt: new Date('2024-01-15'),
-    },
-    {
-      _id: '2',
-      subscriberId: { _id: 'u2', name: 'Jane Smith', email: 'jane@example.com' },
-      creatorId: { _id: 'c1', name: 'Creator One', email: 'creator1@example.com' },
-      tierType: 'Basic',
-      stripeSubscriptionId: 'sub_789012',
-      stripePriceId: 'price_456',
-      status: 'active',
-      startDate: new Date('2024-01-10'),
-      nextBillingDate: new Date('2024-02-10'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-10'),
-      updatedAt: new Date('2024-01-10'),
-    },
-    {
-      _id: '3',
-      subscriberId: { _id: 'u3', name: 'Mike Johnson', email: 'mike@example.com' },
-      creatorId: { _id: 'c2', name: 'Creator Two', email: 'creator2@example.com' },
-      tierType: 'Pro',
-      stripeSubscriptionId: 'sub_345678',
-      stripePriceId: 'price_789',
-      status: 'paused',
-      startDate: new Date('2023-12-20'),
-      nextBillingDate: new Date('2024-01-20'),
-      cancelDate: null,
-      autoRenew: false,
-      createdAt: new Date('2023-12-20'),
-      updatedAt: new Date('2024-01-05'),
-    },
-    {
-      _id: '4',
-      subscriberId: { _id: 'u4', name: 'Sarah Wilson', email: 'sarah@example.com' },
-      creatorId: { _id: 'c1', name: 'Creator One', email: 'creator1@example.com' },
-      tierType: 'Premium',
-      stripeSubscriptionId: 'sub_901234',
-      stripePriceId: 'price_123',
-      status: 'cancelled',
-      startDate: new Date('2023-11-01'),
-      nextBillingDate: new Date('2023-12-01'),
-      cancelDate: new Date('2023-12-01'),
-      autoRenew: false,
-      createdAt: new Date('2023-11-01'),
-      updatedAt: new Date('2023-12-01'),
-    },
-    {
-      _id: '5',
-      subscriberId: { _id: 'u5', name: 'Alex Chen', email: 'alex@example.com' },
-      creatorId: { _id: 'c3', name: 'Creator Three', email: 'creator3@example.com' },
-      tierType: 'Basic',
-      stripeSubscriptionId: 'sub_567890',
-      stripePriceId: 'price_456',
-      status: 'active',
-      startDate: new Date('2024-01-05'),
-      nextBillingDate: new Date('2024-02-05'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-05'),
-      updatedAt: new Date('2024-01-05'),
-    },
-    {
-      _id: '6',
-      subscriberId: { _id: 'u6', name: 'Emily Brown', email: 'emily@example.com' },
-      creatorId: { _id: 'c2', name: 'Creator Two', email: 'creator2@example.com' },
-      tierType: 'Pro',
-      stripeSubscriptionId: 'sub_654321',
-      stripePriceId: 'price_789',
-      status: 'active',
-      startDate: new Date('2024-01-12'),
-      nextBillingDate: new Date('2024-02-12'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-12'),
-      updatedAt: new Date('2024-01-12'),
-    },
-    {
-      _id: '7',
-      subscriberId: { _id: 'u7', name: 'David Lee', email: 'david@example.com' },
-      creatorId: { _id: 'c1', name: 'Creator One', email: 'creator1@example.com' },
-      tierType: 'Premium',
-      stripeSubscriptionId: 'sub_987654',
-      stripePriceId: 'price_123',
-      status: 'paused',
-      startDate: new Date('2023-12-28'),
-      nextBillingDate: new Date('2024-01-28'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2023-12-28'),
-      updatedAt: new Date('2024-01-15'),
-    },
-    {
-      _id: '8',
-      subscriberId: { _id: 'u8', name: 'Lisa Anderson', email: 'lisa@example.com' },
-      creatorId: { _id: 'c3', name: 'Creator Three', email: 'creator3@example.com' },
-      tierType: 'Basic',
-      stripeSubscriptionId: 'sub_246813',
-      stripePriceId: 'price_456',
-      status: 'active',
-      startDate: new Date('2024-01-18'),
-      nextBillingDate: new Date('2024-02-18'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-18'),
-      updatedAt: new Date('2024-01-18'),
-    },
-    {
-      _id: '9',
-      subscriberId: { _id: 'u9', name: 'Tom Wilson', email: 'tom@example.com' },
-      creatorId: { _id: 'c2', name: 'Creator Two', email: 'creator2@example.com' },
-      tierType: 'Pro',
-      stripeSubscriptionId: 'sub_135792',
-      stripePriceId: 'price_789',
-      status: 'cancelled',
-      startDate: new Date('2023-10-15'),
-      nextBillingDate: new Date('2023-11-15'),
-      cancelDate: new Date('2023-11-15'),
-      autoRenew: false,
-      createdAt: new Date('2023-10-15'),
-      updatedAt: new Date('2023-11-15'),
-    },
-    {
-      _id: '10',
-      subscriberId: { _id: 'u10', name: 'Maria Garcia', email: 'maria@example.com' },
-      creatorId: { _id: 'c1', name: 'Creator One', email: 'creator1@example.com' },
-      tierType: 'Premium',
-      stripeSubscriptionId: 'sub_864209',
-      stripePriceId: 'price_123',
-      status: 'active',
-      startDate: new Date('2024-01-08'),
-      nextBillingDate: new Date('2024-02-08'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-08'),
-      updatedAt: new Date('2024-01-08'),
-    },
-    {
-      _id: '11',
-      subscriberId: { _id: 'u11', name: 'James Taylor', email: 'james@example.com' },
-      creatorId: { _id: 'c3', name: 'Creator Three', email: 'creator3@example.com' },
-      tierType: 'Basic',
-      stripeSubscriptionId: 'sub_975318',
-      stripePriceId: 'price_456',
-      status: 'active',
-      startDate: new Date('2024-01-14'),
-      nextBillingDate: new Date('2024-02-14'),
-      cancelDate: null,
-      autoRenew: true,
-      createdAt: new Date('2024-01-14'),
-      updatedAt: new Date('2024-01-14'),
-    },
-    {
-      _id: '12',
-      subscriberId: { _id: 'u12', name: 'Rachel Green', email: 'rachel@example.com' },
-      creatorId: { _id: 'c2', name: 'Creator Two', email: 'creator2@example.com' },
-      tierType: 'Premium',
-      stripeSubscriptionId: 'sub_246802',
-      stripePriceId: 'price_123',
-      status: 'paused',
-      startDate: new Date('2023-12-25'),
-      nextBillingDate: new Date('2024-01-25'),
-      cancelDate: null,
-      autoRenew: false,
-      createdAt: new Date('2023-12-25'),
-      updatedAt: new Date('2024-01-10'),
-    },
-  ];
+  // Fetch subscriptions from API
+  const fetchSubscriptions = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get("/creators/my-subscribers", {
+        params: {
+          page: currentPage,
+          limit: itemsPerPage,
+          search: searchTerm || undefined,
+          status: statusFilter === 'all' ? undefined : statusFilter
+        }
+      });
+      
+      // Handle response
+      if (response.data.data && Array.isArray(response.data.data)) {
+        setSubscriptions(response.data.data);
+        setTotalItems(response.data.pagination?.totalItems || 0);
+        setTotalPages(response.data.pagination?.totalPages || 0);
+      } else if (Array.isArray(response.data)) {
+        setSubscriptions(response.data);
+        setTotalItems(response.data.length);
+        setTotalPages(Math.ceil(response.data.length / itemsPerPage));
+      } else {
+        setSubscriptions([]);
+        setTotalItems(0);
+        setTotalPages(0);
+      }
+    } catch (error) {
+      console.error("Error fetching subscriptions:", error);
+      setSubscriptions([]);
+      setTotalItems(0);
+      setTotalPages(0);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate API call
-    setLoading(true);
-    setTimeout(() => {
-      setSubscriptions(dummySubscriptions);
-      setLoading(false);
-    }, 500);
-  }, []);
+    fetchSubscriptions();
+  }, [currentPage, itemsPerPage, searchTerm, statusFilter]);
 
-  // Get status badge - default shadcn colors
   const getStatusBadge = (status) => {
     switch (status) {
       case 'active':
@@ -251,8 +101,8 @@ const SubscriptionsTable = () => {
     }
   };
 
-  // Format date
   const formatDate = (date) => {
+    if (!date) return '-';
     return new Date(date).toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
@@ -260,27 +110,9 @@ const SubscriptionsTable = () => {
     });
   };
 
-  // Filter subscriptions
-  const filteredSubscriptions = subscriptions.filter((sub) => {
-    const matchesSearch =
-      searchTerm === '' ||
-      sub.subscriberId.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.subscriberId.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      sub.tierType.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'all' || sub.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-  // Pagination
-  const totalPages = Math.ceil(filteredSubscriptions.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentSubscriptions = filteredSubscriptions.slice(startIndex, endIndex);
-
   const handlePageChange = (page) => {
     setCurrentPage(page);
+    window.scrollTo(0, 0); // Scroll to top
   };
 
   const handleItemsPerPageChange = (value) => {
@@ -290,18 +122,37 @@ const SubscriptionsTable = () => {
 
   const handleViewDetails = (subscription) => {
     console.log('View details:', subscription);
-    // Implement view details logic
   };
 
-  const handleCancelSubscription = (subscription) => {
-    console.log('Cancel subscription:', subscription);
-    // Implement cancel logic
+  const handleCancelSubscription = async (subscription) => {
+    try {
+      await api.put(`/subscriptions/${subscription._id}/cancel`);
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+    }
   };
 
-  const handleResumeSubscription = (subscription) => {
-    console.log('Resume subscription:', subscription);
-    // Implement resume logic
+  const handleResumeSubscription = async (subscription) => {
+    try {
+      await api.put(`/subscriptions/${subscription._id}/resume`);
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Error resuming subscription:", error);
+    }
   };
+
+  const handleReactivateSubscription = async (subscription) => {
+    try {
+      await api.put(`/subscriptions/${subscription._id}/reactivate`);
+      fetchSubscriptions();
+    } catch (error) {
+      console.error("Error reactivating subscription:", error);
+    }
+  };
+
+  const startIndex = (currentPage - 1) * itemsPerPage + 1;
+  const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
     <div className="space-y-6">
@@ -359,28 +210,36 @@ const SubscriptionsTable = () => {
                   Loading subscriptions...
                 </TableCell>
               </TableRow>
-            ) : currentSubscriptions.length === 0 ? (
+            ) : subscriptions.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-sm py-6">
                   No subscriptions found
                 </TableCell>
               </TableRow>
             ) : (
-              currentSubscriptions.map((subscription) => (
+              subscriptions.map((subscription) => (
                 <TableRow key={subscription._id}>
                   <TableCell className="py-3">
                     <div>
-                      <div className="text-sm font-medium">{subscription.subscriberId.name}</div>
+                      <div className="text-sm font-medium">
+                        {subscription.subscriberId?.name || 'Unknown'}
+                      </div>
                       <div className="text-xs text-muted-foreground">
-                        {subscription.subscriberId.email}
+                        {subscription.subscriberId?.email || 'No email'}
                       </div>
                     </div>
                   </TableCell>
-                  <TableCell className="text-sm py-3">{subscription.tierType}</TableCell>
-                  <TableCell className="py-3">{getStatusBadge(subscription.status)}</TableCell>
-                  <TableCell className="text-sm py-3">{formatDate(subscription.startDate)}</TableCell>
                   <TableCell className="text-sm py-3">
-                    {subscription.nextBillingDate ? formatDate(subscription.nextBillingDate) : '-'}
+                    {subscription.tierType || 'Unknown'}
+                  </TableCell>
+                  <TableCell className="py-3">
+                    {getStatusBadge(subscription.status)}
+                  </TableCell>
+                  <TableCell className="text-sm py-3">
+                    {formatDate(subscription.startDate)}
+                  </TableCell>
+                  <TableCell className="text-sm py-3">
+                    {formatDate(subscription.nextBillingDate)}
                   </TableCell>
                   <TableCell className="py-3">
                     {subscription.autoRenew ? (
@@ -400,24 +259,36 @@ const SubscriptionsTable = () => {
                       <DropdownMenuContent align="end" className="w-40">
                         <DropdownMenuLabel className="text-xs">Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleViewDetails(subscription)} className="text-xs">
+                        <DropdownMenuItem 
+                          onClick={() => handleViewDetails(subscription)} 
+                          className="text-xs"
+                        >
                           <Eye className="mr-2 h-3.5 w-3.5" />
                           View Details
                         </DropdownMenuItem>
                         {subscription.status === 'active' && (
-                          <DropdownMenuItem onClick={() => handleCancelSubscription(subscription)} className="text-xs">
+                          <DropdownMenuItem 
+                            onClick={() => handleCancelSubscription(subscription)} 
+                            className="text-xs"
+                          >
                             <Ban className="mr-2 h-3.5 w-3.5" />
                             Cancel
                           </DropdownMenuItem>
                         )}
                         {subscription.status === 'paused' && (
-                          <DropdownMenuItem onClick={() => handleResumeSubscription(subscription)} className="text-xs">
+                          <DropdownMenuItem 
+                            onClick={() => handleResumeSubscription(subscription)} 
+                            className="text-xs"
+                          >
                             <RefreshCw className="mr-2 h-3.5 w-3.5" />
                             Resume
                           </DropdownMenuItem>
                         )}
                         {subscription.status === 'cancelled' && (
-                          <DropdownMenuItem className="text-xs">
+                          <DropdownMenuItem 
+                            onClick={() => handleReactivateSubscription(subscription)} 
+                            className="text-xs"
+                          >
                             <CheckCircle className="mr-2 h-3.5 w-3.5" />
                             Reactivate
                           </DropdownMenuItem>
@@ -433,7 +304,7 @@ const SubscriptionsTable = () => {
       </div>
 
       {/* Pagination */}
-      {!loading && filteredSubscriptions.length > 0 && (
+      {!loading && totalItems > 0 && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
             <div className="flex items-center gap-2">
@@ -450,7 +321,7 @@ const SubscriptionsTable = () => {
                 </SelectContent>
               </Select>
               <span className="text-xs text-muted-foreground">
-                {startIndex + 1}-{Math.min(endIndex, filteredSubscriptions.length)} of {filteredSubscriptions.length}
+                {startIndex}-{endIndex} of {totalItems}
               </span>
             </div>
             <div className="flex items-center gap-1">

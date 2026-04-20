@@ -11,6 +11,7 @@ import {
   updateMembership,
   deleteMembership,
   getAllMembershipsForCreator,
+  getAllSubscribers,
 } from "../controllers/creator.controller.js";
 import {
   createPost,
@@ -35,6 +36,7 @@ const creatorRouter = Router();
 
 //Stripe
 
+creatorRouter.get("/my-subscribers",authMiddleware,checkCreatorExists,getAllSubscribers)
 creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,createConnectedAccount);
 
 // Mux routes

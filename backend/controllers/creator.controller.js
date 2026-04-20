@@ -386,82 +386,6 @@ export async function getMembershipById(req,res){
   }
 }
 
-// export async function updateMembership(req, res) {
-//   try {
-//     const { id } = req.params; 
-//     const { success, data, error: ZodError } = subscriptionTierSchema.safeParse(req.body);
-    
-//     if (!success) {
-//       return res.status(400).json({
-//         success: false,
-//         error: errorParser(ZodError)
-//       });
-//     }
-
-//     // Find the user
-//     const user = await User.findById(req.user.userId);
-//     if (!user) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "User not found"
-//       });
-//     }
-
-//     // Find the existing membership
-//     const existingMembership = await SubscriptionTier.findOne({
-//       _id: id,
-//       creatorId: req.user.userId.toString()
-//     });
-
-//     if (!existingMembership) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Membership not found or you don't have permission to edit it"
-//       });
-//     }
-
-//     // Check if another membership with the same name exists (excluding current one)
-//     const duplicateMembership = await SubscriptionTier.findOne({
-//       tierName: data.tierName,
-//       creatorId: user._id,
-//       _id: { $ne: id } // Exclude current membership
-//     });
-
-//     if (duplicateMembership) {
-//       return res.status(409).json({
-//         success: false,
-//         error: "Membership with Same Name Already Exists. Please Try Again"
-//       });
-//     }
-
-//     const updatedMembership = await SubscriptionTier.findByIdAndUpdate(
-//       id,
-//       {
-//         tierName: data.tierName,
-//         price: data.price,
-//         description: data.description,
-//         perks: data.perks,
-//         updatedAt: new Date()
-//       },
-//       { new: true } 
-//     );
-
-//     return res.status(200).json({
-//       success: true,
-//       data: {
-//         membership: updatedMembership
-//       },
-//       message: "Membership updated successfully"
-//     });
-
-//   } catch (error) {
-//     console.log("Error in Updating Membership: ", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: "Internal Server Error"
-//     });
-//   }
-// }
 export async function updateMembership(req, res) {
   try {
     const { id } = req.params; 
@@ -648,5 +572,81 @@ export async function deleteMembership(req, res) {
       success: false,
       error: "Internal Server Error"
     });
+  }
+}
+
+export async function getAllSubscribers(req, res) {
+  try {
+    const creatorId = req.user.userId;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // Build filter conditions
+    let filterConditions = { creatorId };
+
+    // Search filter
+    if (req.query.search) {
+      const searchTerm = req.query.search;
+      filterConditions.$or = [
+        { "subscriberId.fullName": { $regex: searchTerm, $options: "i" } },
+        { "subscriberId.email": { $regex: searchTerm, $options: "i" } },
+        { "tierId.tierName": { $regex: searchTerm, $options: "i" } }
+      ];
+    }
+
+    // Status filter
+    if (req.query.status && req.query.status !== 'all') {
+      const statusValue = req.query.status === 'paused' ? 'past_due' : req.query.status;
+      filterConditions.status = statusValue;
+    }
+
+    // Get total count BEFORE pagination
+    const totalItems = await Subscription.countDocuments(filterConditions);
+
+    // Get paginated subscriptions with filters applied in the query
+    const subscriptions = await Subscription.find(filterConditions)
+      .populate("subscriberId", "fullName email")
+      .populate("tierId", "tierName")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    // Format data
+    const formattedData = subscriptions.map(sub => ({
+      _id: sub._id,
+      subscriberId: {
+        _id: sub.subscriberId?._id,
+        name: sub.subscriberId?.fullName || "Unknown",
+        email: sub.subscriberId?.email || "No email"
+      },
+      creatorId: {
+        _id: sub.creatorId
+      },
+      tierType: sub.tierId?.tierName || "Unknown",
+      stripeSubscriptionId: sub.stripeSubscriptionId,
+      stripePriceId: sub.stripePriceId,
+      status: sub.status === "past_due" ? "paused" : sub.status,
+      startDate: sub.startDate,
+      nextBillingDate: sub.nextBillingDate,
+      cancelDate: sub.cancelDate,
+      autoRenew: sub.autoRenew,
+      createdAt: sub.createdAt,
+      updatedAt: sub.updatedAt
+    }));
+
+    res.json({
+      data: formattedData,
+      pagination: {
+        currentPage: page,
+        totalPages: Math.ceil(totalItems / limit),
+        totalItems: totalItems,
+        itemsPerPage: limit
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
   }
 }
