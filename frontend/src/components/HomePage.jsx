@@ -29,7 +29,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className='w-full h-[200vh] relative'>
+    <div className='w-full h-[200vh] relative  tracking-wide'>
       <Navbar />
   <Grainient
     color1="#ebe6ea"

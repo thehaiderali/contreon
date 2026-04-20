@@ -1,5 +1,7 @@
 
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif&family=Inter:opsz,wght@14..32,100..900&display=swap');
 @import "tailwindcss";
+
 @source "../node_modules/@uploadthing/react/dist"; /** <-- depends on your project structure */
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
@@ -9,6 +11,12 @@
 @custom-variant dark (&:is(.dark *));
 ::-webkit-scrollbar {
   display: none;
+}
+
+
+.landing-page {
+  font-family: 'Instrument Serif', serif;
+
 }
 
 
