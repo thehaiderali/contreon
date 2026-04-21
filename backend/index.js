@@ -12,6 +12,9 @@ import collectionRouter from "./routes/collection.routes.js";
 import membershipRouter from "./routes/membership.routes.js"
 import postRouter from "./routes/post.routes.js"
 import commentRouter from "./routes/comment.routes.js"
+import webhookRoutes from './routes/webhook.routes.js';
+
+// Use webhook route BEFORE express.json() middleware
 
 const app=express()
 
@@ -19,6 +22,7 @@ app.use(cors({
   origin: 'http://localhost:5173', 
   credentials: true, 
 }));
+app.use('/api/webhooks', webhookRoutes);
 app.use(express.json())
 app.use(cookieParser())
 

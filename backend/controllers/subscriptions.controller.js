@@ -1,5 +1,4 @@
-import { envConfig } from "../config/env.js";
-import stripe from "../config/stripe.js";
+
 import Subscription from "../models/subscription.model.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
 import User from "../models/user.model.js";
@@ -53,7 +52,7 @@ export async function createSubscription(req, res) {
 export async function getMySubscriptions(req, res) {
   try {
     const subscriptions = await Subscription.find({ subscriberId: req.user.userId })
-      .populate("creatorId", "fullName email")
+      .populate("creatorId", "fullName email").populate("tierId")
       .sort({ createdAt: -1 });
     
     return res.status(200).json({
@@ -92,49 +91,49 @@ export async function getCreatorSubscribers(req, res) {
   }
 }
 
-export async function cancelSubscription(req, res) {
-  try {
-    const { subscriptionId } = req.params;
-    const userId = req.user.userId;
-    const userRole = req.user.role;
+// export async function cancelSubscription(req, res) {
+//   try {
+//     const { subscriptionId } = req.params;
+//     const userId = req.user.userId;
+//     const userRole = req.user.role;
 
-    console.log("Cancelling subscription:", subscriptionId);
+//     console.log("Cancelling subscription:", subscriptionId);
 
-    if (!subscriptionId || subscriptionId === "null" || subscriptionId === "undefined") {
-      return res.status(400).json({ 
-        success: false, 
-        error: "Invalid subscription ID" 
-      });
-    }
+//     if (!subscriptionId || subscriptionId === "null" || subscriptionId === "undefined") {
+//       return res.status(400).json({ 
+//         success: false, 
+//         error: "Invalid subscription ID" 
+//       });
+//     }
 
-    const subscription = await Subscription.findById(subscriptionId);
-    if (!subscription) {
-      return res.status(404).json({ success: false, error: "Subscription not found" });
-    }
+//     const subscription = await Subscription.findById(subscriptionId);
+//     if (!subscription) {
+//       return res.status(404).json({ success: false, error: "Subscription not found" });
+//     }
 
-    if (userRole === "subscriber" && subscription.subscriberId.toString() !== userId) {
-      return res.status(403).json({ success: false, error: "Unauthorized" });
-    }
-    if (userRole === "creator" && subscription.creatorId.toString() !== userId) {
-      return res.status(403).json({ success: false, error: "Unauthorized" });
-    }
+//     if (userRole === "subscriber" && subscription.subscriberId.toString() !== userId) {
+//       return res.status(403).json({ success: false, error: "Unauthorized" });
+//     }
+//     if (userRole === "creator" && subscription.creatorId.toString() !== userId) {
+//       return res.status(403).json({ success: false, error: "Unauthorized" });
+//     }
 
 
-    subscription.status = "cancelled";
-    subscription.cancelDate = new Date();
-    subscription.autoRenew = false;
-    await subscription.save();
+//     subscription.status = "cancelled";
+//     subscription.cancelDate = new Date();
+//     subscription.autoRenew = false;
+//     await subscription.save();
 
-    return res.status(200).json({
-      success: true,
-      message: "Subscription cancelled. Access will continue until period end."
-    });
+//     return res.status(200).json({
+//       success: true,
+//       message: "Subscription cancelled. Access will continue until period end."
+//     });
 
-  } catch (error) {
-    console.error("Error cancelling subscription:", error);
-    return res.status(500).json({ success: false, error: error.message });
-  }
-}
+//   } catch (error) {
+//     console.error("Error cancelling subscription:", error);
+//     return res.status(500).json({ success: false, error: error.message });
+//   }
+// }
 export async function resumeSubscription(req, res) {
   try {
     const { subscriptionId } = req.params;

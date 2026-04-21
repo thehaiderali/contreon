@@ -80,6 +80,13 @@ const useSubscriptionStore = create((set, get) => ({
       throw error;
     }
   },
+  updateSubscription: (subscriptionId, updates) => {
+    set((state) => ({
+      subscriptions: state.subscriptions.map(sub =>
+        sub._id === subscriptionId ? { ...sub, ...updates } : sub
+      )
+    }));
+  },
 
   clearSubscriptions: () => {
     set({ subscriptions: [], error: null });
