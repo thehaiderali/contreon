@@ -7,7 +7,7 @@ import Explore from './pages/private/subscriber/Explore';
 import Chats from './pages/private/subscriber/Chats';
 import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
-import Feed from './components/Feed';
+import Feed from './components/Feed.jsx';
 import { Dashboard } from './pages/private/creator/Dashboard';
 import Library from './pages/private/creator/Library';
 import Members from './pages/private/creator/Members';
@@ -37,6 +37,8 @@ import { useEffect } from 'react';
 import useMembershipStore from '@/store/memberShipStore';
 import PaymentSuccess from './pages/private/stripe/SuccessPage';
 import PaymentCancel from './pages/private/stripe/CancelPage';
+import Memberships from './pages/private/subscriber/Memberships';
+import SubscriberHome from './pages/private/subscriber/SubscriberHome';
 
 const App = () => {
 
@@ -59,12 +61,13 @@ const App = () => {
       <Route element={<ProtectedRoutes />}>
         
         <Route path="/home" element={<Home />}>
-          <Route index element={<Feed />} />
+          <Route index element={<SubscriberHome />} />
           <Route path="explore" element={<Explore />} />
           <Route path="chat" element={<Chats />} />
           <Route path="messages" element={<Chats />} />
           <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
+          <Route path='memberships' element={<Memberships/>}/>
         </Route>
 
         <Route element={<CreatorRoutes />}>
