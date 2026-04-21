@@ -4,10 +4,8 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import Home from './pages/private/subscriber/Home';
 import Explore from './pages/private/subscriber/Explore';
-import Chats from './pages/private/subscriber/Chats';
 import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
-import Feed from './components/Feed.jsx';
 import { Dashboard } from './pages/private/creator/Dashboard';
 import Library from './pages/private/creator/Library';
 import Members from './pages/private/creator/Members';
@@ -39,6 +37,8 @@ import PaymentSuccess from './pages/private/stripe/SuccessPage';
 import PaymentCancel from './pages/private/stripe/CancelPage';
 import Memberships from './pages/private/subscriber/Memberships';
 import SubscriberHome from './pages/private/subscriber/SubscriberHome';
+import SubscriberChat from './pages/private/subscriber/SubscriberChat';
+import CreatorChats from './pages/private/creator/CreatorChats';
 
 const App = () => {
 
@@ -63,8 +63,7 @@ const App = () => {
         <Route path="/home" element={<Home />}>
           <Route index element={<SubscriberHome />} />
           <Route path="explore" element={<Explore />} />
-          <Route path="chat" element={<Chats />} />
-          <Route path="messages" element={<Chats />} />
+          <Route path="chat" element={<SubscriberChat />} />
           <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path='memberships' element={<Memberships/>}/>
@@ -79,7 +78,7 @@ const App = () => {
             <Route path="members" element={<Members />} />
             <Route path="insights" element={<Insights />} />
             <Route path="payouts" element={<Payouts />} />
-            <Route path="messages" element={<Chats />} />
+            <Route path="messages" element={<CreatorChats />} />
             <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 

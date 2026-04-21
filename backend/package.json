@@ -26,6 +26,7 @@
     "mongoose": "^9.3.1",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.14",
+    "socket.io": "^4.8.3",
     "stripe": "^21.0.1",
     "uploadthing": "^7.7.4",
     "zod": "^4.3.6"
