@@ -120,9 +120,9 @@ const CreatorMembership = ({ creator, creatorUrl }) => {
 
   const handleUpgrade = async (tierId) => {
     try {
-      const res = await api.post('/subscriptions/checkout', { tierId, creatorUrl });
-      if (res.data?.url) {
-        window.location.href = res.data.url;
+      const res = await api.post('/subscriptions/create-checkout', { tierId });
+      if (res.data.data?.checkoutUrl) {
+        window.location.href = res.data.data.checkoutUrl;
       }
     } catch (err) {
       console.error('Checkout error:', err);
