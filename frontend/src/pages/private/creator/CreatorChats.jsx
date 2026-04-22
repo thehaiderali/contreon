@@ -7,6 +7,15 @@
 // }
 
 // export default CreatorChats
+// import React from 'react'
+
+// const CreatorChats = () => {
+//   return (
+//     <div>CreatorChats</div>
+//   )
+// }
+
+// export default CreatorChats
 
 import { useAuthStore } from "@/store/authStore";
 import chatService from "@/src/services/chatService";
@@ -103,9 +112,19 @@ useEffect(() => {
   const loadSubscribers = async () => {
     try {
       setLoading(true);
-      // Get all subscribers for this creator
       const response = await chatService.getSubscribers();
-      setSubscribers(response?.data?.subscribers || []);
+      const raw = response?.data?.subscribers || [];
+  
+      // Deduplicate by subscriber _id, keeping the latest entry
+      const seen = new Map();
+      raw.forEach((sub) => {
+        const id = getUserId(sub._id);
+        if (!seen.has(id)) {
+          seen.set(id, sub);
+        }
+      });
+  
+      setSubscribers(Array.from(seen.values()));
     } catch (error) {
       console.error('Failed to load subscribers:', error);
     } finally {
@@ -533,3 +552,5 @@ useEffect(() => {
 };
 
 export default CreatorChats;
+
+
