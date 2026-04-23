@@ -1,22 +1,3 @@
-// import React from 'react'
-
-// const CreatorChats = () => {
-//   return (
-//     <div>CreatorChats</div>
-//   )
-// }
-
-// export default CreatorChats
-// import React from 'react'
-
-// const CreatorChats = () => {
-//   return (
-//     <div>CreatorChats</div>
-//   )
-// }
-
-// export default CreatorChats
-
 import { useAuthStore } from "@/store/authStore";
 import chatService from "@/src/services/chatService";
 import React, { useState, useEffect, useRef } from "react";

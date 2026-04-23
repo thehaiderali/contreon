@@ -23,7 +23,8 @@ const RecommendationSearch = () => {
   const fetchRandomCreators = async () => {
     setLoadingSuggestions(true);
     try {
-      const response = await api.get('/creators/recommendations/suggestions');
+      // Using creators/recommendations base path
+      const response = await api.get('/creators/recommendations/discover');
       if (response.data.success) {
         setRandomCreators(response.data.data);
       }
@@ -51,7 +52,8 @@ const RecommendationSearch = () => {
 
       setIsSearching(true);
       try {
-        const response = await api.get(`/creators/recommendations/search?search=${query}`);
+        // Using creators/recommendations base path
+        const response = await api.get(`/creators/recommendations/search?search=${encodeURIComponent(query)}`);
         if (response.data.success) {
           setSearchResults(response.data.data);
           setShowDropdown(true);
@@ -75,12 +77,13 @@ const RecommendationSearch = () => {
   const handleAddRecommendation = async (creatorId) => {
     setAddingId(creatorId);
     try {
+      // Using creators/recommendations base path
       const response = await api.post('/creators/recommendations', {
         recommendedCreatorId: creatorId
       });
 
       if (response.data.success) {
-        toast.success('Creator added to recommendations!');
+        toast.success('Creator recommended successfully!');
         
         // Update both search results and random creators
         setSearchResults(prev => 
@@ -99,6 +102,7 @@ const RecommendationSearch = () => {
           )
         );
         
+        // Clear search after successful addition
         setShowDropdown(false);
         setSearchTerm('');
         setSearchResults([]);
@@ -167,6 +171,11 @@ const RecommendationSearch = () => {
                       <p className="font-medium">{creator.fullName}</p>
                       {creator.pageName && (
                         <p className="text-sm text-gray-500">{creator.pageName}</p>
+                      )}
+                      {creator.category && (
+                        <Badge variant="outline" className="text-xs mt-1">
+                          {creator.category}
+                        </Badge>
                       )}
                       {creator.interests?.length > 0 && (
                         <div className="flex gap-1 mt-1">
@@ -267,6 +276,14 @@ const RecommendationSearch = () => {
                     <p className="mt-3 text-sm text-gray-600 line-clamp-2">
                       {creator.bio}
                     </p>
+                  )}
+                  
+                  {creator.category && (
+                    <div className="mt-2">
+                      <Badge variant="secondary" className="text-xs">
+                        {creator.category}
+                      </Badge>
+                    </div>
                   )}
                   
                   {creator.interests?.length > 0 && (

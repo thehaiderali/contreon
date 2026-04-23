@@ -5,47 +5,50 @@ import Recommendation from "../models/recommendation.model.js";
 export const searchCreators = async (req, res) => {
   try {
     const { search } = req.query;
-    const currentCreatorId = req.user.id;
+    const currentCreatorId = req.user.userId;
 
     if (!search || search.trim() === '') {
       return res.json({ success: true, data: [] });
     }
-    const creators = await User.find({
+
+    // Search users first
+    const users = await User.find({
       _id: { $ne: currentCreatorId },
       role: "creator",
       fullName: { $regex: search, $options: 'i' }
     })
-    .select("fullName email")
+    .select("fullName email interests")
     .limit(10)
     .lean();
 
-    // Get profiles for these creators
-    const creatorIds = creators.map(c => c._id);
+    // Get profiles for these users
+    const userIds = users.map(u => u._id);
     const profiles = await CreatorProfile.find({
-      creatorId: { $in: creatorIds }
+      creatorId: { $in: userIds }
     }).lean();
 
     // Get already recommended creators
     const recommendations = await Recommendation.find({
       creatorId: currentCreatorId,
-      recommendedCreatorId: { $in: creatorIds }
+      recommendedCreatorId: { $in: userIds }
     }).lean();
 
     const recommendedIds = new Set(recommendations.map(r => r.recommendedCreatorId.toString()));
 
     // Combine data
-    const results = creators.map(creator => {
-      const profile = profiles.find(p => p.creatorId.toString() === creator._id.toString());
+    const results = users.map(user => {
+      const profile = profiles.find(p => p.creatorId.toString() === user._id.toString());
       return {
-        _id: creator._id,
-        fullName: creator.fullName,
-        email: creator.email,
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        interests: user.interests || [], // interests from User model
         pageName: profile?.pageName,
         pageUrl: profile?.pageUrl,
         profileImageUrl: profile?.profileImageUrl,
         bio: profile?.bio,
-        interests: profile?.interests || [],
-        isAlreadyRecommended: recommendedIds.has(creator._id.toString())
+        category: profile?.category,
+        isAlreadyRecommended: recommendedIds.has(user._id.toString())
       };
     });
 
@@ -58,69 +61,90 @@ export const searchCreators = async (req, res) => {
 
 export const getRandomCreatorsWithSameInterests = async (req, res) => {
   try {
-    const currentCreatorId = req.user.id;
+    const currentCreatorId = req.user.userId;
 
-    // Get current creator's profile
-    const currentProfile = await CreatorProfile.findOne({ creatorId: currentCreatorId });
+    // Get current user's interests (from User model, not CreatorProfile)
+    const currentUser = await User.findById(currentCreatorId).select("interests");
     
-    if (!currentProfile || !currentProfile.interests.length) {
-      // If no interests, return random creators
-      const randomCreators = await User.aggregate([
-        { $match: { _id: { $ne: currentCreatorId }, role: "creator" } },
+    if (!currentUser || !currentUser.interests || currentUser.interests.length === 0) {
+      // If no interests, return random creators (excluding self)
+      const randomUsers = await User.aggregate([
+        { 
+          $match: { 
+            _id: { $ne: currentCreatorId }, 
+            role: "creator" 
+          } 
+        },
         { $sample: { size: 6 } }
       ]);
       
-      const creatorIds = randomCreators.map(c => c._id);
-      const profiles = await CreatorProfile.find({ creatorId: { $in: creatorIds } });
-      const recommendations = await Recommendation.find({ creatorId: currentCreatorId });
+      const userIds = randomUsers.map(u => u._id);
+      const profiles = await CreatorProfile.find({ 
+        creatorId: { $in: userIds } 
+      }).lean();
+      
+      const recommendations = await Recommendation.find({ 
+        creatorId: currentCreatorId 
+      }).lean();
+      
       const recommendedIds = new Set(recommendations.map(r => r.recommendedCreatorId.toString()));
       
-      const results = randomCreators.map(creator => {
-        const profile = profiles.find(p => p.creatorId.toString() === creator._id.toString());
+      const results = randomUsers.map(user => {
+        const profile = profiles.find(p => p.creatorId.toString() === user._id.toString());
         return {
-          _id: creator._id,
-          fullName: creator.fullName,
-          pageName: profile?.pageName,
+          _id: user._id,
+          fullName: user.fullName,
           profileImageUrl: profile?.profileImageUrl,
           bio: profile?.bio,
-          interests: profile?.interests || [],
-          isAlreadyRecommended: recommendedIds.has(creator._id.toString())
+          pageName: profile?.pageName,
+          category: profile?.category,
+          interests: user.interests || [],
+          isAlreadyRecommended: recommendedIds.has(user._id.toString())
         };
       });
       
       return res.json({ success: true, data: results });
     }
 
-    // Find creators with same interests
-    const sameInterestCreators = await CreatorProfile.aggregate([
-      {
-        $match: {
-          creatorId: { $ne: currentCreatorId },
-          interests: { $in: currentProfile.interests }
-        }
-      },
-      { $sample: { size: 6 } }
-    ]);
+    // Find users with same interests (query User model, not CreatorProfile)
+    const sameInterestUsers = await User.find({
+      _id: { $ne: currentCreatorId },
+      role: "creator",
+      interests: { $in: currentUser.interests }
+    })
+    .select("fullName email interests")
+    .limit(20)
+    .lean();
 
-    const creatorIds = sameInterestCreators.map(p => p.creatorId);
-    const users = await User.find({ 
-      _id: { $in: creatorIds },
-      role: "creator"
-    }).select("fullName email");
+    // Get random 6 from the results
+    const shuffled = sameInterestUsers.sort(() => 0.5 - Math.random());
+    const selectedUsers = shuffled.slice(0, 6);
 
-    const recommendations = await Recommendation.find({ creatorId: currentCreatorId });
+    // Get profiles for these users
+    const userIds = selectedUsers.map(u => u._id);
+    const profiles = await CreatorProfile.find({ 
+      creatorId: { $in: userIds } 
+    }).lean();
+
+    // Get recommendations
+    const recommendations = await Recommendation.find({ 
+      creatorId: currentCreatorId 
+    }).lean();
+    
     const recommendedIds = new Set(recommendations.map(r => r.recommendedCreatorId.toString()));
 
-    const results = sameInterestCreators.map(profile => {
-      const user = users.find(u => u._id.toString() === profile.creatorId.toString());
+    const results = selectedUsers.map(user => {
+      const profile = profiles.find(p => p.creatorId.toString() === user._id.toString());
       return {
-        _id: profile.creatorId,
-        fullName: user?.fullName || "Unknown",
-        pageName: profile.pageName,
-        profileImageUrl: profile.profileImageUrl,
-        bio: profile.bio,
-        interests: profile.interests,
-        isAlreadyRecommended: recommendedIds.has(profile.creatorId.toString())
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        interests: user.interests,
+        pageName: profile?.pageName,
+        profileImageUrl: profile?.profileImageUrl,
+        bio: profile?.bio,
+        category: profile?.category,
+        isAlreadyRecommended: recommendedIds.has(user._id.toString())
       };
     });
 
@@ -134,7 +158,34 @@ export const getRandomCreatorsWithSameInterests = async (req, res) => {
 export const addRecommendation = async (req, res) => {
   try {
     const { recommendedCreatorId } = req.body;
-    const currentCreatorId = req.user.id;
+    const currentCreatorId = req.user.userId;
+
+    // Validate that both users are creators
+    const [currentUser, recommendedUser] = await Promise.all([
+      User.findById(currentCreatorId),
+      User.findById(recommendedCreatorId)
+    ]);
+
+    if (!currentUser || currentUser.role !== "creator") {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Only creators can make recommendations" 
+      });
+    }
+
+    if (!recommendedUser || recommendedUser.role !== "creator") {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Can only recommend other creators" 
+      });
+    }
+
+    if (currentCreatorId === recommendedCreatorId) {
+      return res.status(400).json({ 
+        success: false, 
+        message: "Cannot recommend yourself" 
+      });
+    }
 
     // Check if already recommended
     const existing = await Recommendation.findOne({
@@ -169,13 +220,71 @@ export const addRecommendation = async (req, res) => {
 
 export const getRecommendations = async (req, res) => {
   try {
-    const currentCreatorId = req.user.id;
+    const currentCreatorId = req.user.userId;
 
     const recommendations = await Recommendation.find({ 
       creatorId: currentCreatorId 
-    }).populate("recommendedCreatorId", "fullName email");
+    })
+    .populate("recommendedCreatorId", "fullName email interests")
+    .lean();
 
-    res.json({ success: true, data: recommendations });
+    // Get profiles for recommended creators
+    const recommendedIds = recommendations.map(r => r.recommendedCreatorId._id);
+    const profiles = await CreatorProfile.find({
+      creatorId: { $in: recommendedIds }
+    }).lean();
+
+    // Enrich recommendation data with profile info
+    const enrichedRecommendations = recommendations.map(rec => {
+      const profile = profiles.find(p => 
+        p.creatorId.toString() === rec.recommendedCreatorId._id.toString()
+      );
+      
+      return {
+        ...rec,
+        recommendedCreator: {
+          ...rec.recommendedCreatorId,
+          pageName: profile?.pageName,
+          pageUrl: profile?.pageUrl,
+          profileImageUrl: profile?.profileImageUrl,
+          bio: profile?.bio,
+          category: profile?.category
+        }
+      };
+    });
+
+    res.json({ success: true, data: enrichedRecommendations });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+
+export const deleteRecommendation = async (req, res) => {
+  try {
+    const { recommendationId } = req.params;
+    const currentCreatorId = req.user.userId;
+
+    // Find and verify ownership
+    const recommendation = await Recommendation.findOne({
+      _id: recommendationId,
+      creatorId: currentCreatorId
+    });
+
+    if (!recommendation) {
+      return res.status(404).json({
+        success: false,
+        message: "Recommendation not found or you don't have permission to delete it"
+      });
+    }
+
+    await recommendation.deleteOne();
+
+    res.json({
+      success: true,
+      message: "Recommendation removed successfully"
+    });
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: error.message });

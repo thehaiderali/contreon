@@ -22,6 +22,13 @@ import {
   togglePublishStatus,
   getPostStats
 } from "../controllers/post.controller.js";
+import {
+  searchCreators,
+  getRandomCreatorsWithSameInterests,
+  addRecommendation,
+  getRecommendations,
+  deleteRecommendation
+} from "../controllers/recommendation.controller.js";
 import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
@@ -34,12 +41,13 @@ import { createConnectedAccount } from "../controllers/stripe.controller.js";
 
 const creatorRouter = Router();
 
-//Stripe
-
+creatorRouter.get("/recommendations/search",authMiddleware,checkCreatorExists, searchCreators);
+creatorRouter.delete("/recommendations/:recommendationId", authMiddleware, checkCreatorExists, deleteRecommendation);
+creatorRouter.get("/recommendations/discover",authMiddleware,checkCreatorExists, getRandomCreatorsWithSameInterests);
+creatorRouter.post("/recommendations", authMiddleware, checkCreatorExists, addRecommendation);
+creatorRouter.get("/recommendations/my-recommendations",authMiddleware,checkCreatorExists, getRecommendations);
 creatorRouter.get("/my-subscribers",authMiddleware,checkCreatorExists,getAllSubscribers)
 creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,createConnectedAccount);
-
-// Mux routes
 creatorRouter.post("/mux-upload-url", authMiddleware, checkCreatorExists, MuxUploadUrl);
 creatorRouter.get("/mux-upload-status/:uploadId", authMiddleware, checkCreatorExists, checkMuxUploadStatus);
 creatorRouter.get("/mux-playback-url/:playbackId", authMiddleware, checkCreatorExists, getSignedPlaybackUrl);

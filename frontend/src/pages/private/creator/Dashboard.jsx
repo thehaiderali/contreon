@@ -1,21 +1,20 @@
 import React from 'react'
 import { useEffect, useState } from 'react';
-import { useNavigate, useLocation } from 'react-router';
-import { motion, AnimatePresence } from 'motion/react'
 import { api } from '@/lib/api';
+import { motion } from 'motion/react';
+import { AnimatePresence } from 'motion/react';
 
 import CreatorHome from '@/src/components/creator/dashboard/Home'
 
 import NoShop from './dashboard/NoShop'
 import Memberships from '@/src/components/creator/dashboard/Memberships'
-import NoRecommendations from './dashboard/NoRecommendations'
+import Recommendations from './dashboard/NoRecommendations';
 import Collections from '@/src/components/creator/dashboard/Collections'
 import OnBoarding from '@/src/components/creator/onboarding/OnBoarding';
 
 export const Dashboard = () => {
 
   const navlinks = ["Home", "Collections", "Shop", "Memberships", "Recommendations"]
-  const location = useLocation();
   const [isLoading, setIsLoading] = useState(true)
   const [hasProfile, setHasProfile] = useState(null)
   const [currentLink, setCurrentLink] = useState("Home")
@@ -25,7 +24,7 @@ export const Dashboard = () => {
     "Collections": <Collections />,
     "Shop": <NoShop />,
     "Memberships": <Memberships />,
-    "Recommendations": <NoRecommendations />
+    "Recommendations": <Recommendations />
   }
 
   useEffect(() => {
