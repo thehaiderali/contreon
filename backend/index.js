@@ -185,7 +185,7 @@ import Subscription from "./models/subscription.model.js";
 const app = express()
 
 app.use(cors({
-  origin: 'http://localhost:5173', 
+  origin: envConfig.FRONTEND_URL, 
   credentials: true, 
 }));
 app.use('/api/webhooks', webhookRoutes);
