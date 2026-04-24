@@ -17,7 +17,7 @@ class ChatService {
     if (token) {
       options.auth = { token };
     }
-    this.socket = io('http://localhost:3000', options);
+    this.socket = io(import.meta.env.VITE_SOCKET_URL, options);
     
     this.socket.on('connect', () => {
       console.log('[chat/socket] connected', {
