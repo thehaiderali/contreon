@@ -99,19 +99,41 @@ useEffect(() => {
     scrollToBottom();
   }, [messages]);
 
-  const loadCreators = async () => {
-    try {
-      setLoading(true);
-      // Get all creators the subscriber is subscribed to
-      const response = await chatService.getSubscribedCreators();
-      setCreators(response?.data?.creators || []);
-    } catch (error) {
-      console.error('Failed to load creators:', error);
-    } finally {
-      setLoading(false);
+// Fix the loadCreators function to deduplicate creators
+const loadCreators = async () => {
+  try {
+    setLoading(true);
+    // Get all creators the subscriber is subscribed to
+    const response = await chatService.getSubscribedCreators();
+    const creators = response?.data?.creators || [];
+    
+    // Deduplicate creators by their ID
+    const uniqueCreators = [];
+    const seenIds = new Set();
+    
+    for (const creator of creators) {
+      const creatorId = getUserId(creator._id);
+      if (creatorId && !seenIds.has(creatorId)) {
+        seenIds.add(creatorId);
+        
+        // Merge any additional data if there are duplicates
+        // (like different subscription tiers, etc.)
+        uniqueCreators.push(creator);
+      }
     }
-  };
-
+    
+    // Sort by lastMessageAt (most recent first)
+    const sortedCreators = uniqueCreators.sort((a, b) => 
+      new Date(b.lastMessageAt || 0) - new Date(a.lastMessageAt || 0)
+    );
+    
+    setCreators(sortedCreators);
+  } catch (error) {
+    console.error('Failed to load creators:', error);
+  } finally {
+    setLoading(false);
+  }
+};
   const loadMessages = async () => {
     if (!selectedCreator) return;
     

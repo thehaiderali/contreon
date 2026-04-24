@@ -6,7 +6,10 @@ import Grainient from '@/components/Grainient';
 import FeaturesSection from './FeaturesSection';
 import PricingSection from './PricingSection';
 import { useTheme } from '@/hooks/use-theme';
+
+
 const HomePage = () => {
+
 
   const {theme}=useTheme();
   const lenisRef = useRef(null);
