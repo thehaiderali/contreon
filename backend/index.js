@@ -204,8 +204,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie', 'X-Requested-With',   'x-uploadthing-package',  // Add this
-    'x-uploadthing-version', ],
+  allowedHeaders: ['*'],
   exposedHeaders: ['Set-Cookie']
 }));
 
