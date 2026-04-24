@@ -60,5 +60,5 @@ stripeAccountStatus:{
 
 },{timestamps:true})
 
-const User=model("User",userSchema)
-export default User
+const User = mongoose.models.User || model("User", userSchema);
+export default User;

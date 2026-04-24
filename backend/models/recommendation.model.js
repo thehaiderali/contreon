@@ -25,5 +25,5 @@ recommendationSchema.index(
   { unique: true }
 );
 
-const Recommendation = mongoose.model("Recommendation", recommendationSchema);
+const Recommendation = mongoose.models.Recommendation || mongoose.model("Recommendation", recommendationSchema);
 export default Recommendation;

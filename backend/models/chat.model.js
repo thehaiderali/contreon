@@ -69,5 +69,5 @@ const conversationSchema = new mongoose.Schema({
 conversationSchema.index({ participants: 1 });
 conversationSchema.index({ lastMessageAt: -1 });
 
-export const Message = mongoose.model("Message", messageSchema);
-export const Conversation = mongoose.model("Conversation", conversationSchema);
+export const Message = mongoose.models.Message || mongoose.model("Message", messageSchema);
+export const Conversation = mongoose.models.Conversation || mongoose.model("Conversation", conversationSchema);

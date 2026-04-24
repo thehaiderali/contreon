@@ -48,5 +48,5 @@ const profileSchema=new Schema({
     }
 },{timestamps:true})
 
-const CreatorProfile=mongoose.model("CreatorProfile",profileSchema);
-export default CreatorProfile
+const CreatorProfile = mongoose.models.CreatorProfile || mongoose.model("CreatorProfile", profileSchema);
+export default CreatorProfile;

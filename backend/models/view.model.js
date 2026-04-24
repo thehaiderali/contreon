@@ -18,5 +18,5 @@ const postViewSchema=new mongoose.Schema({
 },{timestamps:true})
 
 
-const PostView=mongoose.model("PostView",postViewSchema);
-export default PostView
+const PostView = mongoose.models.PostView || mongoose.model("PostView", postViewSchema);
+export default PostView;

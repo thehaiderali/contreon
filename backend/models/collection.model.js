@@ -27,5 +27,5 @@ const collectionSchema=new mongoose.Schema({
 
 },{timestamps:true})
 
-const Collection=mongoose.model("Collection",collectionSchema)
-export default Collection
+const Collection = mongoose.models.Collection || mongoose.model("Collection", collectionSchema);
+export default Collection;

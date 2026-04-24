@@ -41,5 +41,5 @@ const subscriptionTierSchema = new Schema(
   { timestamps: true }
 );
 
-const SubscriptionTier = model("SubscriptionTier", subscriptionTierSchema);
+const SubscriptionTier = mongoose.models.SubscriptionTier || model("SubscriptionTier", subscriptionTierSchema);
 export default SubscriptionTier;
