@@ -1,6 +1,4 @@
 import mongoose from "mongoose";
-
-
 const postViewSchema=new mongoose.Schema({
     postId:{
         type:mongoose.Schema.Types.ObjectId,

@@ -1,4 +1,5 @@
 import { model, Schema } from "mongoose";
+import mongoose from "mongoose";
 const userSchema=new Schema({
    fullName:{
     type:String,
