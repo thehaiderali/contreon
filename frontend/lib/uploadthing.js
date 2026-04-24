@@ -1,7 +1,7 @@
 import { generateUploadButton } from "@uploadthing/react";
 
 
-const uploadthingUrl=import.meta.env.VITE_BACKEND_URL +  "/api/uploadthing"
+const uploadthingUrl=import.meta.env.VITE_BACKEND_URL +  "/uploadthing"
 export const UploadButton = generateUploadButton({
   url:uploadthingUrl ,
 });
