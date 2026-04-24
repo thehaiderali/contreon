@@ -184,10 +184,30 @@ import Subscription from "./models/subscription.model.js";
 // Use webhook route BEFORE express.json() middleware
 const app = express()
 
+// Define allowed origins
+const allowedOrigins = [
+  'https://contreon.thehaiderali.com',
+  'http://localhost:5173',
+  'https://liver-tiling-exit.ngrok-free.dev'
+];
+
 app.use(cors({
-  origin: envConfig.FRONTEND_URL, 
-  credentials: true, 
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
+    }
+    return callback(null, true);
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie', 'X-Requested-With'],
+  exposedHeaders: ['Set-Cookie']
 }));
+
 app.use('/api/webhooks', webhookRoutes);
 app.use(express.json())
 app.use(cookieParser())
@@ -252,7 +272,7 @@ const server = createServer(app);
 // Socket.IO setup
 const io = new Server(server, {
   cors: {
-    origin: 'http://localhost:5173',
+    origin: envConfig.FRONTEND_URL,
     credentials: true
   }
 });
