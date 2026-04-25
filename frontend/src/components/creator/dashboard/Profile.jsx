@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Separator } from '@/components/ui/separator';
-import { ExternalLink, Globe, LinkIcon } from 'lucide-react';
+import { ArrowBigRight, ArrowRight, ExternalLink, Globe, LinkIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router';
 
 /* ─── tiny helpers ─────────────────────────────────────────── */
 const getInitials = (name = '') =>
@@ -144,16 +146,11 @@ export default function CreatorProfile() {
             </AvatarFallback>
           </Avatar>
 
-          {/* Page URL badge */}
           {pageUrl && (
-            <Badge
-              variant="secondary"
-              className="mb-1 gap-1 text-xs font-mono tracking-tight"
-            >
-              <Globe className="w-3 h-3" />
-              {pageUrl}
-            </Badge>
-          )}
+           <div className='mt-10'>
+            <Link  to={`/c/${pageUrl}`} target='_blank' className=''> <Button className={""}> View Your Page </Button> </Link>
+           </div>
+          )} 
         </div>
 
         {/* Name + bio */}

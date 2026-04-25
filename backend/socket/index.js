@@ -2,6 +2,7 @@ import jwt from "jsonwebtoken";
 import { Message, Conversation } from "../models/chat.model.js";
 import User from "../models/user.model.js";
 import Subscription from "../models/subscription.model.js";
+import { envConfig } from "../config/env.js";
 
 // Helper functions for chat permissions
 async function canCreatorChatWithSubscriber(creatorId, subscriberId) {
@@ -46,7 +47,7 @@ export function setupSocketIO(io) {
     }
     
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const decoded = jwt.verify(token, envConfig.JWT_SECRET);
       socket.userId = decoded.userId;
       socket.userRole = decoded.role;
       next();
