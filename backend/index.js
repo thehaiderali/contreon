@@ -16,6 +16,7 @@ import postRouter from "./routes/post.routes.js";
 import commentRouter from "./routes/comment.routes.js";
 import webhookRoutes from './routes/webhook.routes.js';
 import chatRouter from "./routes/chat.routes.js";
+import notificationRoutes from "./routes/notification.routes.js";
 import { setupSocketIO } from "./socket/index.js";
 
 const app = express();
@@ -60,7 +61,7 @@ app.use("/api/memberships", membershipRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/chat", chatRouter);
-
+app.use("/api/notifications", notificationRoutes);
 // Create HTTP server
 const server = createServer(app);
 

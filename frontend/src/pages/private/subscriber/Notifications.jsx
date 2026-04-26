@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,82 +10,23 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { 
   Bell, 
-  MessageCircle, 
-  Heart, 
-  UserPlus, 
-  Settings, 
-  Crown,
   CheckCheck,
   Loader2,
   MailOpen,
-  Mail,
   Trash2,
-  MoreVertical
+  MoreVertical,
+  AlertCircle,
+  RefreshCw,
+  FileText,
+  Video,
+  Radio,
+  Megaphone,
+  Gift,
+  Crown,
+  Settings
 } from 'lucide-react';
-
-// Hardcoded notifications data
-const hardcodedNotifications = [
-  {
-    _id: 'notif_1',
-    userId: 'user_1',
-    type: 'message',
-    title: 'New Message from Tech Guru',
-    message: 'Thank you for subscribing! Check out your exclusive content.',
-    read: false,
-    metadata: { senderId: 'creator_1', senderName: 'Tech Guru' },
-    createdAt: '2024-01-20T10:30:00.000Z',
-  },
-  {
-    _id: 'notif_2',
-    userId: 'user_1',
-    type: 'like',
-    title: 'Someone liked your comment',
-    message: 'Fitness Coach liked your comment on their latest post.',
-    read: false,
-    metadata: { postId: 'post_123', likerName: 'Fitness Coach' },
-    createdAt: '2024-01-19T15:45:00.000Z',
-  },
-  {
-    _id: 'notif_3',
-    userId: 'user_1',
-    type: 'follow',
-    title: 'New Follower',
-    message: 'Music Academy started following you.',
-    read: true,
-    metadata: { followerId: 'creator_3', followerName: 'Music Academy' },
-    createdAt: '2024-01-18T09:20:00.000Z',
-  },
-  {
-    _id: 'notif_4',
-    userId: 'user_1',
-    type: 'system',
-    title: 'Payment Successful',
-    message: 'Your payment for Pro Plan has been processed successfully.',
-    read: true,
-    metadata: { subscriptionId: 'sub_1', amount: 29.99 },
-    createdAt: '2024-01-15T14:15:00.000Z',
-  },
-  {
-    _id: 'notif_5',
-    userId: 'user_1',
-    type: 'membership',
-    title: 'Membership Renewal',
-    message: 'Your Elite Membership will renew in 3 days.',
-    read: false,
-    metadata: { tierName: 'Elite Membership', daysLeft: 3 },
-    createdAt: '2024-01-19T08:00:00.000Z',
-  },
-  {
-    _id: 'notif_6',
-    userId: 'user_1',
-    type: 'message',
-    title: 'Special Offer',
-    message: 'Get 20% off on yearly subscription! Limited time offer.',
-    read: false,
-    metadata: { discount: '20%', validUntil: '2024-02-01' },
-    createdAt: '2024-01-18T18:30:00.000Z',
-  },
-];
+import { toast } from 'sonner';
+import { api } from '@/lib/api';
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -109,16 +49,20 @@ const formatDate = (dateString) => {
 // Helper function to get notification icon
 const getNotificationIcon = (type) => {
   switch (type) {
-    case 'message':
-      return MessageCircle;
-    case 'like':
-      return Heart;
-    case 'follow':
-      return UserPlus;
-    case 'system':
-      return Settings;
+    case 'new_post':
+      return FileText;
+    case 'new_video':
+      return Video;
+    case 'live_stream':
+      return Radio;
+    case 'announcement':
+      return Megaphone;
+    case 'special_offer':
+      return Gift;
     case 'membership':
       return Crown;
+    case 'system':
+      return Settings;
     default:
       return Bell;
   }
@@ -127,123 +71,243 @@ const getNotificationIcon = (type) => {
 // Helper function to get notification color
 const getNotificationColor = (type) => {
   switch (type) {
-    case 'message':
+    case 'new_post':
       return 'text-blue-600';
-    case 'like':
+    case 'new_video':
       return 'text-red-600';
-    case 'follow':
+    case 'live_stream':
       return 'text-green-600';
-    case 'system':
+    case 'announcement':
       return 'text-purple-600';
-    case 'membership':
+    case 'special_offer':
       return 'text-yellow-600';
-    default:
+    case 'membership':
+      return 'text-pink-600';
+    case 'system':
       return 'text-gray-600';
+    default:
+      return 'text-muted-foreground';
+  }
+};
+
+// API service
+const notificationAPI = {
+  getNotifications: async (params) => {
+    const response = await api.get('/notifications/me', { params });
+    return response.data;
+  },
+  
+  markAsRead: async (notificationId) => {
+    const response = await api.put(`/notifications/${notificationId}/read`);
+    return response.data;
+  },
+  
+  markAllAsRead: async () => {
+    const response = await api.put('/notifications/me/read-all');
+    return response.data;
+  },
+  
+  deleteNotification: async (notificationId) => {
+    const response = await api.delete(`/notifications/me/${notificationId}`);
+    return response.data;
   }
 };
 
 const Notifications = () => {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [markingAsRead, setMarkingAsRead] = useState(false);
+  const [error, setError] = useState(null);
+  const [actionInProgress, setActionInProgress] = useState(false);
   const [selectedNotificationId, setSelectedNotificationId] = useState(null);
+  const [pagination, setPagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    pages: 0,
+    hasMore: false
+  });
+  const [filters, setFilters] = useState({
+    unreadOnly: false,
+    type: ''
+  });
 
-  // Fetch notifications on component mount
-  useEffect(() => {
-    fetchNotifications();
-  }, []);
+  // Core fetch function — accepts explicit filters to avoid stale closure issues
+  const fetchNotificationsWithFilters = useCallback(async (activeFilters, resetPage = true) => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const page = resetPage ? 1 : pagination.page;
+      
+      const response = await notificationAPI.getNotifications({
+        page,
+        limit: pagination.limit,
+        unreadOnly: activeFilters.unreadOnly,
+        type: activeFilters.type
+      });
+      
+      if (response.success) {
+        setNotifications(prev => 
+          resetPage ? response.data : [...prev, ...response.data]
+        );
+        setPagination(prev => ({
+          ...prev,
+          page,
+          total: response.pagination.total,
+          pages: response.pagination.pages,
+          hasMore: response.pagination.hasMore
+        }));
+      }
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+      setError(err.response?.data?.message || 'Failed to load notifications');
+      toast.error('Failed to load notifications', {
+        description: err.response?.data?.message || 'Please try again later',
+      });
+    } finally {
+      setLoading(false);
+    }
+  }, [pagination.page, pagination.limit]);
 
-  // Simulate API call to fetch notifications
-  const fetchNotifications = async () => {
-    setLoading(true);
-    
-    // TODO: Replace with actual API call
-    // const response = await fetch('/api/notifications');
-    // const data = await response.json();
-    
-    // Simulate API call with 2-3 second delay
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    
-    setNotifications(hardcodedNotifications);
-    setLoading(false);
+  // Convenience wrapper using current filters state
+  const fetchNotifications = useCallback((resetPage = true) => {
+    fetchNotificationsWithFilters(filters, resetPage);
+  }, [fetchNotificationsWithFilters, filters]);
+
+  // Load more notifications
+  const loadMore = async () => {
+    if (!pagination.hasMore || loading) return;
+    // Increment page first, then fetch — avoid race with async setPagination
+    const nextPage = pagination.page + 1;
+    setPagination(prev => ({ ...prev, page: nextPage }));
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await notificationAPI.getNotifications({
+        page: nextPage,
+        limit: pagination.limit,
+        unreadOnly: filters.unreadOnly,
+        type: filters.type
+      });
+      if (response.success) {
+        setNotifications(prev => [...prev, ...response.data]);
+        setPagination(prev => ({
+          ...prev,
+          page: nextPage,
+          total: response.pagination.total,
+          pages: response.pagination.pages,
+          hasMore: response.pagination.hasMore
+        }));
+      }
+    } catch (err) {
+      console.error('Error loading more notifications:', err);
+      toast.error('Failed to load more notifications');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Mark a single notification as read
   const markAsRead = async (notificationId) => {
-    setMarkingAsRead(true);
-    setSelectedNotificationId(notificationId);
-    
-    // TODO: Replace with actual API call
-    // const response = await fetch(`/api/notifications/${notificationId}/read`, {
-    //   method: 'PATCH',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ read: true }),
-    // });
-    
-    // Simulate API call with 2 second delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Update local state
-    setNotifications(prev =>
-      prev.map(notif =>
-        notif._id === notificationId
-          ? { ...notif, read: true }
-          : notif
-      )
-    );
-    
-    setMarkingAsRead(false);
-    setSelectedNotificationId(null);
+    try {
+      setActionInProgress(true);
+      setSelectedNotificationId(notificationId);
+      
+      const response = await notificationAPI.markAsRead(notificationId);
+      
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif =>
+            notif._id === notificationId
+              ? { ...notif, read: true }
+              : notif
+          )
+        );
+        
+        toast.success('Marked as read');
+      }
+    } catch (err) {
+      console.error('Error marking notification as read:', err);
+      toast.error('Failed to mark as read');
+    } finally {
+      setActionInProgress(false);
+      setSelectedNotificationId(null);
+    }
   };
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
-    setMarkingAsRead(true);
+    const toastId = toast.loading('Marking all notifications as read...');
     
-    // TODO: Replace with actual API call
-    // const response = await fetch('/api/notifications/mark-all-read', {
-    //   method: 'PATCH',
-    //   headers: { 'Content-Type': 'application/json' },
-    // });
-    
-    // Simulate API call with 2 second delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Update local state
-    setNotifications(prev =>
-      prev.map(notif => ({ ...notif, read: true }))
-    );
-    
-    setMarkingAsRead(false);
+    try {
+      setActionInProgress(true);
+      
+      const response = await notificationAPI.markAllAsRead();
+      
+      if (response.success) {
+        setNotifications(prev =>
+          prev.map(notif => ({ ...notif, read: true }))
+        );
+        
+        toast.success('All marked as read', { id: toastId });
+      }
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+      toast.error('Failed to mark all as read', { id: toastId });
+    } finally {
+      setActionInProgress(false);
+    }
   };
 
   // Delete a notification
   const deleteNotification = async (notificationId) => {
-    setMarkingAsRead(true);
-    setSelectedNotificationId(notificationId);
+    const toastId = toast.loading('Deleting notification...');
     
-    // TODO: Replace with actual API call
-    // const response = await fetch(`/api/notifications/${notificationId}`, {
-    //   method: 'DELETE',
-    // });
-    
-    // Simulate API call with 2 second delay
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Update local state
-    setNotifications(prev =>
-      prev.filter(notif => notif._id !== notificationId)
-    );
-    
-    setMarkingAsRead(false);
-    setSelectedNotificationId(null);
+    try {
+      setActionInProgress(true);
+      setSelectedNotificationId(notificationId);
+      
+      const response = await notificationAPI.deleteNotification(notificationId);
+      
+      if (response.success) {
+        setNotifications(prev =>
+          prev.filter(notif => notif._id !== notificationId)
+        );
+        
+        toast.success('Deleted successfully', { id: toastId });
+      }
+    } catch (err) {
+      console.error('Error deleting notification:', err);
+      toast.error('Failed to delete', { id: toastId });
+    } finally {
+      setActionInProgress(false);
+      setSelectedNotificationId(null);
+    }
   };
 
-  // Get unread count
+  // Apply filters
+  const applyFilters = (newFilters) => {
+    // Merge new filters with current ones synchronously before fetching,
+    // since setFilters is async and fetchNotifications would read stale state.
+    const mergedFilters = { ...filters, ...newFilters };
+    setFilters(mergedFilters);
+    fetchNotificationsWithFilters(mergedFilters, true);
+  };
+
+  // Refresh notifications
+  const refreshNotifications = () => {
+    fetchNotifications(true);
+    toast.success('Notifications refreshed');
+  };
+
+  useEffect(() => {
+    fetchNotifications(true);
+  }, [filters]);
+
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
   // Loading state
-  if (loading) {
+  if (loading && notifications.length === 0) {
     return (
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="flex items-center justify-between mb-8">
@@ -265,6 +329,33 @@ const Notifications = () => {
     );
   }
 
+  // Error state
+  if (error && notifications.length === 0) {
+    return (
+      <div className="container mx-auto py-8 px-4 max-w-4xl">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
+            <p className="text-muted-foreground mt-2">Stay updated with your latest activities</p>
+          </div>
+        </div>
+        
+        <Card>
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <AlertCircle className="h-12 w-12 text-destructive" />
+              <p className="text-destructive font-medium">{error}</p>
+              <Button onClick={refreshNotifications} variant="outline">
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   // Empty state
   if (notifications.length === 0) {
     return (
@@ -274,6 +365,10 @@ const Notifications = () => {
             <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
             <p className="text-muted-foreground mt-2">Stay updated with your latest activities</p>
           </div>
+          
+          <Button onClick={refreshNotifications} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4" />
+          </Button>
         </div>
         
         <Card className="text-center border-dashed">
@@ -300,20 +395,77 @@ const Notifications = () => {
           </p>
         </div>
         
-        {unreadCount > 0 && (
+        <div className="flex gap-2">
           <Button
-            onClick={markAllAsRead}
-            disabled={markingAsRead}
+            onClick={refreshNotifications}
             variant="outline"
+            size="sm"
+            disabled={actionInProgress}
           >
-            {markingAsRead && !selectedNotificationId ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <CheckCheck className="mr-2 h-4 w-4" />
-            )}
-            Mark all as read
+            <RefreshCw className={`h-4 w-4 ${actionInProgress ? 'animate-spin' : ''}`} />
           </Button>
-        )}
+          
+          {unreadCount > 0 && (
+            <Button
+              onClick={markAllAsRead}
+              disabled={actionInProgress}
+              variant="outline"
+            >
+              {actionInProgress && !selectedNotificationId ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCheck className="mr-2 h-4 w-4" />
+              )}
+              Mark all as read
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Filter Bar */}
+      <div className="flex gap-2 mb-4 flex-wrap">
+        <Button
+          variant={filters.unreadOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ unreadOnly: !filters.unreadOnly })}
+        >
+          {filters.unreadOnly ? "All" : "Unread Only"}
+        </Button>
+        <Button
+          variant={filters.type === "new_post" ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ type: filters.type === "new_post" ? "" : "new_post" })}
+        >
+          Posts
+        </Button>
+        <Button
+          variant={filters.type === "new_video" ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ type: filters.type === "new_video" ? "" : "new_video" })}
+        >
+          Videos
+        </Button>
+        <Button
+          variant={filters.type === "live_stream" ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ type: filters.type === "live_stream" ? "" : "live_stream" })}
+        >
+          Live
+        </Button>
+        <Button
+          variant={filters.type === "announcement" ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ type: filters.type === "announcement" ? "" : "announcement" })}
+        >
+          Announcements
+        </Button>
+        <Button
+          variant={filters.type === "special_offer" ? "default" : "outline"}
+          size="sm"
+          onClick={() => applyFilters({ type: filters.type === "special_offer" ? "" : "special_offer" })}
+        >
+          Offers
+        </Button>
       </div>
 
       {/* Notifications List */}
@@ -323,12 +475,12 @@ const Notifications = () => {
             {notifications.map((notification) => {
               const IconComponent = getNotificationIcon(notification.type);
               const iconColor = getNotificationColor(notification.type);
-              const isMarkingThisOne = markingAsRead && selectedNotificationId === notification._id;
+              const isActionInProgress = actionInProgress && selectedNotificationId === notification._id;
               
               return (
                 <div
                   key={notification._id}
-                  className={`p-4 transition-colors ${
+                  className={`p-4 transition-colors hover:bg-muted/30 ${
                     !notification.read ? 'bg-muted/50' : ''
                   }`}
                 >
@@ -341,15 +493,17 @@ const Notifications = () => {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <h3 className="font-semibold text-base">
-                            {notification.title}
+                        <div className="flex-1">
+                          <div className="flex items-center flex-wrap gap-2">
+                            <h3 className="font-semibold text-base">
+                              {notification.title}
+                            </h3>
                             {!notification.read && (
-                              <Badge variant="default" className="ml-2 text-xs">
+                              <Badge variant="default" className="text-xs">
                                 New
                               </Badge>
                             )}
-                          </h3>
+                          </div>
                           <p className="text-sm text-muted-foreground mt-1">
                             {notification.message}
                           </p>
@@ -365,9 +519,9 @@ const Notifications = () => {
                               size="sm"
                               variant="ghost"
                               onClick={() => markAsRead(notification._id)}
-                              disabled={isMarkingThisOne}
+                              disabled={isActionInProgress}
                             >
-                              {isMarkingThisOne ? (
+                              {isActionInProgress ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
                                 <MailOpen className="h-4 w-4" />
@@ -377,7 +531,7 @@ const Notifications = () => {
                           
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button size="sm" variant="ghost">
+                              <Button size="sm" variant="ghost" disabled={isActionInProgress}>
                                 <MoreVertical className="h-4 w-4" />
                               </Button>
                             </DropdownMenuTrigger>
@@ -405,6 +559,26 @@ const Notifications = () => {
               );
             })}
           </div>
+          
+          {/* Load More */}
+          {pagination.hasMore && (
+            <div className="p-4 text-center border-t">
+              <Button
+                variant="outline"
+                onClick={loadMore}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading...
+                  </>
+                ) : (
+                  'Load More'
+                )}
+              </Button>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

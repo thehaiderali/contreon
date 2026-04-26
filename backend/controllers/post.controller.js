@@ -3,127 +3,12 @@
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import { createMessageData, sendNotificationToTier } from "../services/notification.js";
 
 // @desc    Create a new post
 // @route   POST /api/creators/posts
 // @access  Private (Creator only)
-// export const createPost = async (req, res) => {
-//   try {
-//     const { 
-//       title, 
-//       type, 
-//       content, 
-//       isPaid, 
-//       tierId,
-//       commentsAllowed, 
-//       isPublished,
-//       thumbnailUrl,
-//       description,
-//       audioUrl,
-//       transcriptionUrl, 
-//       assetId,
-//       playbackId,
-//       speakers
-//     } = req.body;
-    
-//     const creatorId = req.user.userId;
 
-//     // checkCreatorExists middleware already verified user exists and is creator
-//     // but we'll add an extra check for safety
-//     const user = await User.findById(creatorId);
-//     if (!user || user.role !== "creator") {
-//       return res.status(403).json({
-//         success: false,
-//         message: "Only creators can create posts"
-//       });
-//     }
-
-//     // Validate title
-//     if (!title || title.length < 3 || title.length > 30) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Title must be between 3 and 30 characters"
-//       });
-//     }
-
-//     // Validate type
-//     if (!type || !["text", "audio", "video"].includes(type)) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Type must be text, audio, or video"
-//       });
-//     }
-
-//     // Validate description for audio/video
-//     if ((type === "audio" || type === "video") && (!description || description.trim() === "")) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Description is required for audio and video posts"
-//       });
-//     }
-
-//     // Validate tier for paid content
-//     if (isPaid && !tierId) {
-//       return res.status(400).json({
-//         success: false,
-//         message: "Tier selection is required for paid content"
-//       });
-//     }
-
-//     // Generate slug from title
-//     let slug = title
-//       .toLowerCase()
-//       .replace(/[^a-z0-9]+/g, '-')
-//       .replace(/^-+|-+$/g, '');
-
-//     // Check if slug already exists for this creator
-//     let existingPost = await Post.findOne({ slug, creatorId });
-//     if (existingPost) {
-//       slug = `${slug}-${Date.now()}`;
-//     }
-
-//     // Create post
-//     const post = new Post({
-//       title: title.trim(),
-//       type,
-//       slug,
-//       content: content || "",
-//       creatorId,
-//       isPaid: isPaid || false,
-//       tierId: isPaid ? tierId : undefined,
-//       isPublished: isPublished || false,
-//       thumbnailUrl: thumbnailUrl || "",
-//       commentsAllowed: commentsAllowed !== undefined ? commentsAllowed : true,
-//       description: description || "",
-//       transcriptionUrl,
-//       audioUrl,
-//       assetId,
-//       playbackId,
-//       speakers
-//     });
-
-//     await post.save();
-
-//     // Populate creator info and tier info for response
-//     const populatedPost = await Post.findById(post._id)
-//       .populate("creatorId", "fullName email")
-//       .populate("tierId", "name price benefits");
-
-//     res.status(201).json({
-//       success: true,
-//       message: "Post created successfully",
-//       data: populatedPost
-//     });
-
-//   } catch (error) {
-//     console.error("Error creating post:", error);
-//     res.status(500).json({
-//       success: false,
-//       message: "Error creating post",
-//       error: error.message
-//     });
-//   }
-// };
 export const createPost = async (req, res) => {
   try {
     const { 
@@ -262,6 +147,28 @@ export const createPost = async (req, res) => {
 
     const post = new Post(postData);
     await post.save();
+
+    // Send notifications only if post is published
+    if (isPublished) {
+      // Determine notification type based on post type
+      let notificationType = 'new_post';
+      if (type === 'video') {
+        notificationType = 'new_video';
+      }
+      
+      // Create message data using template
+      const messageData = createMessageData(notificationType, {
+        postId: post._id,
+        postTitle: title
+      });
+      
+      // Determine which tier to send notification to
+      const targetTierId = isPaid && tierId ? tierId : null;
+      
+      // Send to specific tier for paid content, or all subscribers (tierId: null) for free content
+      await sendNotificationToTier(creatorId, targetTierId, messageData);
+    }
+
 
     // Populate creator info and tier info for response
     const populatedPost = await Post.findById(post._id)
