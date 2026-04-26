@@ -46,6 +46,9 @@ if(!process.env.MUX_SIGNING_KEY_ID){
 if(!process.env.MUX_SIGNING_PRIVATE_KEY){
     throw new Error("MUX_SIGNING_PRIVATE_KEY not defined")
 }
+if(!process.env.RESEND_API_KEY){
+    throw new Error("RESEND_API_KEY not defined")
+}
 
 
 export const envConfig={
@@ -64,5 +67,6 @@ export const envConfig={
     MUX_ACCESS_TOKEN:process.env.MUX_ACCESS_TOKEN,
     MUX_SECRET_KEY:process.env.MUX_SECRET_KEY,
     MUX_SIGNING_PRIVATE_KEY:process.env.MUX_SIGNING_PRIVATE_KEY,
-    MUX_SIGNING_KEY_ID:process.env.MUX_SIGNING_KEY_ID
+    MUX_SIGNING_KEY_ID:process.env.MUX_SIGNING_KEY_ID,
+    RESEND_API_KEY:process.env.RESEND_API_KEY
 }
