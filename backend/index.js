@@ -18,6 +18,8 @@ import webhookRoutes from './routes/webhook.routes.js';
 import chatRouter from "./routes/chat.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import { setupSocketIO } from "./socket/index.js";
+import exploreRouter from "./routes/explore.routes.js"
+
 
 const app = express();
 
@@ -62,6 +64,7 @@ app.use("/api/posts", postRouter);
 app.use("/api/comments", commentRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/explore",exploreRouter)
 // Create HTTP server
 const server = createServer(app);
 
