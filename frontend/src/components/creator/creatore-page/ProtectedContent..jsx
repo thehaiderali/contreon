@@ -3,7 +3,7 @@ import React from 'react';
 import { Lock } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import useSubscriptionStore from '@/store/memberShipStore';
+import useSubscriptionStore from '../../store/memberShipStore';
 import { useNavigate } from 'react-router';
 
 const ProtectedContent = ({ 

@@ -14,6 +14,7 @@ const PostViewer = () => {
   const [post, setPost] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [requiresSubscription, setRequiresSubscription] = useState(false);
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -26,7 +27,12 @@ const PostViewer = () => {
           setError('Post not found');
         }
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load post');
+        if (err.response?.data?.requiresSubscription) {
+          setRequiresSubscription(true);
+          setError(err.response?.data?.error || 'Subscription required');
+        } else {
+          setError(err.response?.data?.error || 'Failed to load post');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -38,6 +44,27 @@ const PostViewer = () => {
     return (
       <div className="flex justify-center py-24">
         <div className="w-6 h-6 rounded-full border-2 border-border border-t-foreground animate-spin" />
+      </div>
+    );
+  }
+
+  if (requiresSubscription) {
+    return (
+      <div className="text-center py-24 px-4">
+        <div className="rounded-full bg-muted p-4 mb-4 inline-flex">
+          <Lock className="h-8 w-8 text-muted-foreground" />
+        </div>
+        <h3 className="text-lg font-semibold mb-2">Members Only Content</h3>
+        <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+          This content is available exclusively to paid members. Subscribe to unlock this and other exclusive content.
+        </p>
+        <Button onClick={() => navigate(`/c/${creatorUrl}/membership`)} className="gap-2">
+          <Lock className="h-4 w-4" />
+          Subscribe to Unlock
+        </Button>
+        <Button variant="ghost" onClick={() => navigate(`/c/${creatorUrl}/posts`)} className="ml-2">
+          Back to posts
+        </Button>
       </div>
     );
   }
@@ -84,7 +111,7 @@ const PostViewer = () => {
 
       {/* Post content based on type */}
       <div className="prose prose-neutral dark:prose-invert max-w-none">
-        {post.type === 'text' && (
+{post.type === 'text' && (
           <div className='w-full h-full  p-10 '>
               <Editor editable={false} initialContent={JSON.parse(post.content)} />
           </div>

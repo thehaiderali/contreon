@@ -2,7 +2,9 @@ import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
 import Collection from "../models/collection.model.js";
-import SubscriptionTier from "../models/subscriptionTier.model.js"; 
+import SubscriptionTier from "../models/subscriptionTier.model.js";
+import Subscription from "../models/subscription.model.js";
+import mongoose from "mongoose"; 
 
 export const getCreatorByUrl = async (req, res) => {
   try {
@@ -81,6 +83,21 @@ export const getCreatorPostsByUrl = async (req, res) => {
 export const getCreatorPostById = async (req, res) => {
   try {
     const { pageUrl, postId } = req.params;
+    const token = req.cookies?.token;
+    
+    // Decode token to get user info if token exists
+    let userId, userRole;
+    if (token) {
+      try {
+        const jwt = (await import('jsonwebtoken')).default;
+        const { envConfig } = await import('../config/env.js');
+        const decoded = jwt.verify(token, envConfig.JWT_SECRET);
+        userId = decoded.userId;
+        userRole = decoded.role;
+      } catch (e) {
+        // Token invalid, treat as not logged in
+      }
+    }
     
     const profile = await CreatorProfile.findOne({ pageUrl });
     if (!profile) {
@@ -91,10 +108,67 @@ export const getCreatorPostById = async (req, res) => {
       _id: postId, 
       creatorId: profile.creatorId,
       isPublished: true 
-    }).populate("creatorId", "fullName");
+    }).populate("creatorId", "fullName").populate("tierId");
     
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
+    }
+    
+    // Check subscription for paid posts
+    if (post.isPaid) {
+      if (!userId || userRole !== 'subscriber') {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Subscription required",
+          requiresSubscription: true 
+        });
+      }
+      
+      const subscription = await Subscription.findOne({
+        subscriberId: userId,
+        creatorId: profile.creatorId
+      });
+      
+      if (!subscription) {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Subscription required",
+          requiresSubscription: true 
+        });
+      }
+      
+      if (subscription.status !== 'active') {
+        return res.status(403).json({ 
+          success: false, 
+          error: "Subscription required",
+          requiresSubscription: true 
+        });
+      }
+      
+      if (!post.tierId) {
+        return res.status(200).json({
+          success: true,
+          data: post
+        });
+      }
+      
+      await subscription.populate('tierId');
+      
+      const userTierPrice = subscription.tierId?.price || 0;
+      const postTierPrice = post.tierId?.price || 0;
+      
+      if (userTierPrice >= postTierPrice) {
+        return res.status(200).json({
+          success: true,
+          data: post
+        });
+      }
+      
+      return res.status(403).json({ 
+        success: false, 
+        error: "Higher tier subscription required",
+        requiresSubscription: true 
+      });
     }
     
     return res.status(200).json({

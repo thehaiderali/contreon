@@ -31,8 +31,6 @@ import EditTextPost from './pages/private/creator/posts/EditTextPost';
 import EditAudioPost from './pages/private/creator/posts/EditAudioPost ';
 import EditVideoPost from './pages/private/creator/posts/EditVideoPost';
 import CreatorPage from './components/creator/creatore-page/CreatorPage';
-import { useEffect } from 'react';
-import useMembershipStore from '@/store/memberShipStore';
 import PaymentSuccess from './pages/private/stripe/SuccessPage';
 import PaymentCancel from './pages/private/stripe/CancelPage';
 import Memberships from './pages/private/subscriber/Memberships';
@@ -42,13 +40,6 @@ import CreatorChats from './pages/private/creator/CreatorChats';
 
 const App = () => {
 
-
-   const { fetchMySubscriptions } = useMembershipStore();
-  
-  useEffect(() => {
-    // Load user's subscriptions when app loads
-    fetchMySubscriptions().catch(console.error);
-  }, [fetchMySubscriptions]);
   return (
     <Routes>
       
