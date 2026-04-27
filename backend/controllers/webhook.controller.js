@@ -1,7 +1,10 @@
 import stripe from "../config/stripe.js";
 import Subscription from "../models/subscription.model.js";
 import Payment from "../models/payment.model.js";
+import User from "../models/user.model.js";
+import CreatorProfile from "../models/profile.model.js";
 import { envConfig } from "../config/env.js";
+import { welcomeEmail, cancellationEmail, paymentReceiptEmail, paymentFailedEmail, newSubscriberEmail, subscriberCancelledEmail, sendEmail } from "../emails/templates.js";
 
 export async function handleStripeWebhook(req, res) {
   const sig = req.headers['stripe-signature'];
@@ -73,6 +76,48 @@ async function handleCheckoutSessionCompleted(session) {
     { sessionId: session.id },
     { status: "success" }
   );
+
+  // Send welcome email to new subscriber
+  try {
+    const subscription = await Subscription.findById(dbSubscriptionId)
+      .populate('subscriberId', 'fullName email')
+      .populate('creatorId', 'fullName')
+      .populate('tierId');
+
+    if (subscription && subscription.subscriberId && subscription.creatorId) {
+      const subscriber = subscription.subscriberId;
+      const creator = subscription.creatorId;
+      const tier = subscription.tierId;
+
+      const dashboardUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+      
+      await sendEmail(
+        subscriber.email,
+        `Welcome to ${creator.fullName}!`,
+        welcomeEmail(subscriber.fullName, creator.fullName, tier?.tierName || 'Member', dashboardUrl)
+      );
+      console.log(`✅ Welcome email sent to ${subscriber.email}`);
+
+      // Notify creator about new subscriber
+      const creatorProfile = await CreatorProfile.findOne({ creatorId: creator._id });
+      const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
+      
+      await sendEmail(
+        creator.email,
+        `New subscriber: ${subscriber.fullName}`,
+        newSubscriberEmail(
+          creator.fullName,
+          subscriber.fullName,
+          tier?.tierName || 'Member',
+          tier?.price ? `$${tier.price}` : '$0',
+          manageUrl
+        )
+      );
+      console.log(`✅ New subscriber notification sent to creator ${creator.email}`);
+    }
+  } catch (emailError) {
+    console.log('Could not send welcome email:', emailError.message);
+  }
   
   console.log(`Checkout completed for subscription: ${dbSubscriptionId}`);
 }
@@ -195,6 +240,40 @@ async function handleSubscriptionDeleted(subscription) {
   
   if (result) {
     console.log(`✅ Marked subscription ${result._id} as cancelled`);
+
+    // Send cancellation email to subscriber
+    try {
+      const subscriber = await User.findById(result.subscriberId).select('fullName email');
+      const creator = await User.findById(result.creatorId).select('fullName');
+      
+      const restoreUrl = `${envConfig.FRONTEND_URL}/explore`;
+      
+      await sendEmail(
+        subscriber.email,
+        `Membership cancelled for ${creator.fullName}`,
+        cancellationEmail(subscriber.fullName, creator.fullName, result.tierType, restoreUrl)
+      );
+      console.log(`✅ Cancellation email sent to ${subscriber.email}`);
+    } catch (emailError) {
+      console.log('Could not send cancellation email:', emailError.message);
+    }
+
+    // Notify creator
+    try {
+      const creator = await User.findById(result.creatorId).select('fullName email');
+      const subscriber = await User.findById(result.subscriberId).select('fullName');
+      
+      const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
+      
+      await sendEmail(
+        creator.email,
+        `Subscriber cancelled: ${subscriber.fullName}`,
+        subscriberCancelledEmail(creator.fullName, subscriber.fullName, result.tierType, manageUrl)
+      );
+      console.log(`✅ Cancellation notification sent to creator ${creator.email}`);
+    } catch (emailError) {
+      console.log('Could not send creator notification:', emailError.message);
+    }
   } else {
     console.error(`❌ Subscription ${subscription.id} not found in database`);
   }
@@ -212,8 +291,10 @@ async function handleInvoicePaymentSucceeded(invoice) {
         ? new Date(stripeSubscription.current_period_end * 1000) 
         : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
       
+      let subscription = null;
+      
       if (dbSubscriptionId) {
-        const updated = await Subscription.findByIdAndUpdate(
+        subscription = await Subscription.findByIdAndUpdate(
           dbSubscriptionId,
           {
             status: "active",
@@ -222,10 +303,9 @@ async function handleInvoicePaymentSucceeded(invoice) {
           { new: true }
         );
         console.log(`✅ Updated subscription ${dbSubscriptionId} to active after successful payment`);
-        console.log(`   New status: ${updated?.status}`);
+        console.log(`   New status: ${subscription?.status}`);
       } else {
-        // Try to find by stripe subscription ID
-        const updated = await Subscription.findOneAndUpdate(
+        subscription = await Subscription.findOneAndUpdate(
           { stripeSubscriptionId: invoice.subscription },
           {
             status: "active",
@@ -233,10 +313,32 @@ async function handleInvoicePaymentSucceeded(invoice) {
           },
           { new: true }
         );
-        if (updated) {
-          console.log(`✅ Updated subscription ${updated._id} to active`);
+        if (subscription) {
+          console.log(`✅ Updated subscription ${subscription._id} to active`);
         } else {
           console.error(`❌ Subscription ${invoice.subscription} not found`);
+        }
+      }
+
+      // Send payment receipt email
+      if (subscription) {
+        try {
+          const subscriber = await User.findById(subscription.subscriberId).select('fullName email');
+          const creator = await User.findById(subscription.creatorId).select('fullName');
+          
+          const amount = invoice.amount_paid ? `$${(invoice.amount_paid / 100).toFixed(2)}` : await getTierPrice(subscription.tierId);
+          const paymentDate = new Date().toLocaleDateString();
+          const receiptId = invoice.number || `INV-${Date.now()}`;
+          const manageUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+          
+          await sendEmail(
+            subscriber.email,
+            `Payment receipt for ${creator.fullName}`,
+            paymentReceiptEmail(subscriber.fullName, creator.fullName, amount, paymentDate, subscription.tierType, receiptId, manageUrl)
+          );
+          console.log(`✅ Payment receipt sent to ${subscriber.email}`);
+        } catch (emailError) {
+          console.log('Could not send payment receipt email:', emailError.message);
         }
       }
     } catch (error) {
@@ -244,6 +346,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
     }
   }
 }
+
 
 async function handleInvoicePaymentFailed(invoice) {
   console.log("Invoice payment failed:", invoice.id);
@@ -253,16 +356,40 @@ async function handleInvoicePaymentFailed(invoice) {
       const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
       const dbSubscriptionId = stripeSubscription.metadata?.db_subscription_id;
       
+      let subscription = null;
+      
       if (dbSubscriptionId) {
-        await Subscription.findByIdAndUpdate(dbSubscriptionId, {
+        subscription = await Subscription.findByIdAndUpdate(dbSubscriptionId, {
           status: "past_due",
-        });
+        }, { new: true });
         console.log(`⚠️ Updated subscription ${dbSubscriptionId} to past_due after failed payment`);
       } else {
-        await Subscription.findOneAndUpdate(
+        subscription = await Subscription.findOneAndUpdate(
           { stripeSubscriptionId: invoice.subscription },
-          { status: "past_due" }
+          { status: "past_due" },
+          { new: true }
         );
+      }
+
+      // Send payment failed email to subscriber
+      if (subscription) {
+        try {
+          const subscriber = await User.findById(subscription.subscriberId).select('fullName email');
+          const creator = await User.findById(subscription.creatorId).select('fullName');
+          const tier = subscription.tierType;
+          
+          const retryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString();
+          const updatePaymentUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+          
+          await sendEmail(
+            subscriber.email,
+            `Payment failed for ${creator.fullName}`,
+            paymentFailedEmail(subscriber.fullName, creator.fullName, tier, retryDate, updatePaymentUrl)
+          );
+          console.log(`✅ Payment failed email sent to ${subscriber.email}`);
+        } catch (emailError) {
+          console.log('Could not send payment failed email:', emailError.message);
+        }
       }
     } catch (error) {
       console.error("Error processing invoice payment failure:", error);

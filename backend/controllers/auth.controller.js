@@ -4,6 +4,7 @@ import { loginSchema } from "../validation/zod.js"
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken"
 import { envConfig } from "../config/env.js";
+import { signupWelcomeEmail,sendEmail } from "../emails/templates.js";
 
 
 export async function signup(req,res){
@@ -33,6 +34,19 @@ export async function signup(req,res){
         role:data.role
     })
     await user.save()
+
+    // Send welcome email
+    try {
+        const loginUrl = `${envConfig.FRONTEND_URL}/login`;
+        await sendEmail(
+            data.email,
+            `Welcome to Contreon, ${data.fullName}!`,
+            signupWelcomeEmail(data.fullName, data.email, loginUrl)
+        );
+    } catch (emailError) {
+        console.log('Welcome email could not be sent:', emailError.message);
+    }
+
     return res.status(201).json({
         success:true,
         data:{

@@ -332,6 +332,7 @@ export const searchCreatorOrTopic = async (req, res) => {
         name: user.fullName,
         tagline: profile?.bio || '',
         avatar: profile?.profileImageUrl || 'https://i.pravatar.cc/40',
+        pageUrl: profile?.pageUrl || '',
         type: 'creator'
       });
     }
@@ -343,6 +344,7 @@ export const searchCreatorOrTopic = async (req, res) => {
           name: profile.creatorId.fullName,
           tagline: profile.bio,
           avatar: profile.profileImageUrl || 'https://i.pravatar.cc/40',
+          pageUrl: profile.pageUrl || '',
           type: 'creator'
         });
       }
