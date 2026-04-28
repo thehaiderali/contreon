@@ -83,40 +83,42 @@ export const getCreatorsForYou = async (req, res) => {
 
     const subscribedCreatorIds = subscriptions.map(sub => sub.creatorId._id);
 
-    // Get similar creators: other creators that those subscribed creators also follow?
-    // Simpler: recommend creators from same categories as your subscriptions
-    const profilesOfSubscribed = await CreatorProfile.find({
-      creatorId: { $in: subscribedCreatorIds }
-    });
-    const categories = [...new Set(profilesOfSubscribed.map(p => p.category))];
+    // Get similar creators: recommend creators from same categories as your subscriptions
+    let profilesOfSubscribed = [];
+    if (subscribedCreatorIds.length > 0) {
+      profilesOfSubscribed = await CreatorProfile.find({
+        creatorId: { $in: subscribedCreatorIds }
+      }).lean();
+    }
+    const categories = profilesOfSubscribed.map(p => p.category).filter(Boolean);
 
     let recommendedCreators = [];
     if (categories.length) {
-      recommendedCreators = await CreatorProfile.aggregate([
-        { $match: { category: { $in: categories }, creatorId: { $nin: subscribedCreatorIds } } },
-        { $sample: { size: 10 } },
-        { $lookup: { from: 'users', localField: 'creatorId', foreignField: '_id', as: 'user' } },
-        { $unwind: '$user' }
-      ]);
+      recommendedCreators = await CreatorProfile.find({
+        category: { $in: categories },
+        creatorId: { $nin: subscribedCreatorIds }
+      }).limit(10);
     }
 
     // Fallback: newest creators
     if (recommendedCreators.length === 0) {
-      recommendedCreators = await CreatorProfile.aggregate([
-        { $sort: { createdAt: -1 } },
-        { $limit: 10 },
-        { $lookup: { from: 'users', localField: 'creatorId', foreignField: '_id', as: 'user' } },
-        { $unwind: '$user' }
-      ]);
+      recommendedCreators = await CreatorProfile.find()
+        .sort({ createdAt: -1 })
+        .limit(10);
     }
 
-    const creatorsForYou = recommendedCreators.map(doc => ({
-      id: doc._id,
-      name: doc.user.fullName,
-      tagline: doc.bio?.substring(0, 40) || '',
-      cover: doc.bannerUrl || 'https://picsum.photos/300/200',
-      pageUrl: doc.pageUrl || ''
-    }));
+    const creatorsForYou = await Promise.all(
+      recommendedCreators.map(async (profile) => {
+        const user = await User.findById(profile.creatorId).select('fullName');
+        return {
+          id: profile._id,
+          name: user?.fullName || 'Unknown',
+          tagline: profile.bio?.substring(0, 40) || '',
+          cover: profile.bannerUrl || 'https://picsum.photos/300/200',
+          pageUrl: profile.pageUrl || ''
+        };
+      })
+    );
 
     res.json({ creatorsForYou });
   } catch (error) {
@@ -132,53 +134,37 @@ export const getPopularThisWeek = async (req, res) => {
     const oneWeekAgo = new Date();
     oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-    // Aggregate views per creator (via posts)
-    const popular = await PostView.aggregate([
-      {
-        $lookup: {
-          from: 'posts',
-          localField: 'postId',
-          foreignField: '_id',
-          as: 'post'
-        }
-      },
-      { $unwind: '$post' },
-      { $match: { createdAt: { $gte: oneWeekAgo } } },
-      {
-        $group: {
-          _id: '$post.creatorId',
-          viewCount: { $sum: 1 }
-        }
-      },
-      { $sort: { viewCount: -1 } },
-      { $limit: 9 },
-      {
-        $lookup: {
-          from: 'users',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'user'
-        }
-      },
-      { $unwind: '$user' },
-      {
-        $lookup: {
-          from: 'creatorprofiles',
-          localField: '_id',
-          foreignField: 'creatorId',
-          as: 'profile'
-        }
-      },
-      { $unwind: { path: '$profile', preserveNullAndEmptyArrays: true } }
-    ]);
+    // Get unique creatorIds from recent views
+    const recentViews = await PostView.find({
+      createdAt: { $gte: oneWeekAgo }
+    }).populate('postId', 'creatorId');
 
-    const creators = popular.map(item => ({
-      id: item._id,
-      name: item.user.fullName,
-      tagline: item.profile?.bio?.substring(0, 50) || 'Creator',
-      avatar: item.profile?.profileImageUrl || 'https://i.pravatar.cc/48',
-      pageUrl: item.profile?.pageUrl || ''
-    }));
+    const creatorViewCounts = {};
+    for (const view of recentViews) {
+      if (view.postId?.creatorId) {
+        const cid = view.postId.creatorId.toString();
+        creatorViewCounts[cid] = (creatorViewCounts[cid] || 0) + 1;
+      }
+    }
+
+    // Sort by view count and get top creators
+    const sortedCreators = Object.entries(creatorViewCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 9);
+
+    const creators = await Promise.all(
+      sortedCreators.map(async ([creatorId]) => {
+        const user = await User.findById(creatorId).select('fullName');
+        const profile = await CreatorProfile.findOne({ creatorId }).lean();
+        return {
+          id: creatorId,
+          name: user?.fullName || 'Unknown',
+          tagline: profile?.bio?.substring(0, 50) || 'Creator',
+          avatar: profile?.profileImageUrl || 'https://i.pravatar.cc/48',
+          pageUrl: profile?.pageUrl || ''
+        };
+      })
+    );
 
     res.json({ popularThisWeek: creators });
   } catch (error) {
@@ -406,11 +392,21 @@ export const getFeedPosts = async (req, res) => {
       creatorId: { $in: creatorIds },
       isPublished: true
     })
-    .populate('creatorId', 'fullName profileImageUrl pageUrl')
+    .populate('creatorId', 'fullName profileImageUrl')
     .populate('tierId', 'tierName price')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(parseInt(limit));
+
+    // Get all creator profiles to map pageUrls
+    const creatorProfiles = await CreatorProfile.find({
+      creatorId: { $in: creatorIds }
+    }).lean();
+    
+    const profileMap = {};
+    for (const profile of creatorProfiles) {
+      profileMap[profile.creatorId.toString()] = profile.pageUrl;
+    }
 
     const total = await Post.countDocuments({
       creatorId: { $in: creatorIds },
@@ -418,35 +414,38 @@ export const getFeedPosts = async (req, res) => {
     });
 
     // Transform posts to include creator info
-    const transformedPosts = posts.map(post => ({
-      _id: post._id,
-      title: post.title,
-      type: post.type,
-      content: post.content,
-      thumbnailUrl: post.thumbnailUrl,
-      videoUrl: post.videoUrl,
-      audioUrl: post.audioUrl,
-      videoDuration: post.videoDuration,
-      description: post.description,
-      isPaid: post.isPaid,
-      isPublished: post.isPublished,
-      commentsAllowed: post.commentsAllowed,
-      createdAt: post.createdAt,
-      likes: post.likes || 0,
-      views: post.views || 0,
-      comments: post.commentsCount || 0,
-      creatorId: post.creatorId ? {
-        _id: post.creatorId._id,
-        fullName: post.creatorId.fullName,
-        profileImageUrl: post.creatorId.profileImageUrl,
-        pageUrl: post.creatorId.pageUrl
-      } : null,
-      tierId: post.tierId ? {
-        _id: post.tierId._id,
-        tierName: post.tierId.tierName,
-        price: post.tierId.price
-      } : null
-    }));
+    const transformedPosts = posts.map(post => {
+      const creatorIdStr = post.creatorId?._id?.toString();
+      return {
+        _id: post._id,
+        title: post.title,
+        type: post.type,
+        content: post.content,
+        thumbnailUrl: post.thumbnailUrl,
+        videoUrl: post.videoUrl,
+        audioUrl: post.audioUrl,
+        videoDuration: post.videoDuration,
+        description: post.description,
+        isPaid: post.isPaid,
+        isPublished: post.isPublished,
+        commentsAllowed: post.commentsAllowed,
+        createdAt: post.createdAt,
+        likes: post.likes || 0,
+        views: post.views || 0,
+        comments: post.commentsCount || 0,
+        creatorId: post.creatorId ? {
+          _id: post.creatorId._id,
+          fullName: post.creatorId.fullName,
+          profileImageUrl: post.creatorId.profileImageUrl,
+          pageUrl: profileMap[creatorIdStr] || ''
+        } : null,
+        tierId: post.tierId ? {
+          _id: post.tierId._id,
+          tierName: post.tierId.tierName,
+          price: post.tierId.price
+        } : null
+      };
+    });
 
     res.status(200).json({
       success: true,
