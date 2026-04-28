@@ -320,7 +320,6 @@ const newSubscription = new Subscription({
       },
     };
 
-    // CONNECT SPLIT (ONLY IF FULLY ONBOARDED)
     if (useDirectConnect) {
       sessionParams.subscription_data = {
         ...sessionParams.subscription_data,
