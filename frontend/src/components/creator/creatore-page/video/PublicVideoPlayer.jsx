@@ -9,11 +9,12 @@ export default function PublicVideoPlayer({ videoUrl }) {
   return (
     <Player.Provider>
       <VideoSkin>
-        <Video 
-          src={videoUrl} 
-          controls
-          className="w-full max-w-3xl mx-auto rounded-2xl shadow-lg"
-        />
+        <div className="w-full max-w-3xl mx-auto rounded-2xl shadow-lg overflow-hidden bg-black aspect-video">
+          <Video 
+            src={videoUrl}
+            className="w-full h-full"
+          />
+        </div>
       </VideoSkin>
     </Player.Provider>
   );

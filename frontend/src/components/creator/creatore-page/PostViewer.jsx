@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import AudioPost from './post-view/AudioPost';
 import PublicVideoPlayer from './video/PublicVideoPlayer';
+import MuxPlayerComponent from './video/MuxPlayer';
+import Comments from './post-view/Comments';
 import Editor from '../posts/Editor';
 
 const PostViewer = () => {
@@ -122,15 +124,9 @@ const PostViewer = () => {
     {post.type === 'video' && (
       <div className="aspect-video rounded-xl overflow-hidden bg-black">
         {post.playbackId ? (
-          <></>
+          <MuxPlayerComponent playbackId={post.playbackId} creatorUrl={creatorUrl} />
         ) : post.videoUrl ? (
-          <>
-            {/* Debug: Check what's rendering */}
-            <div className="absolute top-0 left-0 bg-red-500 text-white text-xs p-1 z-50">
-              Video.js Player
-            </div>
-            <PublicVideoPlayer videoUrl={post.videoUrl}/>
-          </>
+          <PublicVideoPlayer videoUrl={post.videoUrl} />
         ) : (
           <div className="w-full h-full flex items-center justify-center bg-muted">
             <Play className="h-12 w-12 text-muted-foreground" />
@@ -158,6 +154,13 @@ const PostViewer = () => {
             <p className="text-muted-foreground leading-relaxed">{post.description}</p>
           </div>
         )}
+
+        {/* Comments Section */}
+        <Comments 
+          postId={postId} 
+          creatorUrl={creatorUrl} 
+          commentsAllowed={post.commentsAllowed !== false} 
+        />
       </div>
     </div>
   );

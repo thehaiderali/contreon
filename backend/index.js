@@ -20,6 +20,7 @@ import notificationRoutes from "./routes/notification.routes.js";
 import { setupSocketIO } from "./socket/index.js";
 import exploreRouter from "./routes/explore.routes.js"
 import insightsRouter from "./routes/insights.routes.js"
+import contentAccessRouter from "./routes/contentAccess.routes.js";
 
 
 const app = express();
@@ -63,6 +64,7 @@ app.use("/api/collections", collectionRouter);
 app.use("/api/memberships", membershipRouter);
 app.use("/api/posts", postRouter);
 app.use("/api/comments", commentRouter);
+app.use("/api/content", contentAccessRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/explore",exploreRouter)

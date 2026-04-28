@@ -14,7 +14,7 @@
     "@blocknote/react": "^0.47.3",
     "@blocknote/shadcn": "^0.47.3",
     "@fontsource-variable/inter": "^5.2.8",
-    "@mux/mux-player-react": "^3.11.7",
+    "@mux/mux-player-react": "^3.12.0",
     "@mux/mux-uploader-react": "^1.4.1",
     "@stripe/stripe-js": "^9.2.0",
     "@tailwindcss/vite": "^4.2.1",

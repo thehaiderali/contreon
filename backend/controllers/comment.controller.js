@@ -22,7 +22,7 @@ export async function createComment(req,res){
                 error:"Post not found"
             })
         }
-        const user=await User.findById(req.user.Id);
+        const user=await User.findById(req.user.userId);
         const subscription=await Subscription.findOne({
             subscriberId:user._id,
             tierId:post.tierId,
@@ -49,6 +49,7 @@ export async function createComment(req,res){
 
         })
         await newComment.save()
+        console.log(newComment)
         return res.status(200).json({
             success:true,
             data:{
@@ -81,14 +82,14 @@ export async function updateComment(req,res){
         }
         const id=req.params.id;
         const alreadyComment=await Comment.findById(id);
-        const user=await User.findById(req.user.userId)
+        const user=await User.findById(req.user.userId);
         if(!alreadyComment){
             return res.status(400).json({
                 success:false,
                 error:"Comment not Found"
             })
         }
-        if(alreadyComment.authorId!==user._id){
+        if(alreadyComment.authorId.toString()!==user._id.toString()){
             return res.status(403).json({
                 success:false,
                 error:"Unauthorized Access . Cannot Update Other's Comments"
@@ -120,6 +121,7 @@ export async function updateComment(req,res){
 export async function deleteComment(req, res) {
     try {
         const postId = req.params.postId;
+        console.log(postId)
         const post = await Post.findById(postId);
         if (!post) {
             return res.status(404).json({
@@ -127,19 +129,13 @@ export async function deleteComment(req, res) {
                 error: "Post not found"
             });
         }
-        
-        const user = await User.findById(req.user.Id);
-        if (!user) {
-            return res.status(404).json({
-                success: false,
-                error: "User not found"
-            });
-        }
+        const user = await User.findById(req.user.userId);
         
         const comment = await Comment.findOne({ 
-            postId: postId, 
+            postId:req.params.postId,
             authorId: user._id 
         });
+        console.log(comment)
         
         if (!comment) {
             return res.status(404).json({
@@ -168,7 +164,7 @@ export async function deleteComment(req, res) {
 export async function getAllCommentsForPost(req,res){
     try {
      
-     const id=req.params.id;
+     const id=req.params.id || req.params.postId;
      const post=await Post.findById(id);
      if(!post){
         return res.status(404).json({
@@ -177,9 +173,9 @@ export async function getAllCommentsForPost(req,res){
         })
      }  
      
-     const comments=Comment.find({
+     const comments=await Comment.find({
         postId:post._id 
-     })
+     }).populate('authorId', 'fullName avatar').sort({ createdAt: -1 });
 
      return res.status(200).json({
         success:true,
