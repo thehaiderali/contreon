@@ -102,7 +102,7 @@ export const getCreatorPostById = async (req, res) => {
     
     // Check subscription for paid posts
     if (post.isPaid) {
-      if (!subscriber ) {
+      if (!subscriber) {
         return res.status(403).json({ 
           success: false, 
           error: "Subscription required",
