@@ -17,6 +17,7 @@ import { Calendar, CreditCard, RefreshCw, XCircle, AlertCircle, CheckCircle, Loa
 import NoSubscriptions from './NoSubscriptions';
 import useSubscriptionStore from '@/store/memberShipStore';
 import { api } from '@/lib/api';
+import { useNavigate } from 'react-router';
 
 // Helper function to format date
 const formatDate = (dateString) => {
@@ -79,7 +80,7 @@ const Memberships = () => {
   const [isReactivating, setIsReactivating] = useState(false);
   const [error, setError] = useState(null);
   const [successMessage, setSuccessMessage] = useState(null);
-  
+  const navigate=useNavigate();
   console.log("Subscriptions : ", subscriptions);
   
   // Fetch subscriptions on component mount
@@ -186,15 +187,10 @@ const Memberships = () => {
     await loadSubscriptions();
   };
 
-  // Navigation handlers for NoSubscriptions component
-  const handleBrowseClick = () => {
-    // TODO: Navigate to browse memberships page
-    console.log('Navigate to browse memberships');
-  };
-
   const handleExploreClick = () => {
     // TODO: Navigate to explore creators page
     console.log('Navigate to explore creators');
+    navigate("/home/explore")
   };
 
   // Loading state
@@ -233,7 +229,6 @@ const Memberships = () => {
   if (!subscriptions || subscriptions.length === 0) {
     return (
       <NoSubscriptions 
-        onBrowseClick={handleBrowseClick}
         onExploreClick={handleExploreClick}
       />
     );

@@ -84,7 +84,7 @@ export default function PaymentSuccess() {
 
                     <div className="space-y-3">
                         <Button 
-                            onClick={() => navigate('/home')} 
+                            onClick={() => navigate('/home/explore')} 
                             className="w-full bg-black text-white hover:bg-black/90"
                         >
                             Start Exploring
@@ -92,7 +92,7 @@ export default function PaymentSuccess() {
                         </Button>
                         
                         <Button 
-                            onClick={() => navigate('/memberships')} 
+                            onClick={() => navigate('/home/memberships')} 
                             variant="outline" 
                             className="w-full border-black text-black hover:bg-black hover:text-white"
                         >

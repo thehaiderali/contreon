@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Button } from '@/components/ui/button';
 import { Sparkles, Crown, Gift, ArrowRight, ShoppingBag } from 'lucide-react';
 
-const NoSubscriptions = ({ onBrowseClick, onExploreClick }) => {
+const NoSubscriptions = ({  onExploreClick }) => {
   const featuredCategories = [
     {
       icon: Crown,
@@ -40,10 +40,6 @@ const NoSubscriptions = ({ onBrowseClick, onExploreClick }) => {
         
         <CardContent className="space-y-6">
           <div className="flex justify-center gap-4 flex-wrap">
-            <Button onClick={onBrowseClick} size="lg">
-              Browse Memberships
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
             <Button onClick={onExploreClick} variant="outline" size="lg">
               Explore Creators
             </Button>
@@ -67,14 +63,6 @@ const NoSubscriptions = ({ onBrowseClick, onExploreClick }) => {
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-center border-t pt-6">
-          <p className="text-sm text-muted-foreground">
-            Want to start your own membership?{' '}
-            <button className="text-foreground underline underline-offset-4 hover:no-underline font-medium">
-              Become a creator
-            </button>
-          </p>
-        </CardFooter>
       </Card>
     </div>
   );
