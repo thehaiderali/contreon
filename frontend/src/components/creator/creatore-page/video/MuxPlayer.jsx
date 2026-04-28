@@ -19,6 +19,7 @@ export default function MuxPlayerComponent({ playbackId, creatorUrl }) {
       try {
         setIsLoading(true);
         const res = await api.get(`/content/video/${playbackId}`);
+        console.log(res)
         if (res.data.success) {
           setSignedUrl(res.data.data.signedUrl);
         } else {
@@ -60,7 +61,7 @@ export default function MuxPlayerComponent({ playbackId, creatorUrl }) {
   return (
     <div className="w-full aspect-video rounded-xl overflow-hidden bg-black">
       <MuxPlayer
-        playbackId={playbackId}
+        src={signedUrl}
         streamType="on-demand"
         metadata={{
           video_id: playbackId,

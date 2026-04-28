@@ -54,6 +54,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
       if (res.data.success) {
         setComments((prev) => [res.data.data.comment, ...prev]);
         setNewComment('');
+        fetchComments()
       }
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to post comment');
@@ -71,7 +72,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
       setEditing(false);
       setEditId("")
       setNewComment("")
-      fetchComments()
+      
 
     }
  
@@ -146,7 +147,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-2">
                     <span className="font-medium text-sm">
-                      {comment.authorId?.fullName }
+                      {comment.authorId.fullName }
                     </span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(comment.createdAt).toLocaleDateString()}
