@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { authMiddleware, checkCreator, checkCreatorExists } from "../middleware/auth.js";
+import { authMiddleware, checkCreator, checkCreatorExists, checkSubscriberExists } from "../middleware/auth.js";
 import {
   getCreatorProfileById,
   getMyCreatorProfile,
@@ -100,7 +100,7 @@ creatorRouter.get("/by-url/:pageUrl", getCreatorByUrl);
 creatorRouter.get("/by-url/:pageUrl/posts", getCreatorPostsByUrl);
 
 // Get single post by ID (public access)
-creatorRouter.get("/by-url/:pageUrl/posts/:postId", getCreatorPostById);
+creatorRouter.get("/by-url/:pageUrl/posts/:postId",authMiddleware,checkSubscriberExists, getCreatorPostById);
 
 // Get creator's collections by pageUrl
 creatorRouter.get("/by-url/:pageUrl/collections", getCreatorCollectionsByUrl);

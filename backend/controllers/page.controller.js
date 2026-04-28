@@ -3,8 +3,7 @@ import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
 import Collection from "../models/collection.model.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
-import Subscription from "../models/subscription.model.js";
-import mongoose from "mongoose"; 
+import Subscription from "../models/subscription.model.js"; 
 
 export const getCreatorByUrl = async (req, res) => {
   try {
@@ -83,21 +82,8 @@ export const getCreatorPostsByUrl = async (req, res) => {
 export const getCreatorPostById = async (req, res) => {
   try {
     const { pageUrl, postId } = req.params;
-    const token = req.cookies?.token;
     
-    // Decode token to get user info if token exists
-    let userId, userRole;
-    if (token) {
-      try {
-        const jwt = (await import('jsonwebtoken')).default;
-        const { envConfig } = await import('../config/env.js');
-        const decoded = jwt.verify(token, envConfig.JWT_SECRET);
-        userId = decoded.userId;
-        userRole = decoded.role;
-      } catch (e) {
-        // Token invalid, treat as not logged in
-      }
-    }
+    const subscriber=await User.findById(req.user.userId);
     
     const profile = await CreatorProfile.findOne({ pageUrl });
     if (!profile) {
@@ -116,7 +102,7 @@ export const getCreatorPostById = async (req, res) => {
     
     // Check subscription for paid posts
     if (post.isPaid) {
-      if (!userId || userRole !== 'subscriber') {
+      if (!subscriber ) {
         return res.status(403).json({ 
           success: false, 
           error: "Subscription required",
@@ -125,7 +111,7 @@ export const getCreatorPostById = async (req, res) => {
       }
       
       const subscription = await Subscription.findOne({
-        subscriberId: userId,
+        subscriberId: subscriber._id,
         creatorId: profile.creatorId
       });
       
