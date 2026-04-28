@@ -1,98 +1,93 @@
-import React, { useEffect, useState, useRef } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Loader2, DollarSign, CreditCard, Calendar, BadgeCheck } from 'lucide-react'
+import { Loader2, DollarSign, CreditCard, Calendar, AlertCircle, ExternalLink, CheckCircle } from 'lucide-react'
 import { toast } from 'sonner'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore.js'
 
 const Payouts = () => {
-  const [isConnecting, setIsConnecting] = useState(false)
-  const [isInitializing, setIsInitializing] = useState(true)
-  const hasInitialized = useRef(false) // ✅ Prevent multiple calls
-  const { user, checkAuth, loading } = useAuthStore();
+  const [loading, setLoading] = useState(true)
+  const [connecting, setConnecting] = useState(false)
+  const [onboarding, setOnboarding] = useState(false)
+  const [requesting, setRequesting] = useState(false)
+  const [stripeStatus, setStripeStatus] = useState(null)
+  const { user, checkAuth } = useAuthStore()
 
-  // Refresh user data on component mount - ONLY ONCE
+  const isConnected = user?.connectedID && user.connectedID !== ""
+
   useEffect(() => {
-    let isMounted = true;
-    
-    const refreshUser = async () => {
-      try {
-        if (isMounted) {
-          // Call twice at first load as requested
-          await checkAuth();
-          await checkAuth();
-        }
-      } catch (error) {
-        console.error('Error refreshing user:', error);
-        toast.error('Error', {
-          description: 'Failed to load user data',
-        });
-      } finally {
-        if (isMounted) {
-          setIsInitializing(false);
-        }
-      }
-    };
-    
-    // Only run once on mount
-    if (!hasInitialized.current) {
-      hasInitialized.current = true;
-      refreshUser();
-    }
-    
-    return () => {
-      isMounted = false;
-    };
-  }, []); // ✅ Empty dependency array - run once on mount only
+    fetchStripeStatus()
+  }, [])
 
-  const handleConnectStripe = async () => {
-    setIsConnecting(true)
+  const fetchStripeStatus = async () => {
     try {
-      const response = await api.post("/creators/connect-stripe")
-      const data = response.data
-      
-      if (data.success) {
-        toast.success('Success', {
-          description: 'Stripe Connect account created successfully!',
-        })
-        
-        // Call checkAuth twice after Stripe connection
-        await checkAuth()
-        await checkAuth()
-        
-        toast.success('Account Updated', {
-          description: 'Your Stripe account has been connected successfully!',
-        })
-      } else {
-        toast.error('Error', {
-          description: data.error || 'Failed to connect to Stripe',
-        })
+      const res = await api.get('/creators/stripe-status')
+      if (res.data.success) {
+        setStripeStatus(res.data.data)
       }
     } catch (error) {
-      console.error('Error connecting Stripe:', error)
-      toast.error('Error', {
-        description: error.response?.data?.error || error.message || 'Failed to connect to Stripe',
-      })
+      console.error('Error fetching stripe status:', error)
     } finally {
-      setIsConnecting(false)
+      setLoading(false)
     }
   }
 
-  const formatDate = (date) => {
-    if (!date) return 'No payments yet'
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    })
+  const handleConnectStripe = async () => {
+    setConnecting(true)
+    try {
+      const res = await api.post('/creators/connect-stripe')
+      if (res.data.success) {
+        toast.success('Stripe account created')
+        await checkAuth()
+        await fetchStripeStatus()
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to connect Stripe')
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const handleOnboarding = async () => {
+    setOnboarding(true)
+    try {
+      const res = await api.post('/creators/stripe-onboarding')
+      if (res.data.url) {
+        window.location.href = res.data.url
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to start onboarding')
+    } finally {
+      setOnboarding(false)
+    }
+  }
+
+  const handleRequestPayout = async () => {
+    setRequesting(true)
+    try {
+      const res = await api.post('/creators/request-payout')
+      if (res.data.success) {
+        toast.success(`Payout of $${res.data.data.amount} requested`)
+        await checkAuth()
+      } else {
+        toast.error(res.data.error || 'Failed to request payout')
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.error || 'Failed to request payout')
+    } finally {
+      setRequesting(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-48">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    )
   }
 
   const formatCurrency = (amount) => {
@@ -102,100 +97,117 @@ const Payouts = () => {
     }).format(amount)
   }
 
-  // Safely access user properties with optional chaining
-  const pendingEarnings = user?.deferredOnboarding?.pendingEarnings || 0
-  const earningsCount = user?.deferredOnboarding?.earningsCount || 0
-  const lastEarningDate = user?.deferredOnboarding?.lastEarningDate
-  const isStripeConnected = user?.connectedID && user.connectedID !== ""
-
-  // Show loading during initial load OR auth loading
-  if (loading || isInitializing) {
-    return (
-      <div className="container mx-auto py-10 flex justify-center items-center min-h-[400px]">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    )
-  }
-
   return (
-    <div className="container mx-auto py-10">
-      <div className="max-w-2xl mx-auto space-y-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <DollarSign className="h-4 w-4" />
-                <span className="text-sm">Pending Earnings</span>
-              </div>
-              <div className="text-2xl font-bold">
-                {formatCurrency(pendingEarnings)}
-              </div>
-            </CardContent>
-          </Card>
+    <div className="p-6 space-y-6 max-w-2xl">
+      <h1 className="text-xl font-semibold">Payouts</h1>
 
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <CreditCard className="h-4 w-4" />
-                <span className="text-sm">Payment Count</span>
-              </div>
-              <div className="text-2xl font-bold">
-                {earningsCount}
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="pt-6">
-              <div className="flex items-center gap-2 text-muted-foreground mb-2">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm">Last Payment</span>
-              </div>
-              <div className="text-sm font-medium">
-                {formatDate(lastEarningDate)}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Stripe Connect Card */}
+      {!isConnected ? (
         <Card>
           <CardHeader>
-            <CardTitle>Stripe Connect</CardTitle>
+            <CardTitle className="text-base">Connect Stripe</CardTitle>
           </CardHeader>
-          <CardContent>
-            {!isStripeConnected ? (
-              <Button 
-                onClick={handleConnectStripe} 
-                disabled={isConnecting}
-                className="w-full"
-              >
-                {isConnecting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connecting...
-                  </>
-                ) : (
-                  'Connect Stripe Account'
-                )}
-              </Button>
-            ) : (
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Connect your Stripe account to receive payouts from your subscribers.
+            </p>
+            <Button onClick={handleConnectStripe} disabled={connecting}>
+              {connecting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+              {connecting ? 'Connecting...' : 'Connect Stripe Account'}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : !stripeStatus?.isOnboarded ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Complete Stripe Onboarding</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start gap-3 p-4 bg-yellow-50 dark:bg-yellow-950 rounded-lg border border-yellow-200 dark:border-yellow-800">
+              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />
+              <div className="text-sm">
+                <p className="font-medium text-yellow-800 dark:text-yellow-200">Onboarding Required</p>
+                <p className="text-yellow-700 dark:text-yellow-300 mt-1">
+                  You need to complete your Stripe onboarding to receive payouts.
+                </p>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">Complete these steps:</p>
+              <ul className="space-y-1 text-sm text-muted-foreground">
+                {!stripeStatus?.detailsSubmitted && <li className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> Add business details</li>}
+                {!stripeStatus?.chargesEnabled && <li className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> Enable card payments</li>}
+                {!stripeStatus?.payoutsEnabled && <li className="flex items-center gap-2"><ExternalLink className="h-3 w-3" /> Set up payouts</li>}
+              </ul>
+            </div>
+            <Button onClick={handleOnboarding} disabled={onboarding}>
+              {onboarding ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ExternalLink className="h-4 w-4 mr-2" />}
+              {onboarding ? 'Loading...' : 'Complete Onboarding on Stripe'}
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <DollarSign className="h-4 w-4" />
+                  <span className="text-sm">Pending Earnings</span>
+                </div>
+                <p className="text-xl font-semibold">{formatCurrency(user?.deferredOnboarding?.pendingEarnings || 0)}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <CreditCard className="h-4 w-4" />
+                  <span className="text-sm">Payment Count</span>
+                </div>
+                <p className="text-xl font-semibold">{user?.deferredOnboarding?.earningsCount || 0}</p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="pt-4 pb-4">
+                <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                  <Calendar className="h-4 w-4" />
+                  <span className="text-sm">Last Payment</span>
+                </div>
+                <p className="text-sm font-medium">
+                  {user?.deferredOnboarding?.lastEarningDate
+                    ? new Date(user.deferredOnboarding.lastEarningDate).toLocaleDateString()
+                    : 'None'}
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Request Payout</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-950 rounded-lg border border-green-200 dark:border-green-800">
                 <div className="flex items-center gap-3">
-                  <BadgeCheck className="h-5 w-5 text-green-600 dark:text-green-400" />
-                  <span className="font-medium text-green-700 dark:text-green-300">
-                    Stripe Account Connected
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                    Stripe Account Active
                   </span>
                 </div>
-                <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 border-green-200 dark:border-green-800">
+                <Badge variant="outline" className="bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
                   Active
                 </Badge>
               </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              <p className="text-sm text-muted-foreground">
+                Your minimum payout is $1.00. Payouts are processed manually and may take 2-3 business days.
+              </p>
+              <Button onClick={handleRequestPayout} disabled={requesting}>
+                {requesting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                {requesting ? 'Processing...' : 'Request Payout'}
+              </Button>
+            </CardContent>
+          </Card>
+        </>
+      )}
     </div>
   )
 }

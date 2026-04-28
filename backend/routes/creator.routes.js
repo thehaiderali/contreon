@@ -37,7 +37,7 @@ import SubscriptionTier from "../models/subscriptionTier.model.js";
 import { creatorDeleteComment, creatorFeaturedCommentToggle, getAllCommentsForPost } from "../controllers/comment.controller.js";
 import { createTranscription } from "../controllers/transcription.controller.js";
 import { checkMuxUploadStatus, getSignedPlaybackUrl, MuxUploadUrl } from "../controllers/mux.controller.js";
-import { createConnectedAccount } from "../controllers/stripe.controller.js";
+import { createConnectedAccount, createPayout, createStripeOnboarding, getStripeAccountStatus, getEarnings } from "../controllers/stripe.controller.js";
 
 import {
   getCreatorByUrl,
@@ -57,6 +57,10 @@ creatorRouter.post("/recommendations", authMiddleware, checkCreatorExists, addRe
 creatorRouter.get("/recommendations/my-recommendations",authMiddleware,checkCreatorExists, getRecommendations);
 creatorRouter.get("/my-subscribers",authMiddleware,checkCreatorExists,getAllSubscribers)
 creatorRouter.post("/connect-stripe",authMiddleware,checkCreatorExists,createConnectedAccount);
+creatorRouter.post("/stripe-onboarding",authMiddleware,checkCreatorExists,createStripeOnboarding);
+creatorRouter.get("/stripe-status",authMiddleware,checkCreatorExists,getStripeAccountStatus);
+creatorRouter.post("/request-payout",authMiddleware,checkCreatorExists,createPayout);
+creatorRouter.get("/earnings",authMiddleware,checkCreatorExists,getEarnings);
 creatorRouter.post("/mux-upload-url", authMiddleware, checkCreatorExists, MuxUploadUrl);
 creatorRouter.get("/mux-upload-status/:uploadId", authMiddleware, checkCreatorExists, checkMuxUploadStatus);
 creatorRouter.get("/mux-playback-url/:playbackId", authMiddleware, checkCreatorExists, getSignedPlaybackUrl);

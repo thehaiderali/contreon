@@ -1,602 +1,3 @@
-// import stripe from "../config/stripe.js";
-// import User from "../models/user.model.js"
-// import Subscription from "../models/subscription.model.js"
-// import { envConfig } from "../config/env.js";
-// import SubscriptionTier from "../models/subscriptionTier.model.js";
-// import Payment from "../models/payment.model.js";
-
-// export async function createConnectedAccount(req,res){
-
-//     try {
-//     const creator=await User.findById(req.user.userId);
-//     if(creator.connectedID){
-//         return res.status(400).json({
-//             success:false,
-//             error:"Stripe ConnectedID for this Creator Already Exists"
-//         })
-//     }
-//     const account=await stripe.accounts.create({
-//         email:creator.email,
-//         type:"express",
-//         country:"US",
-//         business_profile: { name:creator.fullName, url: 'https://yoursite.com' },
-//         capabilities:{
-//                card_payments:{
-//                 requested:true,
-//                },
-//                transfers:{
-//                 requested:true
-//                } 
-//         },
-//         settings: {
-//         payouts: {
-//          schedule: {
-//         interval: "manual", 
-//       },
-//     },
-//   },
-//     })
-
-
-//     const updated=await User.findByIdAndUpdate(creator._id,{
-//         connectedID:account.id,
-//         isConnected:true
-//     })
-//     return res.status(200).json({
-//         success:true,
-//         data:{
-//             user:updated
-//         }
-//     })
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-    
-// }
-
-
-// export async function createStripeOnboarding(req,res){
-//   const creator=await User.findById(req.user.userId);
-//   const connectedID=creator.connectedID;
-//   try {
-//     const accountLink = await stripe.v2.core.accountLinks.create({
-//       account: connectedID,
-//       use_case: {
-//         type: 'account_onboarding',
-//         account_onboarding: {
-//           configurations: ['recipient'],
-//           refresh_url: 'http://localhost:5173',
-//           return_url: `http://localhost:5173/creator/home=${connectedID}`,
-//         },
-//       },
-//     });
-//     res.json({ url: accountLink.url });
-//   } catch (err) {
-//     res.status(500).json({ error: err.message });
-//   }
-
-// }
-
-
-// export async function createSubscriberCheckout(req, res) {
-//   try {
-//     const { tierId } = req.body;
-
-//     const subscriber = await User.findById(req.user.userId);
-//     if (!subscriber) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "User not found",
-//       });
-//     }
-
-//     const tier = await SubscriptionTier.findById(tierId);
-//     if (!tier) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Membership tier not found",
-//       });
-//     }
-
-//     const existing = await Subscription.findOne({
-//       subscriberId: subscriber._id,
-//       tierId,
-//       status: { $in: ["active", "trialing", "past_due"] },
-//     });
-
-//     if (existing) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Already subscribed",
-//       });
-//     }
-
-//     const creator = await User.findById(tier.creatorId);
-
-//     if (!creator) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Creator not found",
-//       });
-//     }
-
-//     // Create subscription with pending status (no stripeSubscriptionId yet)
-//     const newSubscription = new Subscription({
-//       subscriberId: subscriber._id,
-//       tierId: tierId,
-//       creatorId: tier.creatorId,
-//       tierType: tier.tierName,
-//       status: "incomplete",
-//       startDate: new Date(),
-//       nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-//       // stripeSubscriptionId will be added by webhook
-//     });
-    
-//     await newSubscription.save();
-
-//     let creatorAccountId = creator.connectedID;
-//     let useDirectConnect = false;
-
-//     // CONNECT SAFETY CHECK
-//     if (creatorAccountId) {
-//       try {
-//         const account = await stripe.accounts.retrieve(creatorAccountId);
-//         const hasTransfers = account.capabilities?.transfers === "active";
-//         const isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
-//         useDirectConnect = hasTransfers && isFullyOnboarded;
-//       } catch (err) {
-//         console.log("Stripe account fetch failed:", err.message);
-//         useDirectConnect = false;
-//       }
-//     }
-
-//     // CREATE CHECKOUT SESSION
-//     const sessionParams = {
-//       mode: "subscription",
-//       payment_method_types: ["card"],
-//       success_url: `${envConfig.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-//       cancel_url: `${envConfig.FRONTEND_URL}/payment/cancel`,
-//       customer_email: subscriber.email,
-//       client_reference_id: subscriber._id.toString(),
-
-//       line_items: [
-//         {
-//           price: tier.stripePriceId,
-//           quantity: 1,
-//         },
-//       ],
-
-//       subscription_data: {
-//         metadata: {
-//           subscriber_id: subscriber._id.toString(),
-//           creator_id: creator._id.toString(),
-//           tier_id: tier._id.toString(),
-//           tier_name: tier.tierName,
-//           db_subscription_id: newSubscription._id.toString(), // CRITICAL: Store DB subscription ID
-//         },
-//       },
-
-//       metadata: {
-//         subscriber_id: subscriber._id.toString(),
-//         creator_id: creator._id.toString(),
-//         tier_id: tier._id.toString(),
-//         db_subscription_id: newSubscription._id.toString(), // CRITICAL: Store DB subscription ID
-//         payment_mode: useDirectConnect ? "direct_connect" : "platform_hold",
-//       },
-//     };
-
-//     // CONNECT SPLIT (ONLY IF FULLY ONBOARDED)
-//     if (useDirectConnect) {
-//       sessionParams.subscription_data = {
-//         ...sessionParams.subscription_data,
-//         transfer_data: {
-//           destination: creatorAccountId,
-//         },
-//         application_fee_percent: envConfig.PLATFORM_FEE,
-//       };
-//     }
-
-//     const session = await stripe.checkout.sessions.create(sessionParams);
-
-//     const payment = new Payment({
-//       tierId: tier._id,
-//       subscriptionId: newSubscription._id,
-//       sessionId: session.id,
-//       status: "pending",
-//     });    
-
-//     await payment.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       data: {
-//         checkoutUrl: session.url,
-//         sessionId: session.id,
-//         subscriptionId: newSubscription._id, // Return the subscription ID
-//         connectEnabled: useDirectConnect,
-//       },
-//     });
-//   } catch (error) {
-//     console.log("Error in createSubscriberCheckout:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message || "Internal Server Error",
-//     });
-//   }
-// }
-// // export async function createSubscriberCheckout(req, res) {
-// //   try {
-// //     const { tierId } = req.body;
-
-// //     const subscriber = await User.findById(req.user.userId);
-// //     if (!subscriber) {
-// //       return res.status(404).json({
-// //         success: false,
-// //         error: "User not found",
-// //       });
-// //     }
-
-// //     const tier = await SubscriptionTier.findById(tierId);
-// //     if (!tier) {
-// //       return res.status(404).json({
-// //         success: false,
-// //         error: "Membership tier not found",
-// //       });
-// //     }
-
-// //     const existing = await Subscription.findOne({
-// //       subscriberId: subscriber._id,
-// //       tierId,
-// //       status: { $in: ["active", "trialing", "past_due"] },
-// //     });
-
-// //     if (existing) {
-// //       return res.status(400).json({
-// //         success: false,
-// //         error: "Already subscribed",
-// //       });
-// //     }
-
-// //     const creator = await User.findById(tier.creatorId);
-
-// //     if (!creator) {
-// //       return res.status(404).json({
-// //         success: false,
-// //         error: "Creator not found",
-// //       });
-// //     }
-
-
-// //     const newSubscription = new Subscription({
-// //           subscriberId:subscriber._id,
-// //           tierId:tierId,
-// //           creatorId: tier.creatorId,
-// //           tierType: tier.tierName,
-// //           status: "incomplete",
-// //           startDate: new Date(),
-// //           nextBillingDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-// //         });
-    
-// //      await newSubscription.save();
-
-   
-// //     let creatorAccountId = creator.connectedID;
-// //     let useDirectConnect = false;
-
-// //     // ─────────────────────────────────────────────
-// //     // CONNECT SAFETY CHECK (mapped from GitHub logic)
-// //     // ─────────────────────────────────────────────
-// //     if (creatorAccountId) {
-// //       try {
-// //         const account = await stripe.accounts.retrieve(creatorAccountId);
-
-// //         const hasTransfers =
-// //           account.capabilities?.transfers === "active";
-
-// //         const isFullyOnboarded =
-// //           account.charges_enabled && account.payouts_enabled;
-
-// //         useDirectConnect = hasTransfers && isFullyOnboarded;
-// //       } catch (err) {
-// //         console.log("Stripe account fetch failed:", err.message);
-// //         useDirectConnect = false;
-// //       }
-// //     }
-
-// //     // ─────────────────────────────────────────────
-// //     // CREATE CHECKOUT SESSION
-// //     // ─────────────────────────────────────────────
-// //     const sessionParams = {
-// //       mode: "subscription",
-// //       payment_method_types: ["card"],
-// //       success_url: `${envConfig.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
-// //       cancel_url: `${envConfig.FRONTEND_URL}/payment/cancel`,
-// //       customer_email: subscriber.email,
-// //       client_reference_id: subscriber._id.toString(),
-
-// //       line_items: [
-// //         {
-// //           price: tier.stripePriceId,
-// //           quantity: 1,
-// //         },
-// //       ],
-
-// //       subscription_data: {
-// //         metadata: {
-// //           subscriber_id: subscriber._id.toString(),
-// //           creator_id: creator._id.toString(),
-// //           tier_id: tier._id.toString(),
-// //           tier_name: tier.tierName,
-// //         },
-// //       },
-
-// //       metadata: {
-// //         subscriber_id: subscriber._id.toString(),
-// //         creator_id: creator._id.toString(),
-// //         tier_id: tier._id.toString(),
-// //         payment_mode: useDirectConnect ? "direct_connect" : "platform_hold",
-// //       },
-// //     };
-
-// //     // ─────────────────────────────────────────────
-// //     // CONNECT SPLIT (ONLY IF FULLY ONBOARDED)
-// //     // ─────────────────────────────────────────────
-// //     if (useDirectConnect) {
-// //       sessionParams.subscription_data = {
-// //         ...sessionParams.subscription_data,
-// //         transfer_data: {
-// //           destination: creatorAccountId,
-// //         },
-// //         application_fee_percent: envConfig.PLATFORM_FEE, // platform fee
-// //       };
-// //     }
-
-// //     const session = await stripe.checkout.sessions.create(sessionParams);
-
-// //      const payment= new Payment({
-// //         tierId:tier._id,
-// //         subscriptionId:newSubscription._id,
-// //         sessionId:session.id,
-// //         status:"pending",
-// //     })    
-
-// //     await payment.save()
-
-// //     return res.status(200).json({
-// //       success: true,
-// //       data: {
-// //         checkoutUrl: session.url,
-// //         sessionId: session.id,
-// //         connectEnabled: useDirectConnect,
-// //       },
-// //     });
-// //   } catch (error) {
-// //     console.log("Error in createSubscriberCheckout:", error);
-
-// //     return res.status(500).json({
-// //       success: false,
-// //       error: error.message || "Internal Server Error",
-// //     });
-// //   }
-// // }
-// // export async function cancelSubscription(req, res) {
-// //   try {
-// //     const { subscriptionId } = req.params;
-    
-// //     const subscription = await Subscription.findOne({
-// //       _id: subscriptionId,
-// //       subscriberId: req.user.userId
-// //     });
-
-// //     if (!subscription) {
-// //       return res.status(404).json({
-// //         success: false,
-// //         error: "Subscription not found"
-// //       });
-// //     }
-
-// //     // Cancel at period end (no refund)
-// //     const updatedStripeSub = await stripe.subscriptions.update(
-// //       subscription.stripeSubscriptionId,
-// //       {
-// //         cancel_at_period_end: true
-// //       }
-// //     );
-
-// //     subscription.cancelDate = new Date();
-// //     await subscription.save();
-
-// //     return res.status(200).json({
-// //       success: true,
-// //       message: "Subscription will be cancelled at the end of billing period",
-// //       data: {
-// //         subscriptionId: subscription._id,
-// //         expiresAt: subscription.currentPeriodEnd
-// //       }
-// //     });
-
-// //   } catch (error) {
-// //     console.log("Error in cancelSubscription: ", error);
-// //     return res.status(500).json({
-// //       success: false,
-// //       error: error.message
-// //     });
-// //   }
-// // }
-// export async function cancelSubscription(req, res) {
-//   try {
-//     const { subscriptionId } = req.params;
-    
-//     console.log("Cancel subscription request for ID:", subscriptionId);
-    
-//     // Find the subscription with proper population
-//     const subscription = await Subscription.findOne({
-//       _id: subscriptionId,
-//       subscriberId: req.user.userId
-//     }).populate('tierId');
-    
-//     console.log("Found subscription:", subscription);
-    
-//     if (!subscription) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Subscription not found"
-//       });
-//     }
-    
-//     // Check if subscription is already cancelled
-//     if (subscription.status === 'cancelled') {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Subscription is already cancelled"
-//       });
-//     }
-    
-//     // Check if stripeSubscriptionId exists
-//     if (!subscription.stripeSubscriptionId) {
-//       console.error("No stripeSubscriptionId found for subscription:", subscription._id);
-//       return res.status(400).json({
-//         success: false,
-//         error: "No Stripe subscription ID found. Please contact support."
-//       });
-//     }
-    
-//     console.log("Cancelling Stripe subscription:", subscription.stripeSubscriptionId);
-    
-//     // Cancel at period end (no refund)
-//     const updatedStripeSub = await stripe.subscriptions.update(
-//       subscription.stripeSubscriptionId,
-//       {
-//         cancel_at_period_end: true
-//       }
-//     );
-    
-//     console.log("Stripe subscription updated:", updatedStripeSub.id);
-    
-//     // Update subscription in database
-//     subscription.cancelDate = new Date();
-//     subscription.status = 'cancelled';
-//     subscription.autoRenew = false;
-    
-//     // If Stripe provides current_period_end, store it
-//     if (updatedStripeSub.current_period_end) {
-//       subscription.nextBillingDate = new Date(updatedStripeSub.current_period_end * 1000);
-//     }
-    
-//     await subscription.save();
-    
-//     return res.status(200).json({
-//       success: true,
-//       message: "Subscription will be cancelled at the end of billing period",
-//       data: {
-//         subscriptionId: subscription._id,
-//         status: subscription.status,
-//         cancelDate: subscription.cancelDate,
-//         expiresAt: subscription.nextBillingDate
-//       }
-//     });
-    
-//   } catch (error) {
-//     console.error("Error in cancelSubscription: ", error);
-    
-//     // Handle specific Stripe errors
-//     if (error.type === 'StripeInvalidRequestError') {
-//       return res.status(400).json({
-//         success: false,
-//         error: "Invalid Stripe subscription ID. Please contact support."
-//       });
-//     }
-    
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message
-//     });
-//   }
-// }
-
-// export async function reactivateSubscription(req, res) {
-//   try {
-//     const { subscriptionId } = req.params;
-    
-//     const subscription = await Subscription.findOne({
-//       _id: subscriptionId,
-//       subscriberId: req.user.userId
-//     });
-
-//     if (!subscription) {
-//       return res.status(404).json({
-//         success: false,
-//         error: "Subscription not found"
-//       });
-//     }
-
-//     // Reactivate in Stripe
-//     const updatedStripeSub = await stripe.subscriptions.update(
-//       subscription.stripeSubscriptionId,
-//       {
-//         cancel_at_period_end: false
-//       }
-//     );
-
-//     // Update your database
-//     subscription.cancelDate = null;
-//     await subscription.save();
-
-//     return res.status(200).json({
-//       success: true,
-//       message: "Subscription reactivated successfully",
-//       data: {
-//         subscriptionId: subscription._id,
-//         nextBillingDate: subscription.currentPeriodEnd
-//       }
-//     });
-
-//   } catch (error) {
-//     console.log("Error in reactivateSubscription: ", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message
-//     });
-//   }
-// }
-
-// export async function getMySubscriptions(req, res) {
-//   try {
-//     const subscriptions = await Subscription.find({
-//       subscriberId: req.user.userId
-//     })
-//     .populate('tierId')
-//     .populate('creatorId', 'name email')
-//     .sort({ createdAt: -1 });
-
-//     return res.status(200).json({
-//       success: true,
-//       data: {
-//         subscriptions: subscriptions.map(sub => ({
-//           id: sub._id,
-//           status: sub.status,
-//           tierName: sub.tierId?.tierName,
-//           creatorName: sub.creatorId?.name,
-//           price: sub.price,
-//           currency: sub.currency,
-//           currentPeriodEnd: sub.currentPeriodEnd,
-//           cancelAtPeriodEnd: sub.cancelAtPeriodEnd,
-//           createdAt: sub.createdAt
-//         }))
-//       }
-//     });
-
-//   } catch (error) {
-//     console.log("Error in getMySubscriptions: ", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: error.message
-//     });
-//   }
-// }
-
-
-
 import stripe from "../config/stripe.js";
 import User from "../models/user.model.js"
 import Subscription from "../models/subscription.model.js"
@@ -648,21 +49,162 @@ export async function createStripeOnboarding(req, res) {
   const creator = await User.findById(req.user.userId);
   const connectedID = creator.connectedID;
   
-  try {
-    const accountLink = await stripe.v2.core.accountLinks.create({
-      account: connectedID,
-      use_case: {
-        type: 'account_onboarding',
-        account_onboarding: {
-          configurations: ['recipient'],
-          refresh_url: 'http://localhost:5173',
-          return_url: `http://localhost:5173/creator/home=${connectedID}`,
-        },
-      },
+  if (!connectedID) {
+    return res.status(400).json({
+      success: false,
+      error: "No Stripe account found. Please connect first."
     });
-    res.json({ url: accountLink.url });
+  }
+  
+  try {
+    const accountLink = await stripe.accountLinks.create({
+      account: connectedID,
+      refresh_url: `${envConfig.FRONTEND_URL}/creator/payouts`,
+      return_url: `${envConfig.FRONTEND_URL}/creator/payouts`,
+      type: 'account_onboarding',
+    });
+    res.json({ success: true, url: accountLink.url });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStripeAccountStatus(req, res) {
+  try {
+    const creator = await User.findById(req.user.userId);
+    
+    if (!creator.connectedID) {
+      return res.json({
+        success: true,
+        data: { connected: false, isOnboarded: false }
+      });
+    }
+    
+    const account = await stripe.accounts.retrieve(creator.connectedID);
+    
+    const isOnboarded = account.details_submitted && account.charges_enabled;
+    
+    await User.findByIdAndUpdate(creator._id, {
+      stripeAccountStatus: {
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        detailsSubmitted: account.details_submitted
+      }
+    });
+    
+    return res.json({
+      success: true,
+      data: {
+        connected: true,
+        isOnboarded,
+        chargesEnabled: account.charges_enabled,
+        payoutsEnabled: account.payouts_enabled,
+        detailsSubmitted: account.details_submitted
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function createPayout(req, res) {
+  try {
+    const creator = await User.findById(req.user.userId);
+    
+    if (!creator.connectedID) {
+      return res.status(400).json({
+        success: false,
+        error: "No Stripe account connected"
+      });
+    }
+    
+    const stripeStatus = creator.stripeAccountStatus || {};
+    const isOnboarded = stripeStatus.payoutsEnabled && stripeStatus.chargesEnabled;
+    
+    if (!isOnboarded) {
+      return res.status(400).json({
+        success: false,
+        error: "Complete Stripe onboarding first to receive payouts"
+      });
+    }
+    
+    const pendingEarnings = creator.deferredOnboarding?.pendingEarnings || 0;
+    
+    if (pendingEarnings < 1) {
+      return res.status(400).json({
+        success: false,
+        error: "Minimum payout is $1.00"
+      });
+    }
+    
+    // Transfer pending earnings from platform to creator's connected account
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(pendingEarnings * 100),
+      currency: "usd",
+      destination: creator.connectedID,
+      description: `Manual payout of ${creator.deferredOnboarding.earningsCount || 0} sales`,
+    });
+    
+    console.log("Transfer created:", transfer.id);
+    
+    creator.deferredOnboarding.pendingEarnings = 0;
+    creator.deferredOnboarding.lastEarningDate = new Date();
+    await creator.save();
+    
+    return res.json({
+      success: true,
+      message: "Payout successful",
+      data: {
+        transferId: transfer.id,
+        amount: pendingEarnings
+      }
+    });
+  } catch (err) {
+    console.error("Error creating payout:", err.message);
+    return res.status(400).json({
+      success: false,
+      error: err.message || "Failed to create payout"
+    });
+  }
+}
+
+export async function getEarnings(req, res) {
+  try {
+    const creator = await User.findById(req.user.userId);
+    
+    let pendingEarnings = 0;
+    let earningsCount = 0;
+    let lastEarningDate = null;
+    
+    if (creator.connectedID) {
+      const balance = await stripe.balance.retrieve({
+        stripeAccount: creator.connectedID
+      });
+      const available = balance.available.find(b => b.currency === 'usd');
+      pendingEarnings = available ? available.amount / 100 : 0;
+      
+      const payouts = await stripe.payouts.list({
+        limit: 100,
+      }, {
+        stripeAccount: creator.connectedID
+      });
+      earningsCount = payouts.data.length;
+      if (payouts.data.length > 0) {
+        const lastPayout = payouts.data[0];
+        lastEarningDate = new Date(lastPayout.created * 1000);
+      }
+    }
+    
+    return res.json({
+      success: true,
+      data: {
+        pendingEarnings,
+        earningsCount,
+        lastEarningDate
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
   }
 }
 
@@ -740,6 +282,10 @@ const newSubscription = new Subscription({
       }
     }
 
+    const tierPrice = Math.round(tier.price * 100);
+    const platformFeeAmount = Math.round(tierPrice * (parseFloat(envConfig.PLATFORM_FEE) / 100));
+    const sellerAmount = tierPrice - platformFeeAmount;
+
     // CREATE CHECKOUT SESSION
     const sessionParams = {
       mode: "subscription",
@@ -769,6 +315,8 @@ const newSubscription = new Subscription({
         tier_id: tier._id.toString(),
         db_subscription_id: newSubscription._id.toString(),
         payment_mode: useDirectConnect ? "direct_connect" : "platform_hold",
+        seller_amount: (sellerAmount / 100).toString(),
+        platform_fee: (platformFeeAmount / 100).toString(),
       },
     };
 

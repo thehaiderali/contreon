@@ -28,6 +28,14 @@ export async function handleStripeWebhook(req, res) {
         await handleCheckoutSessionCompleted(event.data.object);
         break;
         
+      case 'account.updated':
+        await handleAccountUpdated(event.data.object);
+        break;
+        
+      case 'transfer.created':
+        console.log("Transfer created:", event.data.object.id);
+        break;
+        
       case 'customer.subscription.created':
         await handleSubscriptionCreated(event.data.object);
         break;
@@ -64,12 +72,7 @@ export async function handleStripeWebhook(req, res) {
 async function handleCheckoutSessionCompleted(session) {
   console.log("Checkout session completed:", session.id);
   
-  const dbSubscriptionId = session.metadata?.db_subscription_id;
-  
-  if (!dbSubscriptionId) {
-    console.error("No db_subscription_id in session metadata");
-    return;
-  }
+  const paymentMode = session.metadata?.payment_mode;
   
   // Update payment status
   await Payment.findOneAndUpdate(
@@ -77,12 +80,36 @@ async function handleCheckoutSessionCompleted(session) {
     { status: "success" }
   );
 
+  // If platform holds payment (seller not fully onboarded), track pending earnings
+  if (paymentMode === "platform_hold") {
+    const creatorId = session.metadata?.creator_id;
+    const sellerAmount = parseFloat(session.metadata?.seller_amount || "0");
+
+    if (creatorId && sellerAmount > 0) {
+      const creator = await User.findById(creatorId);
+
+      if (creator) {
+        creator.deferredOnboarding = creator.deferredOnboarding || {};
+        creator.deferredOnboarding.pendingEarnings = (creator.deferredOnboarding.pendingEarnings || 0) + sellerAmount;
+        creator.deferredOnboarding.earningsCount = (creator.deferredOnboarding.earningsCount || 0) + 1;
+        creator.deferredOnboarding.lastEarningDate = new Date();
+
+        await creator.save();
+
+        console.log(`Platform holding $${sellerAmount} for creator ${creatorId}. Total pending: $${creator.deferredOnboarding.pendingEarnings}`);
+      }
+    }
+  }
+
   // Send welcome email to new subscriber
   try {
-    const subscription = await Subscription.findById(dbSubscriptionId)
-      .populate('subscriberId', 'fullName email')
-      .populate('creatorId', 'fullName')
-      .populate('tierId');
+    const dbSubscriptionId = session.metadata?.db_subscription_id;
+    const subscription = dbSubscriptionId
+      ? await Subscription.findById(dbSubscriptionId)
+          .populate('subscriberId', 'fullName email')
+          .populate('creatorId', 'fullName')
+          .populate('tierId')
+      : null;
 
     if (subscription && subscription.subscriberId && subscription.creatorId) {
       const subscriber = subscription.subscriberId;
@@ -90,18 +117,16 @@ async function handleCheckoutSessionCompleted(session) {
       const tier = subscription.tierId;
 
       const dashboardUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
-      
+
       await sendEmail(
         subscriber.email,
         `Welcome to ${creator.fullName}!`,
         welcomeEmail(subscriber.fullName, creator.fullName, tier?.tierName || 'Member', dashboardUrl)
       );
-      console.log(`✅ Welcome email sent to ${subscriber.email}`);
 
-      // Notify creator about new subscriber
       const creatorProfile = await CreatorProfile.findOne({ creatorId: creator._id });
       const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
-      
+
       await sendEmail(
         creator.email,
         `New subscriber: ${subscriber.fullName}`,
@@ -113,13 +138,10 @@ async function handleCheckoutSessionCompleted(session) {
           manageUrl
         )
       );
-      console.log(`✅ New subscriber notification sent to creator ${creator.email}`);
     }
   } catch (emailError) {
     console.log('Could not send welcome email:', emailError.message);
   }
-  
-  console.log(`Checkout completed for subscription: ${dbSubscriptionId}`);
 }
 
 async function handleSubscriptionCreated(subscription) {
@@ -394,6 +416,55 @@ async function handleInvoicePaymentFailed(invoice) {
     } catch (error) {
       console.error("Error processing invoice payment failure:", error);
     }
+  }
+}
+
+async function handleAccountUpdated(account) {
+  console.log("Account updated:", account.id);
+
+  const isFullyVerified = account.charges_enabled && account.capabilities?.transfers === "active";
+
+  if (!isFullyVerified) {
+    console.log("Account not fully verified yet");
+    return;
+  }
+
+  const creator = await User.findOne({ connectedID: account.id });
+
+  if (!creator) {
+    console.log("No creator found for account:", account.id);
+    return;
+  }
+
+  creator.isConnected = true;
+  await creator.save();
+
+  const pendingEarnings = creator.deferredOnboarding?.pendingEarnings || 0;
+
+  if (pendingEarnings <= 0) {
+    console.log("No pending earnings to transfer");
+    return;
+  }
+
+  console.log(`Transferring pending earnings: $${pendingEarnings} to ${account.id}`);
+
+  try {
+    const transfer = await stripe.transfers.create({
+      amount: Math.round(pendingEarnings * 100),
+      currency: "usd",
+      destination: account.id,
+      description: `Transfer of pending earnings`,
+    });
+
+    console.log("Transfer successful:", transfer.id);
+
+    creator.deferredOnboarding.pendingEarnings = 0;
+    creator.deferredOnboarding.lastEarningDate = new Date();
+    await creator.save();
+
+    console.log(`Successfully transferred $${pendingEarnings} to creator ${creator._id}`);
+  } catch (error) {
+    console.error("Error transferring pending earnings:", error.message);
   }
 }
 
