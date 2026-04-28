@@ -2,8 +2,17 @@ import jwt from "jsonwebtoken";
 import { mux } from "../utils/mux.js";
 import { envConfig } from '../config/env.js';
 import Post from "../models/post.model.js";
+import PostView from "../models/view.model.js";
 import Subscription from "../models/subscription.model.js";
 import Comment from "../models/comment.model.js";
+
+async function recordPostView(postId, userId) {
+    try {
+        await PostView.create({ postId, viewerId: userId });
+    } catch (error) {
+        console.error("Error recording post view:", error);
+    }
+}
 
 export async function getSignedPlaybackUrlWithAccess(req, res) {
     try {
@@ -25,6 +34,8 @@ export async function getSignedPlaybackUrlWithAccess(req, res) {
                 error: "Post not found"
             });
         }
+
+        recordPostView(post._id, userId);
 
         const isFree = !post.isPaid && !post.tierId;
 
@@ -152,6 +163,8 @@ export async function getAllCommentsWithAccess(req, res) {
             });
         }
 
+        recordPostView(post._id, userId);
+
         const isFree = !post.isPaid && !post.tierId;
 
         if (isFree) {
@@ -194,6 +207,8 @@ export async function getAllCommentsWithAccess(req, res) {
                 error: "Your subscription tier cannot view comments on this post"
             });
         }
+
+        recordPostView(post._id, userId);
 
         const comments = await Comment.find({ postId })
             .populate('authorId', 'name avatar')

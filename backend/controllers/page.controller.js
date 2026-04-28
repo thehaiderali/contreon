@@ -1,9 +1,18 @@
 import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Post from "../models/post.model.js";
+import PostView from "../models/view.model.js";
 import Collection from "../models/collection.model.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
-import Subscription from "../models/subscription.model.js"; 
+import Subscription from "../models/subscription.model.js";
+
+async function recordPostView(postId, userId) {
+  try {
+    await PostView.create({ postId, viewerId: userId });
+  } catch (error) {
+    console.error("Error recording post view:", error);
+  }
+}
 
 export const getCreatorByUrl = async (req, res) => {
   try {
@@ -68,6 +77,11 @@ export const getCreatorPostsByUrl = async (req, res) => {
       isPublished: true 
     }).sort({ createdAt: -1 });
     
+    const userId = req.user?.userId;
+    for (const post of posts) {
+      recordPostView(post._id, userId);
+    }
+    
     return res.status(200).json({
       success: true,
       data: posts
@@ -99,6 +113,8 @@ export const getCreatorPostById = async (req, res) => {
     if (!post) {
       return res.status(404).json({ success: false, error: "Post not found" });
     }
+    
+    recordPostView(post._id, req.user?.userId);
     
     // Check subscription for paid posts
     if (post.isPaid) {

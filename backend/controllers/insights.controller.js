@@ -17,6 +17,11 @@ export async function getCreatorInsights(req, res) {
     // Total comments
     const totalComments = await Comment.countDocuments({ postId: { $in: postIds } });
 
+    // Total likes/dislikes on comments
+    const comments = await Comment.find({ postId: { $in: postIds } });
+    const totalLikes = comments.reduce((sum, c) => sum + (c.likes?.length || 0), 0);
+    const totalDislikes = comments.reduce((sum, c) => sum + (c.dislikes?.length || 0), 0);
+
     // Total subscribers
     const totalSubscribers = await Subscription.countDocuments({ 
       creatorId, 
@@ -74,6 +79,8 @@ export async function getCreatorInsights(req, res) {
         totalViews,
         totalComments,
         totalSubscribers,
+        totalLikes,
+        totalDislikes,
         recentViews,
         recentComments,
         totalPosts: posts.length,
