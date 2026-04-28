@@ -35,8 +35,6 @@ export const checkCreator=async(req,res,next)=>{
   }
 
 }
-
-
 export const checkCreatorExists=async(req,res,next)=>{
 
   try {
