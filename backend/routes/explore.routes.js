@@ -7,7 +7,8 @@ import {
   getTopics,
   getTopCreatorsByCategory,
   getNewCreators,
-  searchCreatorOrTopic
+  searchCreatorOrTopic,
+  getFeedPosts
 } from '../controllers/explore.controller.js';
 import { authMiddleware, checkSubscriberExists } from '../middleware/auth.js';
 
@@ -24,5 +25,6 @@ router.get('/search', searchCreatorOrTopic);
 // Protected routes (require login)
 router.get('/recently-visited', authMiddleware,checkSubscriberExists, getRecentlyVisited);
 router.get('/creators-for-you', authMiddleware,checkSubscriberExists, getCreatorsForYou);
+router.get('/feed', authMiddleware, checkSubscriberExists, getFeedPosts);
 
 export default router;

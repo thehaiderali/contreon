@@ -59,6 +59,7 @@ export const getRecentlyVisited = async (req, res) => {
           id: item.creatorId._id,
           name: item.creatorId.fullName,
           avatar: profile?.profileImageUrl || 'https://i.pravatar.cc/40',
+          pageUrl: profile?.pageUrl || '',
           slug: profile?.pageUrl || ''
         };
       })
@@ -113,7 +114,8 @@ export const getCreatorsForYou = async (req, res) => {
       id: doc._id,
       name: doc.user.fullName,
       tagline: doc.bio?.substring(0, 40) || '',
-      cover: doc.bannerUrl || 'https://picsum.photos/300/200'
+      cover: doc.bannerUrl || 'https://picsum.photos/300/200',
+      pageUrl: doc.pageUrl || ''
     }));
 
     res.json({ creatorsForYou });
@@ -174,7 +176,8 @@ export const getPopularThisWeek = async (req, res) => {
       id: item._id,
       name: item.user.fullName,
       tagline: item.profile?.bio?.substring(0, 50) || 'Creator',
-      avatar: item.profile?.profileImageUrl || 'https://i.pravatar.cc/48'
+      avatar: item.profile?.profileImageUrl || 'https://i.pravatar.cc/48',
+      pageUrl: item.profile?.pageUrl || ''
     }));
 
     res.json({ popularThisWeek: creators });
@@ -262,7 +265,8 @@ export const getTopCreatorsByCategory = async (req, res) => {
         id: item._id,
         name: item.user.fullName,
         tagline: item.profile.bio?.substring(0, 50) || '',
-        cover: item.profile.bannerUrl || 'https://picsum.photos/300/200'
+        cover: item.profile.bannerUrl || 'https://picsum.photos/300/200',
+        pageUrl: item.profile.pageUrl || ''
       });
       if (creatorsPerCategory[cat].length >= 6) continue; // limit 6 per category
     }
@@ -292,7 +296,8 @@ export const getNewCreators = async (req, res) => {
       id: profile._id,
       name: profile.creatorId.fullName,
       tagline: profile.bio?.substring(0, 40) || '',
-      cover: profile.bannerUrl || 'https://picsum.photos/300/200'
+      cover: profile.bannerUrl || 'https://picsum.photos/300/200',
+      pageUrl: profile.pageUrl || ''
     }));
 
     res.json({ newCreators });
@@ -365,5 +370,95 @@ export const searchCreatorOrTopic = async (req, res) => {
     res.json({ results });
   } catch (error) {
     res.status(500).json({ message: error.message });
+  }
+};
+
+// ─────────────────────────────────────────────
+// Feed: Get posts from subscribed creators
+// ─────────────────────────────────────────────
+export const getFeedPosts = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const { page = 1, limit = 10 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Get all active subscriptions for this user
+    const subscriptions = await Subscription.find({
+      subscriberId: userId,
+      status: 'active'
+    }).select('creatorId');
+
+    if (subscriptions.length === 0) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          posts: [],
+          hasMore: false,
+          page: parseInt(page)
+        }
+      });
+    }
+
+    const creatorIds = subscriptions.map(sub => sub.creatorId);
+
+    // Get posts from these creators
+    const posts = await Post.find({
+      creatorId: { $in: creatorIds },
+      isPublished: true
+    })
+    .populate('creatorId', 'fullName profileImageUrl pageUrl')
+    .populate('tierId', 'tierName price')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(parseInt(limit));
+
+    const total = await Post.countDocuments({
+      creatorId: { $in: creatorIds },
+      isPublished: true
+    });
+
+    // Transform posts to include creator info
+    const transformedPosts = posts.map(post => ({
+      _id: post._id,
+      title: post.title,
+      type: post.type,
+      content: post.content,
+      thumbnailUrl: post.thumbnailUrl,
+      videoUrl: post.videoUrl,
+      audioUrl: post.audioUrl,
+      videoDuration: post.videoDuration,
+      description: post.description,
+      isPaid: post.isPaid,
+      isPublished: post.isPublished,
+      commentsAllowed: post.commentsAllowed,
+      createdAt: post.createdAt,
+      likes: post.likes || 0,
+      views: post.views || 0,
+      comments: post.commentsCount || 0,
+      creatorId: post.creatorId ? {
+        _id: post.creatorId._id,
+        fullName: post.creatorId.fullName,
+        profileImageUrl: post.creatorId.profileImageUrl,
+        pageUrl: post.creatorId.pageUrl
+      } : null,
+      tierId: post.tierId ? {
+        _id: post.tierId._id,
+        tierName: post.tierId.tierName,
+        price: post.tierId.price
+      } : null
+    }));
+
+    res.status(200).json({
+      success: true,
+      data: {
+        posts: transformedPosts,
+        hasMore: skip + posts.length < total,
+        page: parseInt(page),
+        total
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching feed:', error);
+    res.status(500).json({ success: false, error: error.message });
   }
 };

@@ -122,9 +122,9 @@ function RecentlyVisited({ creators }) {
   
   if (!creators || creators.length === 0) return null;
   
-  const handleClick = (slug) => {
-    if (slug) {
-      navigate(`/c/${slug}`);
+  const handleClick = (pageUrl) => {
+    if (pageUrl) {
+      navigate(`/c/${pageUrl}`);
     }
   };
   
@@ -138,7 +138,7 @@ function RecentlyVisited({ creators }) {
           <div
             key={c.id}
             className="flex items-center gap-2.5 bg-muted rounded-xl px-4 py-2.5 cursor-pointer hover:bg-muted/70 transition-colors"
-            onClick={() => handleClick(c.slug)}
+            onClick={() => handleClick(c.pageUrl || c.slug)}
           >
             <img src={c.avatar} alt={c.name} className="w-7 h-7 rounded-full object-cover" />
             <span className="text-sm font-medium">{c.name}</span>
