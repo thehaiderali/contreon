@@ -3,6 +3,7 @@
  * Black & White Theme with Tailwind CSS
  * Compatible with Resend email API
  */
+import { envConfig } from '../config/env.js';
 import resend from '../config/resend.js';
 
 const generateReceiptId = () => Math.random().toString(36).substr(2, 8).toUpperCase();
@@ -579,7 +580,7 @@ export const payoutEmail = (creatorName, amount, date, balance, payoutUrl) => `
 export const sendEmail = async (to, subject, html) => {
   try {
     const response = await resend.emails.send({
-      from: 'contreon@resend.dev',
+      from: envConfig.EMAIL_FROM,
       to: Array.isArray(to) ? to : [to],
       subject,
       html,
@@ -592,38 +593,3 @@ export const sendEmail = async (to, subject, html) => {
   }
 };
 
-// ============================================
-// USAGE EXAMPLE
-// ============================================
-/*
-import { 
-  welcomeEmail, 
-  newPostEmail, 
-  paymentReceiptEmail, 
-  signupWelcomeEmail,
-  passwordResetEmail,
-  newSubscriberEmail,
-  sendEmail 
-} from './emails/templates.js';
-
-// Send welcome email to new subscriber
-await sendEmail(
-  'subscriber@example.com',
-  'Welcome to CreatorName!',
-  welcomeEmail('John', 'CreatorName', 'Supporter Tier', 'https://contreon.com/members')
-);
-
-// Send password reset
-await sendEmail(
-  'user@example.com',
-  'Reset your Contreon password',
-  passwordResetEmail('John', 'token123', 'https://contreon.com/reset/token123', 1)
-);
-
-// Notify creator of new subscriber
-await sendEmail(
-  'creator@example.com',
-  'New subscriber!',
-  newSubscriberEmail('CreatorName', 'John Doe', 'Premium', '$10', 'https://contreon.com/creator/subscribers')
-);
-*/

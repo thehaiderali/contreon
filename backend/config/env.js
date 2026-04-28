@@ -68,6 +68,6 @@ export const envConfig={
     MUX_SECRET_KEY:process.env.MUX_SECRET_KEY,
     MUX_SIGNING_PRIVATE_KEY:process.env.MUX_SIGNING_PRIVATE_KEY,
     MUX_SIGNING_KEY_ID:process.env.MUX_SIGNING_KEY_ID,
-   RESEND_API_KEY:process.env.RESEND_API_KEY,
-   EMAIL_FROM: process.env.EMAIL_FROM || 'Contreon <noreply@contreon.com>'
+    RESEND_API_KEY:process.env.RESEND_API_KEY,
+    EMAIL_FROM: process.env.EMAIL_FROM,
 }
