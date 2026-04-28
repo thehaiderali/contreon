@@ -4,7 +4,6 @@ import ReactConfetti from 'react-confetti';
 import { CheckCircle, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { api } from '@/lib/api';
 
 export default function PaymentSuccess() {
     const [searchParams] = useSearchParams();
@@ -14,6 +13,7 @@ export default function PaymentSuccess() {
     const [windowSize, setWindowSize] = useState({ width: window.innerWidth, height: window.innerHeight });
 
     const sessionId = searchParams.get('session_id');
+    const pageUrl = searchParams.get("creator_url");
 
     useEffect(() => {
         const handleResize = () => {
@@ -46,9 +46,9 @@ export default function PaymentSuccess() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-background">
+            <div className="flex min-h-screen items-center justify-center">
                 <div className="text-center space-y-4">
-                    <div className="w-8 h-8 border-2 border-black border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
                     <p className="text-sm text-muted-foreground">Processing your payment...</p>
                 </div>
             </div>
@@ -56,7 +56,7 @@ export default function PaymentSuccess() {
     }
 
     return (
-        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="relative flex min-h-screen items-center justify-center p-4">
             <ReactConfetti
                 width={windowSize.width}
                 height={windowSize.height}
@@ -67,34 +67,34 @@ export default function PaymentSuccess() {
                 gravity={0.15}
             />
             
-            <Card className="w-full max-w-md border border-border shadow-lg">
+            <Card className="w-full max-w-md shadow-lg">
                 <CardContent className="pt-12 pb-8 px-8 text-center">
                     <div className="mb-6">
-                        <div className="w-16 h-16 rounded-full border-2 border-green-500 flex items-center justify-center mx-auto bg-green-50">
-                            <CheckCircle className="w-8 h-8 text-green-600" />
+                        <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                            <CheckCircle className="h-8 w-8 text-primary" />
                         </div>
                     </div>
                     
-                    <h1 className="text-2xl font-semibold tracking-tight mb-2">
+                    <h1 className="mb-2 text-2xl font-semibold tracking-tight">
                         Welcome Aboard
                     </h1>
-                    <p className="text-sm text-muted-foreground mb-8">
+                    <p className="mb-8 text-sm text-muted-foreground">
                         Your subscription is now active. Start exploring exclusive content from your favorite creators.
                     </p>
 
                     <div className="space-y-3">
                         <Button 
-                            onClick={() => navigate('/home/explore')} 
-                            className="w-full bg-black text-white hover:bg-black/90"
+                            onClick={() => navigate(`/c/${pageUrl}`)} 
+                            className="w-full"
                         >
-                            Start Exploring
-                            <ArrowRight className="ml-2 w-4 h-4" />
+                            Go Back to Creator Page
+                            <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
                         
                         <Button 
                             onClick={() => navigate('/home/memberships')} 
-                            variant="outline" 
-                            className="w-full border-black text-black hover:bg-black hover:text-white"
+                            variant="outline"
+                            className="w-full"
                         >
                             View My Memberships
                         </Button>

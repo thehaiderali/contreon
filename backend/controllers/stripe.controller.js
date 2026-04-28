@@ -4,6 +4,7 @@ import Subscription from "../models/subscription.model.js"
 import { envConfig } from "../config/env.js";
 import SubscriptionTier from "../models/subscriptionTier.model.js";
 import Payment from "../models/payment.model.js";
+import CreatorProfile from "../models/profile.model.js";
 
 export async function createConnectedAccount(req, res) {
   try {
@@ -248,6 +249,9 @@ export async function createSubscriberCheckout(req, res) {
         error: "Creator not found",
       });
     }
+    const profile=await CreatorProfile.findOne({
+      creatorId:creator._id
+    })
 
     // Create subscription with pending status (no stripeSubscriptionId yet)
    // In createSubscriberCheckout function, update the subscription creation:
@@ -290,7 +294,7 @@ const newSubscription = new Subscription({
     const sessionParams = {
       mode: "subscription",
       payment_method_types: ["card"],
-      success_url: `${envConfig.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${envConfig.FRONTEND_URL}/payment/success?session_id={CHECKOUT_SESSION_ID}&creator_url=${profile.pageUrl}`,
       cancel_url: `${envConfig.FRONTEND_URL}/payment/cancel`,
       customer_email: subscriber.email,
       client_reference_id: subscriber._id.toString(),
