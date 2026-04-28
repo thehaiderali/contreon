@@ -56,7 +56,7 @@ export default function PaymentCancel() {
                         </Button>
                         
                         <Button 
-                            onClick={() => navigate('/explore')} 
+                            onClick={() => navigate('/home/explore')} 
                             variant="outline" 
                             className="w-full border-black text-black hover:bg-black hover:text-white"
                         >
