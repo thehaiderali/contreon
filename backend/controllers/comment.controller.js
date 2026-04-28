@@ -242,7 +242,7 @@ export async function creatorDeleteComment(req,res){
 
 export async function creatorFeaturedCommentToggle(req,res){
     try {
-       
+        
       const id=req.params.id;
       const commentId=req.params.commentId;
       const post=await Post.findById(id);
@@ -283,5 +283,111 @@ export async function creatorFeaturedCommentToggle(req,res){
             error:"Internal Server Error"
         })
 
+    }
+}
+
+
+export async function likeComment(req,res){
+    try {
+        const {commentId}=req.params;
+        const userId=req.user.userId;
+
+        const comment=await Comment.findById(commentId);
+        if(!comment){
+            return res.status(404).json({
+                success:false,
+                error:"Comment not found"
+            })
+        }
+        if(comment.authorId.toString()===userId){
+            return res.status(403).json({
+                success:false,
+                error:"You cannot like your own comment"
+            })
+        }
+
+        if(!comment.likes) comment.likes = [];
+        if(!comment.dislikes) comment.dislikes = [];
+
+        const hasLiked=comment.likes.includes(userId);
+        const hasDisliked=comment.dislikes.includes(userId);
+
+        if(hasLiked){
+            comment.likes.pull(userId);
+        } else {
+            if(hasDisliked){
+                comment.dislikes.pull(userId);
+            }
+            comment.likes.push(userId);
+        }
+        await comment.save();
+
+        return res.status(200).json({
+            success:true,
+            data:{
+                likes:comment.likes,
+                dislikes:comment.dislikes
+            },
+            message:hasLiked ? "Like removed" : "Comment liked"
+        })
+    } catch (error) {
+        console.log("Error in Liking Comment : ",error)
+        return res.status(500).json({
+            success:false,
+            error:"Internal Server Error"
+        })
+    }
+}
+
+
+export async function dislikeComment(req,res){
+    try {
+        const {commentId}=req.params;
+        const userId=req.user.userId;
+
+        const comment=await Comment.findById(commentId);
+        if(!comment){
+            return res.status(404).json({
+                success:false,
+                error:"Comment not found"
+            })
+        }
+        if(comment.authorId.toString()===userId){
+            return res.status(403).json({
+                success:false,
+                error:"You cannot dislike your own comment"
+            })
+        }
+
+        if(!comment.likes) comment.likes = [];
+        if(!comment.dislikes) comment.dislikes = [];
+
+        const hasDisliked=comment.dislikes.includes(userId);
+        const hasLiked=comment.likes.includes(userId);
+
+        if(hasDisliked){
+            comment.dislikes.pull(userId);
+        } else {
+            if(hasLiked){
+                comment.likes.pull(userId);
+            }
+            comment.dislikes.push(userId);
+        }
+        await comment.save();
+
+        return res.status(200).json({
+            success:true,
+            data:{
+                likes:comment.likes,
+                dislikes:comment.dislikes
+            },
+            message:hasDisliked ? "Dislike removed" : "Comment disliked"
+        })
+    } catch (error) {
+        console.log("Error in Disliking Comment : ",error)
+        return res.status(500).json({
+            success:false,
+            error:"Internal Server Error"
+        })
     }
 }

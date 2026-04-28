@@ -159,7 +159,7 @@ const PostViewer = () => {
         <Comments 
           postId={postId} 
           creatorUrl={creatorUrl} 
-          commentsAllowed={post.commentsAllowed !== false} 
+          commentsAllowed={post.commentsAllowed} 
         />
       </div>
     </div>

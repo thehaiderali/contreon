@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
-import { MessageCircle, Send, Trash2, Loader2, Edit } from 'lucide-react';
+import { MessageCircle, Send, Trash2, Loader2, Edit, ThumbsUp, ThumbsDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/authStore';
@@ -14,10 +14,6 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
   const {user}=useAuthStore();
   const [editing,setEditing]=useState(false);
   const [editId,setEditId]=useState("")
-
-  // If user._id === comment.authorId // Show an Edit Button on Comment. 
-  // The api request is as Follows  . 
-  // const res=await api.put("/comments/${comment._id}",{ content:newContent   }  )
 
   useEffect(() => {
     if (commentsAllowed) {
@@ -97,6 +93,40 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
     
   };
 
+  const handleLike = async (commentId) => {
+    try {
+      const res = await api.put(`/comments/like/${commentId}`);
+      if (res.data.success) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === commentId
+              ? { ...c, likes: res.data.data.likes, dislikes: res.data.data.dislikes }
+              : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error liking comment:', err);
+    }
+  };
+
+  const handleDislike = async (commentId) => {
+    try {
+      const res = await api.put(`/comments/dislike/${commentId}`);
+      if (res.data.success) {
+        setComments((prev) =>
+          prev.map((c) =>
+            c._id === commentId
+              ? { ...c, likes: res.data.data.likes, dislikes: res.data.data.dislikes }
+              : c
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Error disliking comment:', err);
+    }
+  };
+
   if (!commentsAllowed) {
     return null;
   }
@@ -160,22 +190,76 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
                   </div>
                   <p className="text-sm">{comment.content}</p>
                 </div>
+                {comment.authorId._id === user?._id && (
+                  <>
+<Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-red-500"
+                      onClick={() => handleDeleteComment(comment._id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-yellow-500"
+                      onClick={() => handleUpdateComment(comment._id)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </>
+                )}
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-red-500"
-                  onClick={() => handleDeleteComment(comment._id)}
+                  className={`hover:text-green-500 ${comment.likes?.includes(user?._id) ? 'text-green-500' : 'text-muted-foreground'}`}
+                  onClick={() => comment.authorId._id !== user?._id ? handleLike(comment._id) : null}
+                  disabled={comment.authorId._id === user?._id}
                 >
-                  <Trash2 className="h-4 w-4" />
+                  <ThumbsUp className="h-4 w-4" />
                 </Button>
+                <span className="text-xs text-muted-foreground min-w-[20px] text-center">
+                  {comment.likes?.length || 0}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="text-muted-foreground hover:text-yellow-500"
-                  onClick={() => handleUpdateComment(comment._id)}
+                  className={`hover:text-red-500 ${comment.dislikes?.includes(user?._id) ? 'text-red-500' : 'text-muted-foreground'}`}
+                  onClick={() => comment.authorId._id !== user?._id ? handleDislike(comment._id) : null}
+                  disabled={comment.authorId._id === user?._id}
                 >
-                  <Edit className="h-4 w-4" />
+                  <ThumbsDown className="h-4 w-4" />
                 </Button>
+                <span className="text-xs text-muted-foreground min-w-[20px] text-center">
+                  {comment.dislikes?.length || 0}
+                </span>
+                {comment.authorId._id !== user._id && (
+                  <>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`hover:text-green-500 ${comment.likes?.includes(user?._id) ? 'text-green-500' : 'text-muted-foreground'}`}
+                      onClick={() => handleLike(comment._id)}
+                    >
+                      <ThumbsUp className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground min-w-[20px] text-center">
+                      {comment.likes?.length || 0}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`hover:text-red-500 ${comment.dislikes?.includes(user?._id) ? 'text-red-500' : 'text-muted-foreground'}`}
+                      onClick={() => handleDislike(comment._id)}
+                    >
+                      <ThumbsDown className="h-4 w-4" />
+                    </Button>
+                    <span className="text-xs text-muted-foreground min-w-[20px] text-center">
+                      {comment.dislikes?.length || 0}
+                    </span>
+                  </>
+                )}
               </div>
             </div>
           ))}
