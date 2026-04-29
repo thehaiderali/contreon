@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
 import { Lock, FileText, Music, Video, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader } from '../dashboard/Loader';
 
 const formatDate = (d) => {
   if (!d) return '';
@@ -202,7 +203,7 @@ export default function CreatorHome({ creatorUrl }) {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <div className="w-6 h-6 rounded-full border-2 border-border border-t-foreground animate-spin" />
+        <Loader size="lg" />
       </div>
     );
   }

@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, MessageCircle, Users, FileText, ThumbsUp, ThumbsDown } from 'lucide-react'
 import { api } from '@/lib/api'
+import { Loader } from '../../../components/creator/dashboard/Loader'
 
 const Insights = () => {
   const [insights, setInsights] = useState(null)
@@ -26,7 +27,7 @@ const Insights = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary"></div>
+        <Loader size="md" />
       </div>
     )
   }

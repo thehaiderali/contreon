@@ -8,6 +8,7 @@ import AudioPost from './post-view/AudioPost';
 import PublicVideoPlayer from './video/PublicVideoPlayer';
 import MuxPlayerComponent from './video/MuxPlayer';
 import Comments from './post-view/Comments';
+import { Loader } from '../dashboard/Loader';
 import Editor from '../posts/Editor';
 
 const PostViewer = () => {
@@ -45,7 +46,7 @@ const PostViewer = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center py-24">
-        <div className="w-6 h-6 rounded-full border-2 border-border border-t-foreground animate-spin" />
+        <Loader size="lg" />
       </div>
     );
   }

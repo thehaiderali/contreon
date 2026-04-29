@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
-import { Lock, FileText, Music, Video, Search, SlidersHorizontal, X } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, Plus, MoreHorizontal, Pencil, Trash2, FileText, Music, Video } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Loader } from '../dashboard/Loader';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
@@ -179,7 +180,7 @@ export default function CreatorPosts({ creatorUrl, creator }) {
 
         {isLoading && (
           <div className="flex justify-center py-20">
-            <div className="w-6 h-6 rounded-full border-2 border-border border-t-foreground animate-spin" />
+            <Loader size="lg" />
           </div>
         )}
 

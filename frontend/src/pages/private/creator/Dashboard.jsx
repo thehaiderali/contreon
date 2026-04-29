@@ -1,16 +1,18 @@
 import React from 'react'
 import { useEffect, useState } from 'react';
+import { useNavigate, useLocation } from 'react-router';
 import { api } from '@/lib/api';
 import { motion } from 'motion/react';
 import { AnimatePresence } from 'motion/react';
 
-import CreatorHome from '@/src/components/creator/dashboard/Home'
+import CreatorHome from '../../../components/creator/dashboard/Home'
+import { Loader, PageLoader } from '../../../components/creator/dashboard/Loader'
 
 import NoShop from './dashboard/NoShop'
-import Memberships from '@/src/components/creator/dashboard/Memberships'
+import Memberships from '../../../components/creator/dashboard/Memberships'
 import Recommendations from './dashboard/NoRecommendations';
-import Collections from '@/src/components/creator/dashboard/Collections'
-import OnBoarding from '@/src/components/creator/onboarding/OnBoarding';
+import Collections from '../../../components/creator/dashboard/Collections'
+import OnBoarding from '../../../components/creator/onboarding/OnBoarding';
 
 export const Dashboard = () => {
 
@@ -18,6 +20,8 @@ export const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true)
   const [hasProfile, setHasProfile] = useState(null)
   const [currentLink, setCurrentLink] = useState("Home")
+  const navigate = useNavigate()
+  const location = useLocation()
 
   const componentMap = {
     "Home": <CreatorHome />,
@@ -25,6 +29,14 @@ export const Dashboard = () => {
     "Shop": <NoShop />,
     "Memberships": <Memberships />,
     "Recommendations": <Recommendations />
+  }
+
+  const pathMap = {
+    "Home": "/creator/home",
+    "Collections": "/creator/collections",
+    "Shop": "/creator/shop",
+    "Memberships": "/creator/memberships",
+    "Recommendations": "/creator/recommendations"
   }
 
   useEffect(() => {
@@ -48,14 +60,30 @@ export const Dashboard = () => {
     };
 
     checkProfile();
-  }, [location]);
+  }, []);
+
+  useEffect(() => {
+    const path = location.pathname;
+    if (path === '/creator/home' || path === '/creator' || path === '/creator/') {
+      setCurrentLink("Home");
+    } else if (path.includes('/collections')) {
+      setCurrentLink("Collections");
+    } else if (path.includes('/shop')) {
+      setCurrentLink("Shop");
+    } else if (path.includes('/memberships')) {
+      setCurrentLink("Memberships");
+    } else if (path.includes('/recommendations')) {
+      setCurrentLink("Recommendations");
+    }
+  }, [location.pathname]);
+
+  const handleNavClick = (link) => {
+    setCurrentLink(link);
+    navigate(pathMap[link]);
+  };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (!hasProfile) {
@@ -134,7 +162,7 @@ export const Dashboard = () => {
             className="relative"
           >
             <h1 
-              onClick={() => setCurrentLink(link)} 
+              onClick={() => handleNavClick(link)} 
               className={`cursor-pointer text-xs md:text-[1rem] transition-colors duration-200 ${
                 currentLink === link 
                   ? 'bg-black px-3 py-2 text-white rounded-2xl' 
