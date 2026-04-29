@@ -192,7 +192,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
                 </div>
                 {comment.authorId._id === user?._id && (
                   <>
-<Button
+                    <Button
                       variant="ghost"
                       size="icon"
                       className="text-muted-foreground hover:text-red-500"
@@ -210,31 +210,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
                     </Button>
                   </>
                 )}
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`hover:text-green-500 ${comment.likes?.includes(user?._id) ? 'text-green-500' : 'text-muted-foreground'}`}
-                  onClick={() => comment.authorId._id !== user?._id ? handleLike(comment._id) : null}
-                  disabled={comment.authorId._id === user?._id}
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground min-w-[20px] text-center">
-                  {comment.likes?.length || 0}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className={`hover:text-red-500 ${comment.dislikes?.includes(user?._id) ? 'text-red-500' : 'text-muted-foreground'}`}
-                  onClick={() => comment.authorId._id !== user?._id ? handleDislike(comment._id) : null}
-                  disabled={comment.authorId._id === user?._id}
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                </Button>
-                <span className="text-xs text-muted-foreground min-w-[20px] text-center">
-                  {comment.dislikes?.length || 0}
-                </span>
-                {comment.authorId._id !== user._id && (
+                {comment.authorId._id !== user?._id && (
                   <>
                     <Button
                       variant="ghost"
