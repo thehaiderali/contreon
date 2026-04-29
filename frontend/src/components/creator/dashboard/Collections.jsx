@@ -5,6 +5,43 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { RotateCw, Plus, FolderOpen, ArrowLeft } from 'lucide-react';
 import { Link, useNavigate } from 'react-router';
+import { motion, AnimatePresence } from 'motion/react';
+
+const pageVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.4, ease: "easeOut" }
+  },
+  exit: { 
+    opacity: 0, 
+    y: -20,
+    transition: { duration: 0.3, ease: "easeIn" }
+  }
+};
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.1 }
+  }
+};
+
+const itemVariants = {
+  initial: { opacity: 0, y: 20 },
+  animate: { 
+    opacity: 1, 
+    y: 0,
+    transition: { duration: 0.3 }
+  },
+  exit: { 
+    opacity: 0, 
+    x: -20,
+    transition: { duration: 0.2 }
+  }
+};
 
 const Collections = () => {
     const navigate = useNavigate();
@@ -68,7 +105,13 @@ const Collections = () => {
 
     if (collections.length === 0) {
         return (
-            <div className="text-center py-12">
+            <motion.div 
+                initial="initial" 
+                animate="animate" 
+                exit="exit"
+                variants={pageVariants}
+                className="text-center py-12"
+            >
                 {isStandalonePage && (
                     <Button 
                         variant="ghost" 
@@ -92,12 +135,18 @@ const Collections = () => {
                         Create Collection
                     </Button>
                 </Link>
-            </div>
+            </motion.div>
         );
     }
 
     return (
-        <div className="w-full px-4 py-6">
+        <motion.div 
+            initial="initial" 
+            animate="animate" 
+            exit="exit"
+            variants={pageVariants}
+            className="w-full px-4 py-6"
+        >
             <div className="flex justify-between items-center mb-6">
                 <div className="flex items-center gap-4">
                     {isStandalonePage && (
@@ -131,22 +180,28 @@ const Collections = () => {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-4 max-w-4xl mx-auto">
+            <motion.div 
+                variants={containerVariants}
+                initial="hidden"
+                animate="visible"
+                className="flex flex-col gap-4 max-w-4xl mx-auto"
+            >
                 {collections.map((collection) => (
-                    <CollectionCard
-                        key={collection._id}
-                        id={collection._id}
-                        title={collection.title}
-                        description={collection.description}
-                        posts={collection.posts || []}
-                        postCount={collection.posts.length}
-                        publishedPostCount={collection.publishedPostCount}
-                        createdAt={collection.createdAt}
-                        onDelete={handleDeleteCollection}
-                    />
+                    <motion.div key={collection._id} variants={itemVariants}>
+                        <CollectionCard
+                            id={collection._id}
+                            title={collection.title}
+                            description={collection.description}
+                            posts={collection.posts || []}
+                            postCount={collection.posts.length}
+                            publishedPostCount={collection.publishedPostCount}
+                            createdAt={collection.createdAt}
+                            onDelete={handleDeleteCollection}
+                        />
+                    </motion.div>
                 ))}
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 };
 

@@ -63,6 +63,10 @@ const App = () => {
         <Route element={<CreatorRoutes />}>
           <Route path="/creator" element={<Home />}>
             <Route index element={<Dashboard />} />
+            <Route path="home" element={<Dashboard />} />
+            <Route path="shop" element={<Dashboard />} />
+            <Route path="memberships" element={<Dashboard />} />
+            <Route path="recommendations" element={<Dashboard />} />
             <Route path='profile' element={<Profile />} />
             <Route path='profile/edit' element={<EditCreatorProfile />} />
             <Route path="library" element={<Library />} />
@@ -74,15 +78,15 @@ const App = () => {
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
             <Route path='recommendations/create' element={<RecommendationSearch/>}/>
-          <Route path="collections" element={<Collections />} />
-          <Route path="collections/create" element={<CollectionCreationForm />} />
-          <Route path="collections/:id/edit" element={<CollectionEditForm />} />
-          <Route path='create-post/video' element={<CreateVideoPost/>}/>
-          <Route path='posts/text/:postId/edit' element={<EditTextPost/>}/>
-          <Route path='posts/audio/:id/edit' element={<EditAudioPost/>}/>
-          <Route path='posts/video/:id/edit' element={<EditVideoPost/>}/>
-          <Route path='create-post/text' element={<CreateTextPost/>}/>
-          <Route path='create-post/audio' element={<CreateAudioPost/>}/>
+            <Route path="collections" element={<Collections />} />
+            <Route path="collections/create" element={<CollectionCreationForm />} />
+            <Route path="collections/:id/edit" element={<CollectionEditForm />} />
+            <Route path='create-post/video' element={<CreateVideoPost/>}/>
+            <Route path='posts/text/:postId/edit' element={<EditTextPost/>}/>
+            <Route path='posts/audio/:id/edit' element={<EditAudioPost/>}/>
+            <Route path='posts/video/:id/edit' element={<EditVideoPost/>}/>
+            <Route path='create-post/text' element={<CreateTextPost/>}/>
+            <Route path='create-post/audio' element={<CreateAudioPost/>}/>
           </Route>
         </Route>
       </Route>

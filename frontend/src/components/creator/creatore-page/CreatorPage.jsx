@@ -4,6 +4,7 @@ import { useParams, NavLink, Routes, Route, Navigate, useNavigate } from 'react-
 import { api } from '@/lib/api';
 import { Twitter, Instagram, Youtube, Github, Linkedin, Globe, MessageCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Loader, PageLoader } from '../dashboard/Loader';
 import CreatorHome from './CreatorHome';
 import CreatorPosts from './CreatorPosts';
 import CreatorCollections from './CreatorCollections';
@@ -90,7 +91,6 @@ export default function CreatorPage() {
       alert('Only subscribers can message creators');
       return;
     }
-
     if (!isSubscribed) {
       // Redirect to membership page to subscribe
       navigate(`/c/${creatorUrl}/membership`);
@@ -120,11 +120,7 @@ export default function CreatorPage() {
   const basePath = `/c/${creatorUrl}`;
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-6 h-6 rounded-full border-2 border-border border-t-foreground animate-spin" />
-      </div>
-    );
+    return <PageLoader />;
   }
 
   if (error || !creator) {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Loader2, DollarSign, CreditCard, Calendar, AlertCircle, ExternalLink, CheckCircle, XCircle, Clock } from 'lucide-react'
+import { Loader } from '../../../components/creator/dashboard/Loader'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -81,7 +82,7 @@ const Payouts = () => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-48">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <Loader size="md" />
       </div>
     )
   }

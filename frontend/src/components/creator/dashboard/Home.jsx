@@ -6,17 +6,17 @@ import { Link } from 'react-router';
 
 const CreatorHome = () => {
   return (
-    <>
-        <div className="max-w-2xl mx-auto px-4 py-8 relative">
-          <CreatorProfile/>
-          <Link to={"profile/edit"}>
-          <Button className='flex gap-3 justify-center items-center absolute top-20 right-10'>
+    <div className="w-full max-w-2xl mx-auto">
+      <div className="flex justify-end mb-4">
+        <Link to="profile/edit">
+          <Button variant="outline" size="sm" className="gap-2">
+            <SquarePen size={16} />
             Edit Profile
-              <SquarePen size={20} className=' cursor-pointer'/> 
           </Button>
-           </Link>
-        </div>
-    </>
+        </Link>
+      </div>
+      <CreatorProfile />
+    </div>
   );
 };
 
