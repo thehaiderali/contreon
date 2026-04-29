@@ -173,35 +173,54 @@ export async function getEarnings(req, res) {
   try {
     const creator = await User.findById(req.user.userId);
     
-    let pendingEarnings = 0;
-    let earningsCount = 0;
-    let lastEarningDate = null;
+    const deferred = creator.deferredOnboarding || {};
+    const heldEarnings = deferred.pendingEarnings || 0;
+    const heldCount = deferred.earningsCount || 0;
+    const heldLastDate = deferred.lastEarningDate;
+    
+    let stripeBalance = 0;
+    let payoutsCount = 0;
+    let lastPayoutDate = null;
+    let totalPayouts = 0;
     
     if (creator.connectedID) {
       const balance = await stripe.balance.retrieve({
         stripeAccount: creator.connectedID
       });
       const available = balance.available.find(b => b.currency === 'usd');
-      pendingEarnings = available ? available.amount / 100 : 0;
+      stripeBalance = available ? available.amount / 100 : 0;
       
-      const payouts = await stripe.payouts.list({
-        limit: 100,
-      }, {
+      const payouts = await stripe.payouts.list({ limit: 100 }, {
         stripeAccount: creator.connectedID
       });
-      earningsCount = payouts.data.length;
+      payoutsCount = payouts.data.length;
+      totalPayouts = payouts.data.reduce((sum, p) => sum + (p.amount / 100), 0);
       if (payouts.data.length > 0) {
         const lastPayout = payouts.data[0];
-        lastEarningDate = new Date(lastPayout.created * 1000);
+        lastPayoutDate = new Date(lastPayout.created * 1000);
       }
     }
+    
+    const totalEarnings = heldEarnings + totalPayouts;
+    const totalPayments = heldCount + payoutsCount;
+    const lastDate = !heldLastDate && !lastPayoutDate ? null 
+      : !heldLastDate ? lastPayoutDate 
+      : !lastPayoutDate ? heldLastDate 
+      : heldLastDate > lastPayoutDate ? heldLastDate : lastPayoutDate;
     
     return res.json({
       success: true,
       data: {
-        pendingEarnings,
-        earningsCount,
-        lastEarningDate
+        totalEarnings,
+        pendingAmount: heldEarnings,
+        earningsCount: totalPayments,
+        lastPaymentDate: lastDate,
+        stripeBalance,
+        heldEarnings,
+        totalPayouts,
+        payoutsCount,
+        isOnboarded: creator.stripeAccountStatus?.chargesEnabled && creator.stripeAccountStatus?.payoutsEnabled,
+        platformFeePercent: envConfig.PLATFORM_FEE
       }
     });
   } catch (err) {

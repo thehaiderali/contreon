@@ -308,6 +308,8 @@ async function handleInvoicePaymentSucceeded(invoice) {
     try {
       const stripeSubscription = await stripe.subscriptions.retrieve(invoice.subscription);
       const dbSubscriptionId = stripeSubscription.metadata?.db_subscription_id;
+      const paymentMode = stripeSubscription.metadata?.payment_mode;
+      const creatorId = stripeSubscription.metadata?.creator_id;
       
       const nextBillingDate = stripeSubscription.current_period_end 
         ? new Date(stripeSubscription.current_period_end * 1000) 
@@ -342,13 +344,50 @@ async function handleInvoicePaymentSucceeded(invoice) {
         }
       }
 
+      // Handle platform_hold transfer for recurring payments
+      if (paymentMode === "platform_hold" && creatorId && invoice.amount_paid) {
+        const sellerAmount = parseFloat(stripeSubscription.metadata?.seller_amount || "0");
+        
+        if (sellerAmount > 0) {
+          const creator = await User.findById(creatorId);
+          
+          if (creator) {
+            // Check if creator is fully onboarded
+            const account = await stripe.accounts.retrieve(creator.connectedID);
+            const isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
+            
+            if (isFullyOnboarded && creator.connectedID) {
+              // Transfer immediately if onboarded
+              const transferAmount = Math.round(sellerAmount * 100);
+              const transfer = await stripe.transfers.create({
+                amount: transferAmount,
+                currency: "usd",
+                destination: creator.connectedID,
+                description: `Recurring payment transfer`,
+              });
+              
+              console.log(`✅ Transferred $${sellerAmount} to creator ${creatorId} (Transfer: ${transfer.id})`);
+            } else {
+              // Hold funds until onboarding complete
+              creator.deferredOnboarding = creator.deferredOnboarding || {};
+              creator.deferredOnboarding.pendingEarnings = (creator.deferredOnboarding.pendingEarnings || 0) + sellerAmount;
+              creator.deferredOnboarding.earningsCount = (creator.deferredOnboarding.earningsCount || 0) + 1;
+              creator.deferredOnboarding.lastEarningDate = new Date();
+              await creator.save();
+              
+              console.log(`💰 Held $${sellerAmount} for creator ${creatorId} (not onboarded)`);
+            }
+          }
+        }
+      }
+
       // Send payment receipt email
       if (subscription) {
         try {
           const subscriber = await User.findById(subscription.subscriberId).select('fullName email');
           const creator = await User.findById(subscription.creatorId).select('fullName');
           
-          const amount = invoice.amount_paid ? `$${(invoice.amount_paid / 100).toFixed(2)}` : await getTierPrice(subscription.tierId);
+          const amount = invoice.amount_paid ? `$${(invoice.amount_paid / 100).toFixed(2)}` : '$0.00';
           const paymentDate = new Date().toLocaleDateString();
           const receiptId = invoice.number || `INV-${Date.now()}`;
           const manageUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
@@ -467,6 +506,7 @@ async function handleAccountUpdated(account) {
     console.error("Error transferring pending earnings:", error.message);
   }
 }
+
 
 function mapStripeStatus(stripeStatus) {
   const statusMap = {
