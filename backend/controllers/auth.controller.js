@@ -112,7 +112,8 @@ export async function login(req,res){
             success:true,
             data:{
                 message:"User logged in Successfully",
-                user
+                user,
+                token
             }
         })
 

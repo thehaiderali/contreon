@@ -10,7 +10,7 @@ export const signUpSchema=z.object({
     fullName:z.string().min(3).max(50),
     email:z.email(),
     password:z.string().min(8).max(20),
-    role:z.enum(["creator","subscriber"])
+    role:z.enum(["creator","subscriber","admin"])
 
 })
 

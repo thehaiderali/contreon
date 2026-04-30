@@ -21,6 +21,7 @@ import { setupSocketIO } from "./socket/index.js";
 import exploreRouter from "./routes/explore.routes.js"
 import insightsRouter from "./routes/insights.routes.js"
 import contentAccessRouter from "./routes/contentAccess.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 import { rateLimit } from 'express-rate-limit'
 
 const limiter = rateLimit({
@@ -80,6 +81,7 @@ app.use("/api/chat", chatRouter);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/explore",exploreRouter)
 app.use("/api/insights", insightsRouter);
+app.use("/api/admin", adminRouter);
 // Create HTTP server
 const server = createServer(app);
 
