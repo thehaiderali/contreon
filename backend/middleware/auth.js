@@ -2,8 +2,11 @@ import jwt from "jsonwebtoken"
 import { envConfig } from "../config/env.js";
 import User from "../models/user.model.js";
 
-export const authMiddleware = (req, res, next) => {
-  const token = req.cookies.token;
+export const verifyToken = (req, res, next) => {
+  let token = req.cookies.token;
+  if (!token && req.headers.authorization?.startsWith("Bearer ")) {
+    token = req.headers.authorization.split(" ")[1];
+  }
   if (!token) return res.status(401).json({ message: "No Auth token Found" });
   try {
     const decoded = jwt.verify(token, envConfig.JWT_SECRET);
@@ -15,7 +18,6 @@ export const authMiddleware = (req, res, next) => {
 };
 
 export const checkCreator=async(req,res,next)=>{
-
   try {
     const role=req.user.role;
     if(role!=="creator"){
@@ -33,10 +35,9 @@ export const checkCreator=async(req,res,next)=>{
       error:"Internal Server Error"
     })
   }
-
 }
-export const checkCreatorExists=async(req,res,next)=>{
 
+export const checkCreatorExists=async(req,res,next)=>{
   try {
     const role=req.user.role;
     if(role!=="creator"){
@@ -65,12 +66,9 @@ export const checkCreatorExists=async(req,res,next)=>{
       error:"Internal Server Error"
     })
   }
-
 }
 
-
 export const checkSubscriberExists=async(req,res,next)=>{
-
   try {
     const role=req.user.role;
     if(role!=="subscriber"){
@@ -89,7 +87,7 @@ export const checkSubscriberExists=async(req,res,next)=>{
     if(userExists.role!=="subscriber"){
       return res.status(403).json({
         success:false,
-        error:"Creator Access Required"
+        error:"Subscriber Access Required"
       })
     }
     next()
@@ -99,5 +97,18 @@ export const checkSubscriberExists=async(req,res,next)=>{
       error:"Internal Server Error"
     })
   }
-
 }
+
+export const checkAdmin = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user || user.role !== "admin") {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+    next();
+  } catch (error) {
+    return res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+export const authMiddleware = verifyToken;

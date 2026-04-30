@@ -21,11 +21,11 @@ const userSchema=new Schema({
     max:20,
     required:true
    },
-   role:{
-    type:String,
-    enum:["creator","subscriber"],
-    required:true
-   },
+role:{
+     type:String,
+     enum:["creator","subscriber","admin"],
+     default:"subscriber"
+    },
    hasProfile:{
       type:Boolean,
       default:false,
