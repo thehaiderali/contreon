@@ -1,7 +1,9 @@
+import mongoose from "mongoose";
 import Post from "../models/post.model.js";
 import PostView from "../models/view.model.js";
 import Comment from "../models/comment.model.js";
 import Subscription from "../models/subscription.model.js";
+import TrackingLink from "../models/trackingLink.model.js";
 
 export async function getCreatorInsights(req, res) {
   try {
@@ -73,21 +75,42 @@ export async function getCreatorInsights(req, res) {
       createdAt: { $gte: sevenDaysAgo }
     });
 
-    res.json({
-      success: true,
-      data: {
-        totalViews,
-        totalComments,
-        totalSubscribers,
-        totalLikes,
-        totalDislikes,
-        recentViews,
-        recentComments,
-        totalPosts: posts.length,
-        topPostsByViews,
-        topPostsByComments
-      }
-    });
+// Tracking link stats
+     const platformStats = await TrackingLink.aggregate([
+       { $match: { creatorId: new mongoose.Types.ObjectId(creatorId) } },
+       { $group: { _id: '$source', totalClicks: { $sum: '$clicks' }, totalUniqueClicks: { $sum: '$uniqueClicks' }, linkCount: { $sum: 1 } } }
+     ]);
+ 
+     const totalLinkClicks = await TrackingLink.aggregate([
+       { $match: { creatorId: new mongoose.Types.ObjectId(creatorId) } },
+       { $group: { _id: null, totalClicks: { $sum: '$clicks' }, totalUniqueClicks: { $sum: '$uniqueClicks' } } }
+     ]);
+ 
+     const trafficSources = platformStats.map(p => ({
+       platform: p._id,
+       clicks: p.totalClicks,
+       uniqueClicks: p.totalUniqueClicks,
+       links: p.linkCount
+     }));
+ 
+     res.json({
+       success: true,
+       data: {
+         totalViews,
+         totalComments,
+         totalSubscribers,
+         totalLikes,
+         totalDislikes,
+         recentViews,
+         recentComments,
+         totalPosts: posts.length,
+         topPostsByViews,
+         topPostsByComments,
+         trafficSources,
+         totalLinkClicks: totalLinkClicks[0]?.totalClicks || 0,
+         uniqueLinkClicks: totalLinkClicks[0]?.totalUniqueClicks || 0
+       }
+     });
   } catch (error) {
     console.error('Error fetching insights:', error);
     res.status(500).json({ success: false, error: error.message });

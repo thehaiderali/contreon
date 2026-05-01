@@ -22,35 +22,31 @@ import exploreRouter from "./routes/explore.routes.js"
 import insightsRouter from "./routes/insights.routes.js"
 import contentAccessRouter from "./routes/contentAccess.routes.js";
 import adminRouter from "./routes/admin.routes.js";
+import trackingLinkRouter from "./routes/trackingLink.routes.js";
 import { rateLimit } from 'express-rate-limit'
 
 const limiter = rateLimit({
-	windowMs: 15 * 60 * 1000, // 15 minutes
-	limit: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
-	standardHeaders: 'draft-8', // draft-6: `RateLimit-*` headers; draft-7 & draft-8: combined `RateLimit` header
-	legacyHeaders: false, // Disable the `X-RateLimit-*` headers.
-	ipv6Subnet: 56, // Set to 60 or 64 to be less aggressive, or 52 or 48 to be more aggressive
-	// store: ... , // Redis, Memcached, etc. See below.
+	windowMs: 15 * 60 * 1000,
+	limit: 100,
+	standardHeaders: 'draft-8',
+	legacyHeaders: false,
+	ipv6Subnet: 56,
 })
 
 
 const app = express();
 
-// CORS configuration
 app.use(cors({
   origin: envConfig.FRONTEND_URL || 'https://contreon.thehaiderali.com',
   credentials: true
 }));
 
-// Webhook route BEFORE express.json()
 app.use('/api/webhooks', webhookRoutes);
 
-// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(limiter)
 
-// Routes
 app.get("/", (req, res) => res.send("CONTREON API"));
 
 app.use(
@@ -82,27 +78,24 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/explore",exploreRouter)
 app.use("/api/insights", insightsRouter);
 app.use("/api/admin", adminRouter);
-// Create HTTP server
+app.use("/api/tracking-links", trackingLinkRouter);
+
 const server = createServer(app);
 
-// Socket.IO setup
 const io = new Server(server, {
   cors: {
     origin: envConfig.FRONTEND_URL || 'https://contreon.thehaiderali.com',
     credentials: true
   },
-  // Performance optimizations
   pingTimeout: 60000,
   pingInterval: 25000,
-  transports: ['websocket', 'polling'] // Prefer websocket
+  transports: ['websocket', 'polling']
 });
 
 app.set("io", io);
 
-// Initialize socket logic
 setupSocketIO(io);
 
-// Start server
 server.listen(envConfig.PORT, async () => {
   if (envConfig.NODE_ENV === "development") {
     console.log("Server Started at http://localhost:3000");
