@@ -12,6 +12,7 @@ import Members from './pages/private/creator/Members';
 import Insights from './pages/private/creator/Insights';
 import Payouts from './pages/private/creator/Payouts';
 import Profile from './pages/private/creator/Profile';
+import TrackingLinks from './pages/private/creator/TrackingLinks';
 
 // Protected Routes
 import { ProtectedRoutes } from './components/ProtectedRoutes';
@@ -37,6 +38,7 @@ import Memberships from './pages/private/subscriber/Memberships';
 import SubscriberHome from './pages/private/subscriber/SubscriberHome';
 import SubscriberChat from './pages/private/subscriber/SubscriberChat';
 import CreatorChats from './pages/private/creator/CreatorChats';
+import LinkRedirect from './pages/LinkRedirect';
 
 const App = () => {
 
@@ -47,6 +49,7 @@ const App = () => {
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/c/:creatorUrl/*" element={<CreatorPage/>}/>
+      <Route path="/l/:token" element={<LinkRedirect />} />
        <Route path="/payment/success" element={<PaymentSuccess />} />
        <Route path="/payment/cancel" element={<PaymentCancel />} />
       <Route element={<ProtectedRoutes />}>
@@ -72,6 +75,7 @@ const App = () => {
             <Route path="library" element={<Library />} />
             <Route path="members" element={<Members />} />
             <Route path="insights" element={<Insights />} />
+            <Route path="tracking-links" element={<TrackingLinks />} />
             <Route path="payouts" element={<Payouts />} />
             <Route path="messages" element={<CreatorChats />} />
             <Route path="settings" element={<Settings />} />
