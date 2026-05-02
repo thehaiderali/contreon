@@ -4,7 +4,7 @@ import {BrowserRouter} from 'react-router'
 import App from './App.jsx'
 import { ThemeProvider } from '@/context/theme-provider'
 import posthog from 'posthog-js'; 
-import { PostHogErrorBoundary, PostHogProvider } from '@posthog/react'
+import {  PostHogProvider } from '@posthog/react'
 
 posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN, { 
   api_host: import.meta.env.VITE_PUBLIC_POSTHOG_HOST, 

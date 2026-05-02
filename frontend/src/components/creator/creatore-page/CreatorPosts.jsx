@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router';
 import { api } from '@/lib/api';
-import { Loader2, Search, Filter, ChevronDown, Plus, MoreHorizontal,SlidersHorizontal, Pencil, Trash2, FileText, Music, Video } from 'lucide-react';
+import { Loader2, Search, Filter, ChevronDown, Plus, MoreHorizontal, SlidersHorizontal, Pencil, Trash2, FileText, Music, Video, Lock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Loader } from '../dashboard/Loader';
 import { Input } from '@/components/ui/input';
