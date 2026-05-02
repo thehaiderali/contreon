@@ -4,7 +4,6 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import Home from './pages/private/subscriber/Home';
 import Explore from './pages/private/subscriber/Explore';
-import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
 import { Dashboard } from './pages/private/creator/Dashboard';
 import Library from './pages/private/creator/Library';
@@ -59,9 +58,9 @@ const App = () => {
           <Route index element={<SubscriberHome />} />
           <Route path="explore" element={<Explore />} />
           <Route path="chat" element={<SubscriberChat />} />
-          <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path='memberships' element={<Memberships/>}/>
+          <Route path="settings" element={<CreatorSettings />} />
         </Route>
 
         <Route element={<CreatorRoutes />}>

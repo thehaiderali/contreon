@@ -244,7 +244,7 @@ const CreatorSettings = () => {
                 <Alert>
                   <AlertCircle className="h-4 w-4" />
                   <AlertDescription>
-                    Password must be at least 6 characters long and different from your current password.
+                    Password must be at least 8 characters long and different from your current password.
                   </AlertDescription>
                 </Alert>
               </CardContent>
