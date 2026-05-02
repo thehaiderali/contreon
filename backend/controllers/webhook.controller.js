@@ -31,7 +31,9 @@ export async function handleStripeWebhook(req, res) {
       case 'account.updated':
         await handleAccountUpdated(event.data.object);
         break;
-        
+      case 'v2.core.account[requirements].updated':
+        await handleAccountUpdated(event.data.object);
+        break;
       case 'transfer.created':
         console.log("Transfer created:", event.data.object.id);
         break;
@@ -56,6 +58,8 @@ export async function handleStripeWebhook(req, res) {
       case 'invoice.payment_failed':
         await handleInvoicePaymentFailed(event.data.object);
         break;
+
+
         
       default:
         console.log(`Unhandled event type: ${event.type}`);
