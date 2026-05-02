@@ -29,14 +29,20 @@ export async function handleStripeWebhook(req, res) {
         break;
         
       case 'account.updated':
+      case 'v2.core.account.updated':
         await handleAccountUpdated(event.data.object);
         break;
-      case 'v2.core.account[requirements].updated':
+      
+      case 'v2.core.account[configuration.recipient].updated':
+        console.log("V2 account configuration recipient updated:", event.data.object.id);
         await handleAccountUpdated(event.data.object);
         break;
-         case 'v2.core.account[configuration.recipient].capability_status_updated':
+      
+      case 'v2.core.account[configuration.merchant].updated':
+        console.log("V2 account configuration merchant updated:", event.data.object.id);
         await handleAccountUpdated(event.data.object);
         break;
+     
       case 'transfer.created':
         console.log("Transfer created:", event.data.object.id);
         break;
@@ -105,8 +111,17 @@ async function handleCheckoutSessionCompleted(session) {
 
         if (creator.connectedID) {
           try {
-            const account = await stripe.accounts.retrieve(creator.connectedID);
-            isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
+            const account = await stripe.v2.core.accounts.retrieve(creator.connectedID);
+            
+            if (account.controller) {
+              const merchantConfig = account.configuration?.merchant;
+              const recipientConfig = account.configuration?.recipient;
+              const chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
+              const payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
+              isFullyOnboarded = chargesEnabled && payoutsEnabled;
+            } else {
+              isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
+            }
 
             if (isFullyOnboarded) {
               const transferAmount = Math.round(sellerAmount * 100);
@@ -474,8 +489,18 @@ async function handleInvoicePaymentSucceeded(invoice) {
           
           if (creator) {
             // Check if creator is fully onboarded
-            const account = await stripe.accounts.retrieve(creator.connectedID);
-            const isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
+            const account = await stripe.v2.core.accounts.retrieve(creator.connectedID);
+            let isFullyOnboarded;
+            
+            if (account.controller) {
+              const merchantConfig = account.configuration?.merchant;
+              const recipientConfig = account.configuration?.recipient;
+              const chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
+              const payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
+              isFullyOnboarded = chargesEnabled && payoutsEnabled;
+            } else {
+              isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
+            }
             
             if (isFullyOnboarded && creator.connectedID) {
               // Transfer immediately if onboarded
@@ -604,7 +629,19 @@ async function handleInvoicePaymentFailed(invoice) {
 async function handleAccountUpdated(account) {
   console.log("Account updated:", account.id);
 
-  const isFullyVerified = account.charges_enabled && account.capabilities?.transfers === "active";
+  let isFullyVerified = false;
+  
+  if (account.controller) {
+    const capabilities = account.configuration?.merchant?.capabilities || account.configuration?.recipient?.capabilities;
+    isFullyVerified = (account.configuration?.merchant?.capabilities?.card_payments === "active" || 
+                       account.configuration?.recipient?.capabilities?.transfers === "active") &&
+                      (account.configuration?.merchant?.charges_enabled === true || 
+                       account.configuration?.recipient?.payouts_enabled === true);
+    console.log("V2 Account - merchant capabilities:", account.configuration?.merchant?.capabilities);
+    console.log("V2 Account - recipient capabilities:", account.configuration?.recipient?.capabilities);
+  } else {
+    isFullyVerified = account.charges_enabled && account.capabilities?.transfers === "active";
+  }
 
   if (!isFullyVerified) {
     console.log("Account not fully verified yet");
