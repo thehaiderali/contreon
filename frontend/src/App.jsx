@@ -39,6 +39,7 @@ import SubscriberHome from './pages/private/subscriber/SubscriberHome';
 import SubscriberChat from './pages/private/subscriber/SubscriberChat';
 import CreatorChats from './pages/private/creator/CreatorChats';
 import LinkRedirect from './pages/LinkRedirect';
+import CreatorSettings from './pages/private/creator/CreatorSettings';
 
 const App = () => {
 
@@ -78,7 +79,7 @@ const App = () => {
             <Route path="tracking-links" element={<TrackingLinks />} />
             <Route path="payouts" element={<Payouts />} />
             <Route path="messages" element={<CreatorChats />} />
-            <Route path="settings" element={<Settings />} />
+            <Route path="settings" element={<CreatorSettings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
             <Route path='recommendations/create' element={<RecommendationSearch/>}/>

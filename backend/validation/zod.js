@@ -69,3 +69,20 @@ export const collectionUpdateSchema=z.object({
 export const commentSchema=z.object({
     content:z.string().min(3).max(150)
 })
+
+
+export const updatePasswordSchema = z.object({
+  currentPassword: z.string().min(6, "Password must be at least 6 characters"),
+  newPassword: z.string().min(6, "Password must be at least 6 characters"),
+  confirmNewPassword: z.string().min(6, "Password must be at least 6 characters")
+}).refine((data) => data.newPassword === data.confirmNewPassword, {
+  message: "New passwords don't match",
+  path: ["confirmNewPassword"]
+});
+
+export const deleteAccountSchema = z.object({
+  password: z.string().min(1, "Password is required to delete account"),
+  confirmation: z.literal("DELETE", {
+    errorMap: () => ({ message: 'Please type "DELETE" to confirm account deletion' })
+  })
+});

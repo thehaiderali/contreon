@@ -1,4 +1,3 @@
-// components/RecommendationSearch.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { Search, UserPlus, Check, X, Loader } from 'lucide-react';
 import { debounce } from 'lodash';
