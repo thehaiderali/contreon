@@ -34,6 +34,9 @@ export async function handleStripeWebhook(req, res) {
       case 'v2.core.account[requirements].updated':
         await handleAccountUpdated(event.data.object);
         break;
+         case 'v2.core.account[configuration.recipient].capability_status_updated':
+        await handleAccountUpdated(event.data.object);
+        break;
       case 'transfer.created':
         console.log("Transfer created:", event.data.object.id);
         break;
