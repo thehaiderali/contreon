@@ -301,8 +301,8 @@ const Notifications = () => {
   };
 
   useEffect(() => {
-    fetchNotifications(true);
-  }, [filters]);
+  fetchNotificationsWithFilters({ unreadOnly: false, type: '' }, true);
+}, []);
 
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
