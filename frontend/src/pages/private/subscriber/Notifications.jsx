@@ -143,7 +143,7 @@ const Notifications = () => {
         page,
         limit: pagination.limit,
         unreadOnly: activeFilters.unreadOnly,
-        type: activeFilters.type
+        type: activeFilters.type || undefined // Don't send empty string
       });
       
       if (response.success) {
@@ -152,18 +152,38 @@ const Notifications = () => {
         );
         setPagination(prev => ({
           ...prev,
-          page,
-          total: response.pagination.total,
-          pages: response.pagination.pages,
-          hasMore: response.pagination.hasMore
+          page: page,
+          total: response.pagination?.total || 0,
+          pages: response.pagination?.pages || 0,
+          hasMore: response.pagination?.hasMore || false
         }));
+        
+        // Show toast message when no results found for filter
+        if (resetPage && response.data.length === 0 && (activeFilters.unreadOnly || activeFilters.type)) {
+          toast.info('No notifications found with the selected filters', {
+            description: 'Try changing your filter criteria'
+          });
+        }
+      } else {
+        // Handle unsuccessful response
+        setNotifications([]);
+        setError('No notifications found');
       }
     } catch (err) {
       console.error('Error fetching notifications:', err);
-      setError(err.response?.data?.message || 'Failed to load notifications');
-      toast.error('Failed to load notifications', {
-        description: err.response?.data?.message || 'Please try again later',
-      });
+      // Check for auth error specifically
+      if (err.response?.status === 401 || err.response?.data?.message?.includes('Auth token')) {
+        setError('Authentication failed. Please log in again.');
+        toast.error('Authentication error', {
+          description: 'Please log in again to continue',
+        });
+      } else {
+        setError(err.response?.data?.message || 'Failed to load notifications');
+        toast.error('Failed to load notifications', {
+          description: err.response?.data?.message || 'Please try again later',
+        });
+      }
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -177,26 +197,28 @@ const Notifications = () => {
   // Load more notifications
   const loadMore = async () => {
     if (!pagination.hasMore || loading) return;
-    // Increment page first, then fetch — avoid race with async setPagination
+    
     const nextPage = pagination.page + 1;
-    setPagination(prev => ({ ...prev, page: nextPage }));
+    
     try {
       setLoading(true);
       setError(null);
+      
       const response = await notificationAPI.getNotifications({
         page: nextPage,
         limit: pagination.limit,
         unreadOnly: filters.unreadOnly,
-        type: filters.type
+        type: filters.type || undefined
       });
+      
       if (response.success) {
         setNotifications(prev => [...prev, ...response.data]);
         setPagination(prev => ({
           ...prev,
           page: nextPage,
-          total: response.pagination.total,
-          pages: response.pagination.pages,
-          hasMore: response.pagination.hasMore
+          total: response.pagination?.total || 0,
+          pages: response.pagination?.pages || 0,
+          hasMore: response.pagination?.hasMore || false
         }));
       }
     } catch (err) {
@@ -275,6 +297,13 @@ const Notifications = () => {
         );
         
         toast.success('Deleted successfully', { id: toastId });
+        
+        // If no notifications left, show empty state message
+        if (notifications.length === 1) {
+          toast.info('No more notifications', {
+            description: 'You have cleared all notifications'
+          });
+        }
       }
     } catch (err) {
       console.error('Error deleting notification:', err);
@@ -285,24 +314,36 @@ const Notifications = () => {
     }
   };
 
-  // Apply filters
-  const applyFilters = (newFilters) => {
-    // Merge new filters with current ones synchronously before fetching,
-    // since setFilters is async and fetchNotifications would read stale state.
+  // Apply filters - FIXED VERSION
+  const applyFilters = async (newFilters) => {
+    // Merge new filters with current ones
     const mergedFilters = { ...filters, ...newFilters };
+    
+    // Update filters state
     setFilters(mergedFilters);
-    fetchNotificationsWithFilters(mergedFilters, true);
+    
+    // Fetch with the new filters and reset page
+    await fetchNotificationsWithFilters(mergedFilters, true);
   };
 
-  // Refresh notifications
+  // Clear all filters
+  const clearFilters = () => {
+    const defaultFilters = { unreadOnly: false, type: '' };
+    setFilters(defaultFilters);
+    fetchNotificationsWithFilters(defaultFilters, true);
+    toast.success('All filters cleared');
+  };
+
+  // Refresh notifications (keep current filters)
   const refreshNotifications = () => {
     fetchNotifications(true);
     toast.success('Notifications refreshed');
   };
 
+  // Initial load
   useEffect(() => {
-  fetchNotificationsWithFilters({ unreadOnly: false, type: '' }, true);
-}, []);
+    fetchNotificationsWithFilters({ unreadOnly: false, type: '' }, true);
+  }, []); // Empty dependency array - only runs once on mount
 
   const unreadCount = notifications.filter(notif => !notif.read).length;
 
@@ -356,8 +397,10 @@ const Notifications = () => {
     );
   }
 
-  // Empty state
+  // Empty state with filter info
   if (notifications.length === 0) {
+    const hasActiveFilters = filters.unreadOnly || filters.type;
+    
     return (
       <div className="container mx-auto py-8 px-4 max-w-4xl">
         <div className="flex items-center justify-between mb-8">
@@ -366,18 +409,82 @@ const Notifications = () => {
             <p className="text-muted-foreground mt-2">Stay updated with your latest activities</p>
           </div>
           
-          <Button onClick={refreshNotifications} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4" />
+          <div className="flex gap-2">
+            {hasActiveFilters && (
+              <Button onClick={clearFilters} variant="outline" size="sm">
+                Clear Filters
+              </Button>
+            )}
+            <Button onClick={refreshNotifications} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Show filter bar even in empty state */}
+        <div className="flex gap-2 mb-4 flex-wrap">
+          <Button
+            variant={filters.unreadOnly ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ unreadOnly: !filters.unreadOnly })}
+          >
+            {filters.unreadOnly ? "All" : "Unread Only"}
+          </Button>
+          <Button
+            variant={filters.type === "new_post" ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ type: filters.type === "new_post" ? "" : "new_post" })}
+          >
+            Posts
+          </Button>
+          <Button
+            variant={filters.type === "new_video" ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ type: filters.type === "new_video" ? "" : "new_video" })}
+          >
+            Videos
+          </Button>
+          <Button
+            variant={filters.type === "live_stream" ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ type: filters.type === "live_stream" ? "" : "live_stream" })}
+          >
+            Live
+          </Button>
+          <Button
+            variant={filters.type === "announcement" ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ type: filters.type === "announcement" ? "" : "announcement" })}
+          >
+            Announcements
+          </Button>
+          <Button
+            variant={filters.type === "special_offer" ? "default" : "outline"}
+            size="sm"
+            onClick={() => applyFilters({ type: filters.type === "special_offer" ? "" : "special_offer" })}
+          >
+            Offers
           </Button>
         </div>
         
         <Card className="text-center border-dashed">
           <CardContent className="py-12">
             <Bell className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">No notifications yet</p>
-            <p className="text-sm text-muted-foreground mt-1">
-              When you receive notifications, they'll appear here
+            <p className="text-muted-foreground">
+              {hasActiveFilters 
+                ? "No notifications match your filters" 
+                : "No notifications yet"}
             </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              {hasActiveFilters
+                ? "Try clearing your filters to see all notifications"
+                : "When you receive notifications, they'll appear here"}
+            </p>
+            {hasActiveFilters && (
+              <Button onClick={clearFilters} variant="outline" className="mt-4">
+                Clear All Filters
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -392,10 +499,24 @@ const Notifications = () => {
           <h1 className="text-3xl font-bold tracking-tight">Notifications</h1>
           <p className="text-muted-foreground mt-2">
             You have {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+            {(filters.unreadOnly || filters.type) && (
+              <span className="ml-2 text-sm">
+                (Filtered)
+              </span>
+            )}
           </p>
         </div>
         
         <div className="flex gap-2">
+          {(filters.unreadOnly || filters.type) && (
+            <Button
+              onClick={clearFilters}
+              variant="outline"
+              size="sm"
+            >
+              Clear Filters
+            </Button>
+          )}
           <Button
             onClick={refreshNotifications}
             variant="outline"
