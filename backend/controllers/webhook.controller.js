@@ -111,17 +111,12 @@ async function handleCheckoutSessionCompleted(session) {
 
         if (creator.connectedID) {
           try {
-            const account = await stripe.v2.core.accounts.retrieve(creator.connectedID);
+            const account = await stripe.accounts.retrieve(creator.connectedID);
             
-            if (account.controller) {
-              const merchantConfig = account.configuration?.merchant;
-              const recipientConfig = account.configuration?.recipient;
-              const chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
-              const payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
-              isFullyOnboarded = chargesEnabled && payoutsEnabled;
-            } else {
-              isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
-            }
+            const hasTransfers = account.capabilities?.transfers === "active";
+            const chargesEnabled = account.charges_enabled;
+            const payoutsEnabled = account.payouts_enabled;
+            isFullyOnboarded = chargesEnabled && payoutsEnabled && hasTransfers;
 
             if (isFullyOnboarded) {
               const transferAmount = Math.round(sellerAmount * 100);
@@ -489,18 +484,11 @@ async function handleInvoicePaymentSucceeded(invoice) {
           
           if (creator) {
             // Check if creator is fully onboarded
-            const account = await stripe.v2.core.accounts.retrieve(creator.connectedID);
-            let isFullyOnboarded;
-            
-            if (account.controller) {
-              const merchantConfig = account.configuration?.merchant;
-              const recipientConfig = account.configuration?.recipient;
-              const chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
-              const payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
-              isFullyOnboarded = chargesEnabled && payoutsEnabled;
-            } else {
-              isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
-            }
+            const account = await stripe.accounts.retrieve(creator.connectedID);
+            const hasTransfers = account.capabilities?.transfers === "active";
+            const chargesEnabled = account.charges_enabled;
+            const payoutsEnabled = account.payouts_enabled;
+            isFullyOnboarded = chargesEnabled && payoutsEnabled && hasTransfers;
             
             if (isFullyOnboarded && creator.connectedID) {
               // Transfer immediately if onboarded
@@ -629,22 +617,13 @@ async function handleInvoicePaymentFailed(invoice) {
 async function handleAccountUpdated(account) {
   console.log("Account updated:", account.id);
 
-  let isFullyVerified = false;
-  
-  if (account.controller) {
-    const capabilities = account.configuration?.merchant?.capabilities || account.configuration?.recipient?.capabilities;
-    isFullyVerified = (account.configuration?.merchant?.capabilities?.card_payments === "active" || 
-                       account.configuration?.recipient?.capabilities?.transfers === "active") &&
-                      (account.configuration?.merchant?.charges_enabled === true || 
-                       account.configuration?.recipient?.payouts_enabled === true);
-    console.log("V2 Account - merchant capabilities:", account.configuration?.merchant?.capabilities);
-    console.log("V2 Account - recipient capabilities:", account.configuration?.recipient?.capabilities);
-  } else {
-    isFullyVerified = account.charges_enabled && account.capabilities?.transfers === "active";
-  }
+  const chargesEnabled = account.charges_enabled;
+  const payoutsEnabled = account.payouts_enabled;
+  const hasTransfers = account.capabilities?.transfers === "active";
+  const isFullyVerified = chargesEnabled && payoutsEnabled && hasTransfers;
 
   if (!isFullyVerified) {
-    console.log("Account not fully verified yet");
+    console.log("Account not fully verified yet - charges:", chargesEnabled, "payouts:", payoutsEnabled, "transfers:", account.capabilities?.transfers);
     return;
   }
 

@@ -16,21 +16,17 @@ export async function createConnectedAccount(req, res) {
       });
     }
     
-    const account = await stripe.v2.core.accounts.create({
+    const account = await stripe.accounts.create({
+      type: "express",
       email: creator.email,
       country: "US",
-      controller: {
-        losses: { payments: "application" },
-        fees: { payer: "application" },
-        stripe_dashboard: { type: "express" },
-        requirement_collection: "application"
-      },
-      business_profile: { name: creator.fullName, url: 'https://yoursite.com' },
       capabilities: {
         card_payments: { requested: true },
         transfers: { requested: true }
       }
     });
+    
+    console.log("Stripe account created:", account.id);
 
     const updated = await User.findByIdAndUpdate(creator._id, {
       connectedID: account.id,
@@ -58,7 +54,7 @@ export async function createStripeOnboarding(req, res) {
   }
   
   try {
-    const accountLink = await stripe.v2.core.accountLinks.create({
+    const accountLink = await stripe.accountLinks.create({
       account: connectedID,
       refresh_url: `${envConfig.FRONTEND_URL}/creator/payouts`,
       return_url: `${envConfig.FRONTEND_URL}/creator/payouts`,
@@ -81,24 +77,14 @@ export async function getStripeAccountStatus(req, res) {
       });
     }
     
-    const account = await stripe.v2.core.accounts.retrieve(creator.connectedID);
+    const account = await stripe.accounts.retrieve(creator.connectedID);
     
     let isOnboarded, chargesEnabled, payoutsEnabled, detailsSubmitted;
     
-    if (account.controller) {
-      const merchantConfig = account.configuration?.merchant;
-      const recipientConfig = account.configuration?.recipient;
-      chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
-      payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
-      const capabilities = merchantConfig?.capabilities || recipientConfig?.capabilities;
-      detailsSubmitted = capabilities?.card_payments === "active" || capabilities?.transfers === "active";
-      isOnboarded = chargesEnabled && payoutsEnabled && detailsSubmitted;
-    } else {
-      detailsSubmitted = account.details_submitted;
-      chargesEnabled = account.charges_enabled;
-      payoutsEnabled = account.payouts_enabled;
-      isOnboarded = detailsSubmitted && chargesEnabled;
-    }
+    detailsSubmitted = account.details_submitted;
+    chargesEnabled = account.charges_enabled;
+    payoutsEnabled = account.payouts_enabled;
+    isOnboarded = detailsSubmitted && chargesEnabled;
     
     await User.findByIdAndUpdate(creator._id, {
       stripeAccountStatus: {
@@ -307,24 +293,12 @@ const newSubscription = new Subscription({
     let creatorAccountId = creator.connectedID;
     let useDirectConnect = false;
 
-    // CONNECT SAFETY CHECK
+// CONNECT SAFETY CHECK
     if (creatorAccountId) {
       try {
-        const account = await stripe.v2.core.accounts.retrieve(creatorAccountId);
-        let hasTransfers, isFullyOnboarded;
-        
-        if (account.controller) {
-          const merchantConfig = account.configuration?.merchant;
-          const recipientConfig = account.configuration?.recipient;
-          const capabilities = merchantConfig?.capabilities || recipientConfig?.capabilities;
-          hasTransfers = capabilities?.transfers === "active";
-          const chargesEnabled = merchantConfig?.charges_enabled === true || recipientConfig?.charges_enabled === true;
-          const payoutsEnabled = merchantConfig?.payouts_enabled === true || recipientConfig?.payouts_enabled === true;
-          isFullyOnboarded = chargesEnabled && payoutsEnabled;
-        } else {
-          hasTransfers = account.capabilities?.transfers === "active";
-          isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
-        }
+        const account = await stripe.accounts.retrieve(creatorAccountId);
+        const hasTransfers = account.capabilities?.transfers === "active";
+        const isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
         
         useDirectConnect = hasTransfers && isFullyOnboarded;
       } catch (err) {
