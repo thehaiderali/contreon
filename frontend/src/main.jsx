@@ -13,13 +13,11 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN, {
 
 createRoot(document.getElementById('root')).render(
     <PostHogProvider client={posthog}>
-    <PostHogErrorBoundary fallback={<div>Something Went Wrong</div>} > 
     <BrowserRouter>
     <ThemeProvider>
       <App/>
     </ThemeProvider>
     </BrowserRouter>
-      </PostHogErrorBoundary> 
      </PostHogProvider>
 
 )
