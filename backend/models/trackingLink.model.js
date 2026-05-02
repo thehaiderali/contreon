@@ -35,14 +35,8 @@ const trackingLinkSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 trackingLinkSchema.index({ creatorId: 1 });
-trackingLinkSchema.index({ token: 1 });
 
 const TrackingLink = mongoose.models.TrackingLink || mongoose.model("TrackingLink", trackingLinkSchema);
 
-TrackingLink.on('index', (err) => {
-  if (err) {
-    console.log('Index error:', err.message);
-  }
-});
 
 export default TrackingLink;
