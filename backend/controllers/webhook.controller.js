@@ -80,7 +80,10 @@ async function handleCheckoutSessionCompleted(session) {
     { status: "success" }
   );
 
-  // If platform holds payment (seller not fully onboarded), track pending earnings
+  // FIX: Handle first-payment transfer for already-onboarded creators.
+  // Previously this block always accumulated pendingEarnings regardless of
+  // onboarding status. For onboarded creators, those earnings would sit in
+  // deferredOnboarding forever because account.updated never fires again.
   if (paymentMode === "platform_hold") {
     const creatorId = session.metadata?.creator_id;
     const sellerAmount = parseFloat(session.metadata?.seller_amount || "0");
@@ -89,22 +92,53 @@ async function handleCheckoutSessionCompleted(session) {
       const creator = await User.findById(creatorId);
 
       if (creator) {
-        creator.deferredOnboarding = creator.deferredOnboarding || {};
-        creator.deferredOnboarding.pendingEarnings = (creator.deferredOnboarding.pendingEarnings || 0) + sellerAmount;
-        creator.deferredOnboarding.earningsCount = (creator.deferredOnboarding.earningsCount || 0) + 1;
-        creator.deferredOnboarding.lastEarningDate = new Date();
+        // Check if creator is already fully onboarded — if so, transfer immediately
+        // rather than parking the funds in deferredOnboarding.
+        let isFullyOnboarded = false;
 
-        await creator.save();
+        if (creator.connectedID) {
+          try {
+            const account = await stripe.accounts.retrieve(creator.connectedID);
+            isFullyOnboarded = account.charges_enabled && account.payouts_enabled;
 
-        console.log(`Platform holding $${sellerAmount} for creator ${creatorId}. Total pending: $${creator.deferredOnboarding.pendingEarnings}`);
+            if (isFullyOnboarded) {
+              const transferAmount = Math.round(sellerAmount * 100);
+              const transfer = await stripe.transfers.create({
+                amount: transferAmount,
+                currency: "usd",
+                // Use account.id from the retrieved object — authoritative source of truth.
+                destination: account.id,
+                description: `First payment transfer (checkout)`,
+              });
+              console.log(`✅ Transferred $${sellerAmount} to onboarded creator ${creatorId} on first payment (Transfer: ${transfer.id})`);
+            }
+          } catch (transferError) {
+            // If the transfer fails for any reason, fall through to the deferred path
+            // so earnings are never silently lost.
+            console.error(`⚠️ Transfer attempt failed for creator ${creatorId}, deferring: ${transferError.message}`);
+            isFullyOnboarded = false;
+          }
+        }
+
+        // Only accumulate pendingEarnings when the creator is NOT yet onboarded.
+        // account.updated will flush these once onboarding completes.
+        if (!isFullyOnboarded) {
+          creator.deferredOnboarding = creator.deferredOnboarding || {};
+          creator.deferredOnboarding.pendingEarnings = (creator.deferredOnboarding.pendingEarnings || 0) + sellerAmount;
+          creator.deferredOnboarding.earningsCount = (creator.deferredOnboarding.earningsCount || 0) + 1;
+          creator.deferredOnboarding.lastEarningDate = new Date();
+
+          await creator.save();
+          console.log(`Platform holding $${sellerAmount} for creator ${creatorId}. Total pending: $${creator.deferredOnboarding.pendingEarnings}`);
+        }
       }
     }
   }
 
-  // FIX #6 & #7: Only send welcome email for brand-new subscriptions.
-  // We check `subscription.startDate` being very recent (within 5 minutes) to avoid
-  // re-sending on re-subscribe checkouts and to guard against the race condition where
-  // handleSubscriptionCreated hasn't finished writing yet (we wait briefly if needed).
+  // Only send welcome email for brand-new subscriptions.
+  // We check createdAt being very recent (within 10 minutes) to avoid
+  // re-sending on re-subscribe checkouts and to guard against the race condition
+  // where handleSubscriptionCreated hasn't finished writing yet.
   try {
     const dbSubscriptionId = session.metadata?.db_subscription_id;
     if (!dbSubscriptionId) return;
@@ -129,7 +163,7 @@ async function handleCheckoutSessionCompleted(session) {
       return;
     }
 
-    // FIX #6: Only send welcome email for genuinely new subscriptions.
+    // Only send welcome email for genuinely new subscriptions.
     // A subscription is "new" if it was created within the last 10 minutes.
     const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
     const isNewSubscription = subscription.createdAt && subscription.createdAt > tenMinutesAgo;
@@ -139,7 +173,7 @@ async function handleCheckoutSessionCompleted(session) {
       return;
     }
 
-    // FIX #1: Guard against null subscriber/creator before accessing properties
+    // Guard against null subscriber/creator before accessing properties
     const subscriber = subscription.subscriberId;
     const creator = subscription.creatorId;
     const tier = subscription.tierId;
@@ -302,7 +336,7 @@ async function handleSubscriptionDeleted(subscription) {
   if (result) {
     console.log(`✅ Marked subscription ${result._id} as cancelled`);
 
-    // FIX #1: Fetch subscriber and creator once, reuse across both email blocks.
+    // Fetch subscriber and creator once, reuse across both email blocks.
     // Guard against null users (e.g. deleted accounts) before accessing properties.
     let subscriber = null;
     let creator = null;
@@ -370,17 +404,31 @@ async function handleInvoicePaymentSucceeded(invoice) {
       
       let subscription = null;
       
+      // FIX: Add retry loop before falling back to stripeSubscriptionId lookup.
+      // On a brand-new subscription, invoice.payment_succeeded fires concurrently
+      // with customer.subscription.created. The DB write from handleSubscriptionCreated
+      // may not have landed yet, so both findById and findOne({ stripeSubscriptionId })
+      // can return null — causing the transfer block to be silently skipped.
       if (dbSubscriptionId) {
-        subscription = await Subscription.findByIdAndUpdate(
-          dbSubscriptionId,
-          {
-            status: "active",
-            nextBillingDate: nextBillingDate,
-          },
-          { new: true }
-        );
-        console.log(`✅ Updated subscription ${dbSubscriptionId} to active after successful payment`);
-        console.log(`   New status: ${subscription?.status}`);
+        for (let attempt = 0; attempt < 3; attempt++) {
+          subscription = await Subscription.findByIdAndUpdate(
+            dbSubscriptionId,
+            {
+              status: "active",
+              nextBillingDate: nextBillingDate,
+            },
+            { new: true }
+          );
+          if (subscription) break;
+          console.log(`Subscription ${dbSubscriptionId} not found on attempt ${attempt + 1}, retrying...`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        if (subscription) {
+          console.log(`✅ Updated subscription ${dbSubscriptionId} to active after successful payment`);
+          console.log(`   New status: ${subscription?.status}`);
+        } else {
+          console.error(`❌ Subscription ${dbSubscriptionId} not found after retries`);
+        }
       } else {
         subscription = await Subscription.findOneAndUpdate(
           { stripeSubscriptionId: invoice.subscription },
@@ -397,13 +445,11 @@ async function handleInvoicePaymentSucceeded(invoice) {
         }
       }
 
-      // FIX #2: Use invoice.amount_paid (the actual charged amount) to calculate the
+      // Use invoice.amount_paid (the actual charged amount) to calculate the
       // seller's share rather than the stale `seller_amount` from subscription metadata,
       // which would be wrong after plan changes or prorations.
       if (paymentMode === "platform_hold" && creatorId && invoice.amount_paid) {
         // Derive the platform fee percentage from metadata to compute seller share dynamically.
-        // Fall back to metadata seller_amount only for the very first invoice (when amount_paid
-        // may differ due to prorations on upgrade), but prefer the live calculation.
         const platformFeePercent = parseFloat(stripeSubscription.metadata?.platform_fee_percent || "0");
         let sellerAmount;
 
@@ -430,7 +476,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
               const transfer = await stripe.transfers.create({
                 amount: transferAmount,
                 currency: "usd",
-                // FIX #4: Use account.id from the retrieved account object (source of truth)
+                // Use account.id from the retrieved account object (source of truth)
                 // rather than creator.connectedID, which could theoretically be stale.
                 destination: account.id,
                 description: `Recurring payment transfer`,
@@ -454,7 +500,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
       // Send payment receipt email
       if (subscription) {
         try {
-          // FIX #1: Guard against null subscriber/creator before accessing properties
+          // Guard against null subscriber/creator before accessing properties
           const [subscriber, creator] = await Promise.all([
             User.findById(subscription.subscriberId).select('fullName email'),
             User.findById(subscription.creatorId).select('fullName'),
@@ -511,7 +557,7 @@ async function handleInvoicePaymentFailed(invoice) {
       // Send payment failed email to subscriber
       if (subscription) {
         try {
-          // FIX #1: Guard against null subscriber/creator before accessing properties
+          // Guard against null subscriber/creator before accessing properties
           const [subscriber, creator] = await Promise.all([
             User.findById(subscription.subscriberId).select('fullName email'),
             User.findById(subscription.creatorId).select('fullName'),
@@ -522,7 +568,7 @@ async function handleInvoicePaymentFailed(invoice) {
           } else {
             const tier = subscription.tierType;
             
-            // FIX #5: Use Stripe's next_payment_attempt timestamp if available, since
+            // Use Stripe's next_payment_attempt timestamp if available, since
             // Stripe's Smart Retry schedule is configurable and not always 7 days.
             // Fall back to 7 days only when Stripe provides no retry date.
             const retryDate = invoice.next_payment_attempt
@@ -581,7 +627,7 @@ async function handleAccountUpdated(account) {
     const transfer = await stripe.transfers.create({
       amount: Math.round(pendingEarnings * 100),
       currency: "usd",
-      // FIX #4: Use account.id from the event directly (already verified above),
+      // Use account.id from the event directly (already verified above),
       // not creator.connectedID, to ensure we're using the authoritative Stripe value.
       destination: account.id,
       description: `Transfer of pending earnings`,
@@ -599,7 +645,7 @@ async function handleAccountUpdated(account) {
   }
 }
 
-// FIX #3: Log a warning for unmapped Stripe statuses instead of silently
+// Log a warning for unmapped Stripe statuses instead of silently
 // defaulting to 'incomplete', which could corrupt subscription state.
 function mapStripeStatus(stripeStatus) {
   const statusMap = {
@@ -610,7 +656,7 @@ function mapStripeStatus(stripeStatus) {
     'incomplete_expired': 'incomplete_expired',
     'trialing': 'active',
     'unpaid': 'past_due',
-    'paused': 'paused', // Stripe added this in newer API versions
+    'paused': 'paused',
   };
 
   const mapped = statusMap[stripeStatus];
