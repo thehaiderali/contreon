@@ -7,8 +7,10 @@ import FreeVideoUploadStep from './FreeVideoUploadStep';
 import PaidVideoUploadStep from './PaidVideoUploadStep';
 import PreviewStep from './PreviewStep';
 import EditDetailsStep from './EditDetailsStep';
+import { usePostHog } from '@posthog/react';
 
 const CreateVideoPost = () => {
+  const posthog=usePostHog();
   const location = useLocation();
   const navigate = useNavigate();
   const isMountedRef = useRef(true);
@@ -157,6 +159,7 @@ const CreateVideoPost = () => {
             `/collections/${location.state.collectionId}/posts/${newPost._id}`
           );
           toast.success('Post created and added to collection!');
+          posthog.capture("video_post_created")
         } catch (err) {
           console.error('Failed to add to collection:', err);
           toast.success('Post created but failed to add to collection');

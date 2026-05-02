@@ -3,9 +3,11 @@ import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "./theme-toggle"
 import { useAuthStore } from "@/store/authStore"
 import { useState } from "react"
-import { Loader2 } from "lucide-react" // Make sure to install lucide-react: npm install lucide-react
+import { Loader2 } from "lucide-react" 
+import { usePostHog } from "@posthog/react"
 
 const Navbar = () => {
+  const posthog=usePostHog()
   const { user, logout } = useAuthStore();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -13,7 +15,8 @@ const Navbar = () => {
   const handleLogout = async () => {
     setIsLoggingOut(true);
     try {
-      await logout(); // Call the logout function from your store
+      await logout();
+      posthog.capture("user_logged_out")
       navigate("/"); // Redirect to home page after logout
     } catch (error) {
       console.error("Logout failed:", error);

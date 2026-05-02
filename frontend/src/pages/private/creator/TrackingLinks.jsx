@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Copy, MousePointer, Users, ExternalLink } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { usePostHog } from '@posthog/react';
 
 const SOURCES = [
   { value: 'youtube', label: 'YouTube', icon: '📺' },
@@ -17,6 +18,7 @@ const SOURCES = [
 ];
 
 const TrackingLinks = () => {
+  const posthog=usePostHog()
   const [links, setLinks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
@@ -58,6 +60,7 @@ const TrackingLinks = () => {
         setFormData({ source: '', name: '' });
         setShowForm(false);
         toast.success('Link created successfully');
+        posthog.capture("trackinglink_created")
       }
     } catch (error) {
       toast.error(error.response?.data?.error || 'Failed to create link');

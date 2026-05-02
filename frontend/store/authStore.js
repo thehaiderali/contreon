@@ -119,7 +119,7 @@ export const useAuthStore = create(
       logout: async () => {
         try {
           set({ loading: true });
-          await api.post("/auth/logout", {}, { withCredentials: true });
+          await api.post("/auth/logout");
         } catch (err) {
           console.error("Logout error:", err);
         } finally {

@@ -16,8 +16,10 @@ import { Badge } from '@/components/ui/badge';
 import { X, Plus, ArrowLeft } from 'lucide-react';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
+import { usePostHog } from '@posthog/react';
 
 const MembershipCreationForm = () => {
+  const posthog=usePostHog()
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
@@ -118,7 +120,7 @@ const MembershipCreationForm = () => {
 
       if (response.data.success) {
         toast.success('Membership tier created successfully!');
-        
+        posthog.capture("membership_created")
         // Reset form after successful submission
         setFormData({
           tierName: '',

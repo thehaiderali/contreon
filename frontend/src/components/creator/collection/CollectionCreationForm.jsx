@@ -14,8 +14,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { api } from '@/lib/api';
 import { useNavigate } from 'react-router';
+import { usePostHog } from '@posthog/react';
 
 const CollectionCreationForm = () => {
+  const posthog=usePostHog();
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     title: '',
@@ -79,6 +81,7 @@ const CollectionCreationForm = () => {
     try {
       const response = await api.post('/collections', submissionData);
       console.log("Collection created:", response);
+      posthog.capture("collection_created")
 
       if (response.data.success) {
         navigate('/creator/collections');

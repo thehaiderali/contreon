@@ -7,8 +7,10 @@ import PostCreatedModal from './PostCreated'
 import { toast } from 'sonner'
 import { api } from '@/lib/api'
 import { UploadButton } from '@/lib/uploadthing'
+import { usePostHog } from '@posthog/react'
 
 const CreateTextPost = () => {
+  const posthog=usePostHog()
   const navigate = useNavigate()
   const location = useLocation()
   
@@ -92,6 +94,7 @@ const CreateTextPost = () => {
       
       if (response.data.success) {
         const newPost = response.data.data;
+        posthog.capture("text_post_created")
         
         if (location.state?.collectionId) {
           try {
