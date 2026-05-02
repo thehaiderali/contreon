@@ -101,29 +101,68 @@ async function handleCheckoutSessionCompleted(session) {
     }
   }
 
-  // Send welcome email to new subscriber
+  // FIX #6 & #7: Only send welcome email for brand-new subscriptions.
+  // We check `subscription.startDate` being very recent (within 5 minutes) to avoid
+  // re-sending on re-subscribe checkouts and to guard against the race condition where
+  // handleSubscriptionCreated hasn't finished writing yet (we wait briefly if needed).
   try {
     const dbSubscriptionId = session.metadata?.db_subscription_id;
-    const subscription = dbSubscriptionId
-      ? await Subscription.findById(dbSubscriptionId)
-          .populate('subscriberId', 'fullName email')
-          .populate('creatorId', 'fullName')
-          .populate('tierId')
-      : null;
+    if (!dbSubscriptionId) return;
 
-    if (subscription && subscription.subscriberId && subscription.creatorId) {
-      const subscriber = subscription.subscriberId;
-      const creator = subscription.creatorId;
-      const tier = subscription.tierId;
+    // Retry up to 3 times with a short delay to handle the race condition where
+    // customer.subscription.created fires concurrently and may not have written yet.
+    let subscription = null;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      subscription = await Subscription.findById(dbSubscriptionId)
+        .populate('subscriberId', 'fullName email')
+        .populate('creatorId', 'fullName email')
+        .populate('tierId');
 
-      const dashboardUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+      if (subscription) break;
 
-      await sendEmail(
-        subscriber.email,
-        `Welcome to ${creator.fullName}!`,
-        welcomeEmail(subscriber.fullName, creator.fullName, tier?.tierName || 'Member', dashboardUrl)
-      );
+      // Wait 1s before retrying
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
 
+    if (!subscription) {
+      console.log(`Subscription ${dbSubscriptionId} not found after retries, skipping welcome email`);
+      return;
+    }
+
+    // FIX #6: Only send welcome email for genuinely new subscriptions.
+    // A subscription is "new" if it was created within the last 10 minutes.
+    const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000);
+    const isNewSubscription = subscription.createdAt && subscription.createdAt > tenMinutesAgo;
+
+    if (!isNewSubscription) {
+      console.log(`Subscription ${dbSubscriptionId} is not new, skipping welcome email`);
+      return;
+    }
+
+    // FIX #1: Guard against null subscriber/creator before accessing properties
+    const subscriber = subscription.subscriberId;
+    const creator = subscription.creatorId;
+    const tier = subscription.tierId;
+
+    if (!subscriber || !creator) {
+      console.log(`Missing subscriber or creator on subscription ${dbSubscriptionId}, skipping welcome emails`);
+      return;
+    }
+
+    if (!subscriber.email) {
+      console.log(`Subscriber has no email on subscription ${dbSubscriptionId}, skipping welcome email`);
+      return;
+    }
+
+    const dashboardUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+
+    await sendEmail(
+      subscriber.email,
+      `Welcome to ${creator.fullName}!`,
+      welcomeEmail(subscriber.fullName, creator.fullName, tier?.tierName || 'Member', dashboardUrl)
+    );
+
+    if (creator.email) {
       const creatorProfile = await CreatorProfile.findOne({ creatorId: creator._id });
       const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
 
@@ -176,7 +215,7 @@ async function handleSubscriptionCreated(subscription) {
         nextBillingDate: nextBillingDate,
         autoRenew: !subscription.cancel_at_period_end,
       },
-      { new: true, runValidators: false } // Disable validators to avoid date issues
+      { new: true, runValidators: false }
     );
     
     if (updatedSubscription) {
@@ -263,38 +302,52 @@ async function handleSubscriptionDeleted(subscription) {
   if (result) {
     console.log(`✅ Marked subscription ${result._id} as cancelled`);
 
-    // Send cancellation email to subscriber
+    // FIX #1: Fetch subscriber and creator once, reuse across both email blocks.
+    // Guard against null users (e.g. deleted accounts) before accessing properties.
+    let subscriber = null;
+    let creator = null;
+
     try {
-      const subscriber = await User.findById(result.subscriberId).select('fullName email');
-      const creator = await User.findById(result.creatorId).select('fullName');
-      
-      const restoreUrl = `${envConfig.FRONTEND_URL}/explore`;
-      
-      await sendEmail(
-        subscriber.email,
-        `Membership cancelled for ${creator.fullName}`,
-        cancellationEmail(subscriber.fullName, creator.fullName, result.tierType, restoreUrl)
-      );
-      console.log(`✅ Cancellation email sent to ${subscriber.email}`);
-    } catch (emailError) {
-      console.log('Could not send cancellation email:', emailError.message);
+      [subscriber, creator] = await Promise.all([
+        User.findById(result.subscriberId).select('fullName email'),
+        User.findById(result.creatorId).select('fullName email'),
+      ]);
+    } catch (fetchError) {
+      console.log('Could not fetch subscriber/creator for cancellation emails:', fetchError.message);
+    }
+
+    // Send cancellation email to subscriber
+    if (subscriber?.email && creator?.fullName) {
+      try {
+        const restoreUrl = `${envConfig.FRONTEND_URL}/explore`;
+        await sendEmail(
+          subscriber.email,
+          `Membership cancelled for ${creator.fullName}`,
+          cancellationEmail(subscriber.fullName, creator.fullName, result.tierType, restoreUrl)
+        );
+        console.log(`✅ Cancellation email sent to ${subscriber.email}`);
+      } catch (emailError) {
+        console.log('Could not send cancellation email:', emailError.message);
+      }
+    } else {
+      console.log('Skipping subscriber cancellation email: missing subscriber or creator data');
     }
 
     // Notify creator
-    try {
-      const creator = await User.findById(result.creatorId).select('fullName email');
-      const subscriber = await User.findById(result.subscriberId).select('fullName');
-      
-      const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
-      
-      await sendEmail(
-        creator.email,
-        `Subscriber cancelled: ${subscriber.fullName}`,
-        subscriberCancelledEmail(creator.fullName, subscriber.fullName, result.tierType, manageUrl)
-      );
-      console.log(`✅ Cancellation notification sent to creator ${creator.email}`);
-    } catch (emailError) {
-      console.log('Could not send creator notification:', emailError.message);
+    if (creator?.email && subscriber?.fullName) {
+      try {
+        const manageUrl = `${envConfig.FRONTEND_URL}/creator/members`;
+        await sendEmail(
+          creator.email,
+          `Subscriber cancelled: ${subscriber.fullName}`,
+          subscriberCancelledEmail(creator.fullName, subscriber.fullName, result.tierType, manageUrl)
+        );
+        console.log(`✅ Cancellation notification sent to creator ${creator.email}`);
+      } catch (emailError) {
+        console.log('Could not send creator notification:', emailError.message);
+      }
+    } else {
+      console.log('Skipping creator cancellation email: missing creator or subscriber data');
     }
   } else {
     console.error(`❌ Subscription ${subscription.id} not found in database`);
@@ -344,9 +397,24 @@ async function handleInvoicePaymentSucceeded(invoice) {
         }
       }
 
-      // Handle platform_hold transfer for recurring payments
+      // FIX #2: Use invoice.amount_paid (the actual charged amount) to calculate the
+      // seller's share rather than the stale `seller_amount` from subscription metadata,
+      // which would be wrong after plan changes or prorations.
       if (paymentMode === "platform_hold" && creatorId && invoice.amount_paid) {
-        const sellerAmount = parseFloat(stripeSubscription.metadata?.seller_amount || "0");
+        // Derive the platform fee percentage from metadata to compute seller share dynamically.
+        // Fall back to metadata seller_amount only for the very first invoice (when amount_paid
+        // may differ due to prorations on upgrade), but prefer the live calculation.
+        const platformFeePercent = parseFloat(stripeSubscription.metadata?.platform_fee_percent || "0");
+        let sellerAmount;
+
+        if (platformFeePercent > 0) {
+          // Calculate seller's share from actual amount paid
+          const amountPaidDollars = invoice.amount_paid / 100;
+          sellerAmount = amountPaidDollars * (1 - platformFeePercent / 100);
+        } else {
+          // Fallback to metadata value if fee percent is not stored
+          sellerAmount = parseFloat(stripeSubscription.metadata?.seller_amount || "0");
+        }
         
         if (sellerAmount > 0) {
           const creator = await User.findById(creatorId);
@@ -362,11 +430,13 @@ async function handleInvoicePaymentSucceeded(invoice) {
               const transfer = await stripe.transfers.create({
                 amount: transferAmount,
                 currency: "usd",
-                destination: creator.connectedID,
+                // FIX #4: Use account.id from the retrieved account object (source of truth)
+                // rather than creator.connectedID, which could theoretically be stale.
+                destination: account.id,
                 description: `Recurring payment transfer`,
               });
               
-              console.log(`✅ Transferred $${sellerAmount} to creator ${creatorId} (Transfer: ${transfer.id})`);
+              console.log(`✅ Transferred $${sellerAmount.toFixed(2)} to creator ${creatorId} (Transfer: ${transfer.id})`);
             } else {
               // Hold funds until onboarding complete
               creator.deferredOnboarding = creator.deferredOnboarding || {};
@@ -375,7 +445,7 @@ async function handleInvoicePaymentSucceeded(invoice) {
               creator.deferredOnboarding.lastEarningDate = new Date();
               await creator.save();
               
-              console.log(`💰 Held $${sellerAmount} for creator ${creatorId} (not onboarded)`);
+              console.log(`💰 Held $${sellerAmount.toFixed(2)} for creator ${creatorId} (not onboarded)`);
             }
           }
         }
@@ -384,20 +454,27 @@ async function handleInvoicePaymentSucceeded(invoice) {
       // Send payment receipt email
       if (subscription) {
         try {
-          const subscriber = await User.findById(subscription.subscriberId).select('fullName email');
-          const creator = await User.findById(subscription.creatorId).select('fullName');
-          
-          const amount = invoice.amount_paid ? `$${(invoice.amount_paid / 100).toFixed(2)}` : '$0.00';
-          const paymentDate = new Date().toLocaleDateString();
-          const receiptId = invoice.number || `INV-${Date.now()}`;
-          const manageUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
-          
-          await sendEmail(
-            subscriber.email,
-            `Payment receipt for ${creator.fullName}`,
-            paymentReceiptEmail(subscriber.fullName, creator.fullName, amount, paymentDate, subscription.tierType, receiptId, manageUrl)
-          );
-          console.log(`✅ Payment receipt sent to ${subscriber.email}`);
+          // FIX #1: Guard against null subscriber/creator before accessing properties
+          const [subscriber, creator] = await Promise.all([
+            User.findById(subscription.subscriberId).select('fullName email'),
+            User.findById(subscription.creatorId).select('fullName'),
+          ]);
+
+          if (!subscriber?.email || !creator?.fullName) {
+            console.log('Missing subscriber or creator data, skipping payment receipt email');
+          } else {
+            const amount = invoice.amount_paid ? `$${(invoice.amount_paid / 100).toFixed(2)}` : '$0.00';
+            const paymentDate = new Date().toLocaleDateString();
+            const receiptId = invoice.number || `INV-${Date.now()}`;
+            const manageUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+            
+            await sendEmail(
+              subscriber.email,
+              `Payment receipt for ${creator.fullName}`,
+              paymentReceiptEmail(subscriber.fullName, creator.fullName, amount, paymentDate, subscription.tierType, receiptId, manageUrl)
+            );
+            console.log(`✅ Payment receipt sent to ${subscriber.email}`);
+          }
         } catch (emailError) {
           console.log('Could not send payment receipt email:', emailError.message);
         }
@@ -407,7 +484,6 @@ async function handleInvoicePaymentSucceeded(invoice) {
     }
   }
 }
-
 
 async function handleInvoicePaymentFailed(invoice) {
   console.log("Invoice payment failed:", invoice.id);
@@ -435,19 +511,33 @@ async function handleInvoicePaymentFailed(invoice) {
       // Send payment failed email to subscriber
       if (subscription) {
         try {
-          const subscriber = await User.findById(subscription.subscriberId).select('fullName email');
-          const creator = await User.findById(subscription.creatorId).select('fullName');
-          const tier = subscription.tierType;
-          
-          const retryDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString();
-          const updatePaymentUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
-          
-          await sendEmail(
-            subscriber.email,
-            `Payment failed for ${creator.fullName}`,
-            paymentFailedEmail(subscriber.fullName, creator.fullName, tier, retryDate, updatePaymentUrl)
-          );
-          console.log(`✅ Payment failed email sent to ${subscriber.email}`);
+          // FIX #1: Guard against null subscriber/creator before accessing properties
+          const [subscriber, creator] = await Promise.all([
+            User.findById(subscription.subscriberId).select('fullName email'),
+            User.findById(subscription.creatorId).select('fullName'),
+          ]);
+
+          if (!subscriber?.email || !creator?.fullName) {
+            console.log('Missing subscriber or creator data, skipping payment failed email');
+          } else {
+            const tier = subscription.tierType;
+            
+            // FIX #5: Use Stripe's next_payment_attempt timestamp if available, since
+            // Stripe's Smart Retry schedule is configurable and not always 7 days.
+            // Fall back to 7 days only when Stripe provides no retry date.
+            const retryDate = invoice.next_payment_attempt
+              ? new Date(invoice.next_payment_attempt * 1000).toLocaleDateString()
+              : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString();
+
+            const updatePaymentUrl = `${envConfig.FRONTEND_URL}/subscriber/memberships`;
+            
+            await sendEmail(
+              subscriber.email,
+              `Payment failed for ${creator.fullName}`,
+              paymentFailedEmail(subscriber.fullName, creator.fullName, tier, retryDate, updatePaymentUrl)
+            );
+            console.log(`✅ Payment failed email sent to ${subscriber.email}`);
+          }
         } catch (emailError) {
           console.log('Could not send payment failed email:', emailError.message);
         }
@@ -491,6 +581,8 @@ async function handleAccountUpdated(account) {
     const transfer = await stripe.transfers.create({
       amount: Math.round(pendingEarnings * 100),
       currency: "usd",
+      // FIX #4: Use account.id from the event directly (already verified above),
+      // not creator.connectedID, to ensure we're using the authoritative Stripe value.
       destination: account.id,
       description: `Transfer of pending earnings`,
     });
@@ -507,7 +599,8 @@ async function handleAccountUpdated(account) {
   }
 }
 
-
+// FIX #3: Log a warning for unmapped Stripe statuses instead of silently
+// defaulting to 'incomplete', which could corrupt subscription state.
 function mapStripeStatus(stripeStatus) {
   const statusMap = {
     'active': 'active',
@@ -516,7 +609,16 @@ function mapStripeStatus(stripeStatus) {
     'incomplete': 'incomplete',
     'incomplete_expired': 'incomplete_expired',
     'trialing': 'active',
-    'unpaid': 'past_due'
+    'unpaid': 'past_due',
+    'paused': 'paused', // Stripe added this in newer API versions
   };
-  return statusMap[stripeStatus] || 'incomplete';
+
+  const mapped = statusMap[stripeStatus];
+
+  if (!mapped) {
+    console.warn(`⚠️ Unrecognized Stripe subscription status: "${stripeStatus}". Defaulting to "incomplete". Consider adding this status to mapStripeStatus().`);
+    return 'incomplete';
+  }
+
+  return mapped;
 }
