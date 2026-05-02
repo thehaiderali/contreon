@@ -7,8 +7,6 @@ import { envConfig } from "../config/env.js";
 import { signupWelcomeEmail,sendEmail } from "../emails/templates.js";
 import { updatePasswordSchema ,deleteAccountSchema} from "../validation/zod.js";
 
-
-
 export async function signup(req,res){
     try {
 

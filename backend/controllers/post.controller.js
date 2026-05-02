@@ -4,6 +4,8 @@ import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import { createMessageData, sendNotificationToTier } from "../services/notification.js";
+import { sendEmail,postCreationEmailTemplate } from "../emails/templates.js";
+import { envConfig } from "../config/env.js";
 
 // @desc    Create a new post
 // @route   POST /api/creators/posts
@@ -175,6 +177,8 @@ export const createPost = async (req, res) => {
       .populate("creatorId", "fullName email")
       .populate("tierId", "name price benefits");
 
+    const html=postCreationEmailTemplate(user.fullName,populatedPost.title,populatedPost._id,`${envConfig.FRONTEND_URL}/creator/library`) 
+    await sendEmail(user.email,"Content Post Created",html);
     res.status(201).json({
       success: true,
       message: "Post created successfully",

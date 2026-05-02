@@ -344,51 +344,7 @@ export const signupWelcomeEmail = (userName, email, loginUrl) => `
 </html>
 `;
 
-// 9. Password Reset Email
-export const passwordResetEmail = (userName, resetToken, resetUrl, expiryHours) => `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Reset your Contreon password</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-white m-0 p-0 font-sans">
-  <div class="max-w-2xl mx-auto my-10 p-6 border border-black">
-    <div class="text-center pb-6 mb-6 border-b border-black">
-      <h1 class="text-3xl font-bold text-black tracking-tight m-0">RESET PASSWORD</h1>
-    </div>
-    <div class="py-4">
-      <p class="text-black text-lg mb-5">Hello ${userName},</p>
-      <p class="text-black text-base mb-5">
-        We received a request to reset your password. Click the button below to create a new password.
-      </p>
-      <div class="bg-gray-50 border border-gray-200 p-4 my-6">
-        <p class="text-black text-sm">
-          <strong>Note:</strong> This link will expire in ${expiryHours || 1} hour(s).
-        </p>
-        <p class="text-black text-sm mt-2">
-          If you didn't request this, please ignore this email.
-        </p>
-      </div>
-      <div class="text-center my-8">
-        <a href="${resetUrl}" class="bg-black text-white no-underline text-base font-semibold py-3 px-8 border border-black inline-block hover:bg-white hover:text-black transition">
-          RESET PASSWORD
-        </a>
-      </div>
-      <p class="text-black text-sm text-center opacity-80 mt-6">
-        Or copy and paste this link in your browser:<br/>
-        <span class="text-xs break-all">${resetUrl}</span>
-      </p>
-    </div>
-    <div class="pt-6 mt-6 border-t border-black text-center">
-      <p class="text-black text-xs m-0">© ${getCurrentYear()} Contreon</p>
-    </div>
-  </div>
-</body>
-</html>
-`;
+
 
 // 10. Password Reset Confirmation
 export const passwordResetConfirmationEmail = (userName, accountUrl) => `
@@ -593,3 +549,165 @@ export const sendEmail = async (to, subject, html) => {
   }
 };
 
+
+export const postCreationEmailTemplate = (creatorName, postTitle, postId, postUrl) => {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Post Created Successfully</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        * {
+          font-family: 'Inter', sans-serif;
+        }
+      </style>
+    </head>
+    <body class="bg-black m-0 p-0">
+      <div class="max-w-2xl mx-auto my-8 bg-white rounded-none overflow-hidden">
+        <!-- Header - Black -->
+        <div class="bg-black text-white px-8 py-12 text-center border-b border-gray-200">
+          <div class="text-4xl font-extrabold tracking-tight">CONTREON</div>
+          <p class="text-gray-400 mt-2 text-sm">Creator Platform</p>
+        </div>
+        
+        <!-- Content -->
+        <div class="bg-white text-black px-8 py-12">
+          <h1 class="text-3xl font-bold mb-2">Hello ${creatorName}! 👋</h1>
+          <p class="text-gray-600 text-base leading-relaxed mb-6">
+            Your post has been successfully created and is now live on Contreon.
+          </p>
+          
+          <!-- Post Card -->
+          <div class="bg-gray-50 border border-gray-200 p-6 my-6">
+            <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Post Created</p>
+            <h2 class="text-2xl font-bold text-black mb-2">"${postTitle}"</h2>
+            <p class="text-xs text-gray-400 font-mono">ID: ${postId}</p>
+          </div>
+          
+          <!-- Info Grid -->
+          <div class="border border-gray-200 divide-y divide-gray-200 my-6">
+            <div class="flex py-3 px-4">
+              <span class="w-1/3 text-sm font-medium text-gray-600">Status</span>
+              <span class="w-2/3 text-sm text-black font-semibold">✓ Published</span>
+            </div>
+            <div class="flex py-3 px-4">
+              <span class="w-1/3 text-sm font-medium text-gray-600">Created</span>
+              <span class="w-2/3 text-sm text-black">${new Date().toLocaleString()}</span>
+            </div>
+            <div class="flex py-3 px-4">
+              <span class="w-1/3 text-sm font-medium text-gray-600">Post ID</span>
+              <span class="w-2/3 text-sm font-mono text-black">${postId}</span>
+            </div>
+          </div>
+          
+          <!-- Button -->
+          <div class="text-center my-8">
+            <a href="${postUrl}" class="inline-block bg-black text-white px-6 py-3 text-base font-semibold no-underline hover:bg-gray-800 transition-colors">
+              View Your Post →
+            </a>
+          </div>
+          
+          <!-- Tips Box -->
+          <div class="bg-gray-50 border border-gray-200 p-6 my-6">
+            <p class="font-semibold text-black mb-3">💡 Pro Tips:</p>
+            <ul class="space-y-2 text-sm text-gray-600">
+              <li class="flex items-start">
+                <span class="mr-2">•</span>
+                Share your post on social media platforms
+              </li>
+              <li class="flex items-start">
+                <span class="mr-2">•</span>
+                Engage with comments from your audience
+              </li>
+              <li class="flex items-start">
+                <span class="mr-2">•</span>
+                Track your post performance in dashboard
+              </li>
+              <li class="flex items-start">
+                <span class="mr-2">•</span>
+                Promote your post through newsletters
+              </li>
+            </ul>
+          </div>
+          
+          <p class="text-gray-600 my-6">Keep creating amazing content! ✨</p>
+          
+          <p class="text-gray-600">
+            Best regards,<br>
+            <strong class="text-black">The Contreon Team</strong>
+          </p>
+        </div>
+        
+        <!-- Footer - Black -->
+        <div class="bg-black text-gray-400 px-8 py-8 text-center text-xs">
+          <p>© 2024 Contreon. All rights reserved.</p>
+          <div class="flex justify-center gap-4 mt-4">
+            <a href="#" class="text-gray-400 hover:text-white no-underline text-xs">Twitter</a>
+            <a href="#" class="text-gray-400 hover:text-white no-underline text-xs">Instagram</a>
+            <a href="#" class="text-gray-400 hover:text-white no-underline text-xs">Facebook</a>
+          </div>
+          <p class="mt-6 text-gray-500 text-xs">
+            You're receiving this email because you created a post on Contreon.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+
+
+
+
+export const creatorRecommendationTemplate = (currentCreatorName, recommendedCreatorName) => {
+  return `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Someone Recommended You</title>
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-black m-0 p-0">
+      <div class="max-w-2xl mx-auto my-8 bg-white rounded-none overflow-hidden">
+        <!-- Header -->
+        <div class="bg-black text-white px-8 py-12 text-center">
+          <div class="text-4xl font-extrabold tracking-tight">CONTREON</div>
+        </div>
+        
+        <!-- Content -->
+        <div class="bg-white text-black px-8 py-12 text-center">
+          <div class="text-7xl mb-6">⭐</div>
+          
+          <h1 class="text-3xl font-bold mb-4">Hey ${currentCreatorName}!</h1>
+          
+          <p class="text-xl text-gray-700 mb-6">
+            <span class="font-semibold text-black">${recommendedCreatorName}</span> recommended you on Contreon
+          </p>
+          
+          <div class="bg-gray-50 border border-gray-200 p-6 my-8">
+            <p class="text-gray-600">
+              Someone thinks you're doing great work and wants others to know about you!
+            </p>
+          </div>
+          
+          <a href="#" class="inline-block bg-black text-white px-8 py-3 text-base font-semibold no-underline">
+            Check Your Profile →
+          </a>
+        </div>
+        
+        <!-- Footer -->
+        <div class="bg-black text-gray-500 px-8 py-6 text-center text-xs">
+          <p>© 2024 Contreon</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};

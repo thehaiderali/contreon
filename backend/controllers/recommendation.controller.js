@@ -1,6 +1,7 @@
 import CreatorProfile from "../models/profile.model.js";
 import User from "../models/user.model.js";
 import Recommendation from "../models/recommendation.model.js";
+import { creatorRecommendationTemplate,sendEmail } from "../emails/templates.js";
 
 export const searchCreators = async (req, res) => {
   try {
@@ -206,6 +207,9 @@ export const addRecommendation = async (req, res) => {
     });
 
     await recommendation.save();
+
+    const html=creatorRecommendationTemplate(currentUser.fullName,recommendedUser.fullName);
+    await sendEmail(recommendedUser.email,"Someone recommended You on Contreon",html)
 
     res.json({ 
       success: true, 
