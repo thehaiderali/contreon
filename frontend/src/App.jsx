@@ -42,13 +42,13 @@ import CreatorSettings from './pages/private/creator/CreatorSettings';
 import SubscriberProfile from './pages/private/subscriber/Profile';
 import { useEffect } from "react";
 import posthog from "posthog-js";
+import NotFound from './pages/public/NotFound';
 const App = () => {
 
    useEffect(() => {
     posthog.reset();
   }, []);
   
-
   return (
     <Routes>
       
@@ -102,6 +102,7 @@ const App = () => {
           </Route>
         </Route>
       </Route>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };
