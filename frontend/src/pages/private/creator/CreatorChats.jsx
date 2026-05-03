@@ -313,7 +313,7 @@ useEffect(() => {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
+    <div className="chat-message flex h-screen bg-background overflow-hidden">
       {/* WhatsApp-style Sidebar */}
       <div className="w-96 flex flex-col border-r bg-background min-h-0">
         {/* Header */}
