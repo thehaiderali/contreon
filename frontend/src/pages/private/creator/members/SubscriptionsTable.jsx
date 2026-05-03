@@ -155,11 +155,11 @@ const SubscriptionsTable = () => {
   const endIndex = Math.min(currentPage * itemsPerPage, totalItems);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       {/* Filters */}
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold">Filters</h2>
-        <div className="flex flex-col sm:flex-row gap-3">
+        <h2 className="text-sm font-semibold hidden md:block">Filters</h2>
+        <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
           <div className="relative flex-1">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
@@ -176,7 +176,7 @@ const SubscriptionsTable = () => {
             setStatusFilter(value);
             setCurrentPage(1);
           }}>
-            <SelectTrigger className="w-40 h-9 text-sm">
+            <SelectTrigger className="w-full sm:w-40 h-9 text-sm">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
             <SelectContent>
@@ -189,8 +189,8 @@ const SubscriptionsTable = () => {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="rounded-md border">
+      {/* Table - Desktop */}
+      <div className="rounded-md border hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -301,6 +301,74 @@ const SubscriptionsTable = () => {
             )}
           </TableBody>
         </Table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-3">
+        {loading ? (
+          <div className="text-center py-8 text-muted-foreground">Loading...</div>
+        ) : subscriptions.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">No subscriptions found</div>
+        ) : (
+          subscriptions.map((subscription) => (
+            <div key={subscription._id} className="border rounded-lg p-3 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0 flex-1">
+                  <p className="font-medium text-sm">
+                    {subscription.subscriberId?.name || 'Unknown'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {subscription.subscriberId?.email || 'No email'}
+                  </p>
+                </div>
+                <div className="shrink-0">
+                  {getStatusBadge(subscription.status)}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-2 text-xs">
+                <div className="bg-muted/50 px-2 py-1 rounded">
+                  <span className="text-muted-foreground">Tier:</span> {subscription.tierType || 'Unknown'}
+                </div>
+                <div className="bg-muted/50 px-2 py-1 rounded">
+                  <span className="text-muted-foreground">Start:</span> {formatDate(subscription.startDate)}
+                </div>
+                <div className="bg-muted/50 px-2 py-1 rounded">
+                  <span className="text-muted-foreground">Next:</span> {formatDate(subscription.nextBillingDate)}
+                </div>
+                <div className="bg-muted/50 px-2 py-1 rounded">
+                  {subscription.autoRenew ? 'Auto-renew: Yes' : 'Auto-renew: No'}
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="w-full">
+                    Actions <MoreHorizontal className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-40">
+                  <DropdownMenuItem onClick={() => handleViewDetails(subscription)}>
+                    <Eye className="mr-2 h-3.5 w-3.5" /> View Details
+                  </DropdownMenuItem>
+                  {subscription.status === 'active' && (
+                    <DropdownMenuItem onClick={() => handleCancelSubscription(subscription)} className="text-red-500">
+                      <Ban className="mr-2 h-3.5 w-3.5" /> Cancel
+                    </DropdownMenuItem>
+                  )}
+                  {subscription.status === 'paused' && (
+                    <DropdownMenuItem onClick={() => handleResumeSubscription(subscription)}>
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" /> Resume
+                    </DropdownMenuItem>
+                  )}
+                  {subscription.status === 'cancelled' && (
+                    <DropdownMenuItem onClick={() => handleReactivateSubscription(subscription)}>
+                      <CheckCircle className="mr-2 h-3.5 w-3.5" /> Reactivate
+                    </DropdownMenuItem>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          ))
+        )}
       </div>
 
       {/* Pagination */}

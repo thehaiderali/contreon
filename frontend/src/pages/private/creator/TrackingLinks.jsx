@@ -89,20 +89,21 @@ const TrackingLinks = () => {
   const getSourceInfo = (source) => SOURCES.find(s => s.value === source);
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-3 md:p-6 max-w-4xl mx-auto space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">Attribution Links</h1>
           <p className="text-sm text-muted-foreground">Track which platforms drive traffic to your page</p>
         </div>
-        <Button onClick={() => setShowForm(!showForm)} className="gap-2">
+        <Button onClick={() => setShowForm(!showForm)} className="gap-2 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
-          New Link
+          <span className="hidden sm:inline">New Link</span>
+          <span className="sm:hidden">Add</span>
         </Button>
       </div>
 
       {/* Stats Overview */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
         <Card>
           <CardContent className="pt-4">
             <div className="flex items-center gap-3">
@@ -146,7 +147,7 @@ const TrackingLinks = () => {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleCreate} className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                 <div className="space-y-2">
                   <Label className="text-sm">Platform</Label>
                   <Select
@@ -174,7 +175,7 @@ const TrackingLinks = () => {
                   />
                 </div>
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button type="submit" disabled={creating} size="sm">
                   {creating ? 'Creating...' : 'Create Link'}
                 </Button>
@@ -204,27 +205,29 @@ const TrackingLinks = () => {
             const source = getSourceInfo(link.source);
             return (
               <Card key={link._id}>
-                <CardContent className="p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 min-w-0">
+                <CardContent className="p-3 md:p-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:justify-between gap-3">
+                    <div className="flex items-center gap-3 min-w-0 w-full">
                       <div className="w-10 h-10 bg-muted rounded-lg flex items-center justify-center text-lg flex-shrink-0">
                         {source?.icon}
                       </div>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{link.name || source?.label}</p>
-                        <p className="text-sm text-muted-foreground truncate max-w-[200px] font-mono">
+                        <p className="text-sm text-muted-foreground truncate max-w-[150px] md:max-w-[200px] font-mono">
                           {link.trackingUrl}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-4 flex-shrink-0">
-                      <div className="text-right">
-                        <p className="font-bold">{link.uniqueClicks || 0}</p>
-                        <p className="text-xs text-muted-foreground">unique</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">{link.clicks || 0}</p>
-                        <p className="text-xs text-muted-foreground">clicks</p>
+                    <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto ml-13 sm:ml-0">
+                      <div className="flex gap-3 text-sm">
+                        <div className="text-center">
+                          <p className="font-bold">{link.uniqueClicks || 0}</p>
+                          <p className="text-xs text-muted-foreground">unique</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="font-bold">{link.clicks || 0}</p>
+                          <p className="text-xs text-muted-foreground">clicks</p>
+                        </div>
                       </div>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => copyLink(link.trackingUrl)}>

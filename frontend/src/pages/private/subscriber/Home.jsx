@@ -17,10 +17,10 @@ export default function Home() {
           {user?.role==="creator" && (<CreatorSideBar/>)}
           {user?.role==="subscriber" && (<SubscriberAppSidebar/>)}
         <main className="flex-1 relative">
-          <div className="absolute top-4 left-4 z-10">
+          <div className="absolute top-3 left-3 md:top-4 md:left-4 z-10">
             <SidebarTrigger />
           </div>
-          <div className="py-10 px-4 pt-16 max-w-5xl">
+          <div className="py-6 px-3 md:py-10 md:px-4 pt-14 md:pt-16 max-w-5xl">
             <Outlet />
           </div>
         </main>

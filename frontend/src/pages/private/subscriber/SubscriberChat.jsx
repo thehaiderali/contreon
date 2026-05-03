@@ -1,18 +1,9 @@
-// import React from 'react'
-
-// const SubscriberChat = () => {
-//   return (
-//     <div>SubscriberChat</div>
-//   )
-// }
-
-// export default SubscriberChat
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, Search, Loader2, MoreVertical, MessageCircle } from "lucide-react";
+import { Send, Search, Loader2, MoreVertical, MessageCircle, ChevronLeft } from "lucide-react";
 import { useAuthStore } from "@/store/authStore";
 import chatService from "@/src/services/chatService";
 
@@ -325,6 +316,8 @@ const loadCreators = async () => {
     creator.fullName?.toLowerCase().includes(search.toLowerCase())
   );
 
+  const [showChat, setShowChat] = useState(false);
+
   if (loading) {
     return (
       <div className="flex h-screen bg-background items-center justify-center">
@@ -333,30 +326,39 @@ const loadCreators = async () => {
     );
   }
 
+  const handleCreatorSelect = (creator) => {
+    setSelectedCreator(creator);
+    setShowChat(true);
+  };
+
+  const handleBackToList = () => {
+    setShowChat(false);
+  };
+
   return (
     <div className="chat-message ph-no-capture flex h-screen bg-background overflow-hidden">
-      {/* WhatsApp-style Sidebar */}
-      <div className="w-96 flex flex-col border-r bg-background min-h-0">
+      {/* WhatsApp-style Sidebar - Hidden on mobile when chat is open */}
+      <div className={`${showChat ? 'hidden md:flex' : 'flex'} w-full md:w-96 flex-col border-r bg-background min-h-0`}>
         {/* Header */}
-        <div className="h-16 px-4 flex items-center justify-between border-b">
-          <div className="flex items-center gap-3">
+        <div className="h-14 md:h-16 px-3 md:px-4 flex items-center justify-between border-b">
+          <div className="flex items-center gap-2 md:gap-3">
             <Avatar className="h-8 w-8">
               <AvatarFallback>{getInitials(user?.fullName)}</AvatarFallback>
             </Avatar>
-            <span className="font-semibold">Chats</span>
+            <span className="font-semibold text-sm md:text-base">Chats</span>
           </div>
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" className="hidden md:flex">
             <MoreVertical className="h-5 w-5" />
           </Button>
         </div>
 
         {/* Search */}
-        <div className="p-3">
+        <div className="p-2 md:p-3">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search creators..."
-              className="pl-9 bg-muted border-0"
+              placeholder="Search..."
+              className="pl-9 bg-muted border-0 text-sm"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -366,7 +368,7 @@ const loadCreators = async () => {
         {/* Creators List */}
         <ScrollArea className="flex-1">
           {filteredCreators.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
+            <div className="p-6 md:p-8 text-center text-muted-foreground">
               <p className="text-sm">No conversations yet</p>
               <p className="text-xs mt-2">Subscribe to creators to start chatting</p>
             </div>
@@ -375,35 +377,35 @@ const loadCreators = async () => {
               {filteredCreators.map((creator) => (
                 <button
                   key={creator._id}
-                  onClick={() => setSelectedCreator(creator)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 hover:bg-accent transition-colors ${
+                  onClick={() => handleCreatorSelect(creator)}
+                  className={`w-full flex items-center gap-2 md:gap-3 px-3 md:px-4 py-2 md:py-3 hover:bg-accent transition-colors ${
                     getUserId(selectedCreator?._id) === getUserId(creator._id) ? "bg-accent" : ""
                   }`}
                 >
-                  <div className="relative">
-                    <Avatar className="h-12 w-12">
+                  <div className="relative shrink-0">
+                    <Avatar className="h-10 md:h-12 w-10 md:w-12">
                       <AvatarImage src={creator.avatar} />
-                      <AvatarFallback className="text-sm">
+                      <AvatarFallback className="text-xs md:text-sm">
                         {getInitials(creator.fullName)}
                       </AvatarFallback>
                     </Avatar>
                     {onlineStatus[getUserId(creator._id)] && (
-                      <span className="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-500 ring-2 ring-background" />
+                      <span className="absolute bottom-0 right-0 block h-2.5 md:h-3 w-2.5 md:w-3 rounded-full bg-green-500 ring-2 ring-background" />
                     )}
                   </div>
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex justify-between items-baseline">
-                      <span className="font-medium truncate">{creator.fullName}</span>
+                      <span className="font-medium text-sm truncate">{creator.fullName}</span>
                       <span className="text-xs text-muted-foreground shrink-0 ml-2">
                         {formatTime(creator.lastMessageAt)}
                       </span>
                     </div>
                     <div className="flex justify-between items-center mt-0.5">
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-xs md:text-sm text-muted-foreground truncate">
                         {creator.lastMessage || "No messages yet"}
                       </p>
                       {creator.unreadCount > 0 && (
-                        <span className="bg-primary text-primary-foreground text-xs rounded-full px-2 py-0.5 min-w-[20px] text-center">
+                        <span className="bg-primary text-primary-foreground text-xs rounded-full px-1.5 md:px-2 py-0.5 min-w-[20px] text-center">
                           {creator.unreadCount}
                         </span>
                       )}
@@ -416,139 +418,142 @@ const loadCreators = async () => {
         </ScrollArea>
       </div>
 
-      {/* Chat Area - WhatsApp Style */}
-      {selectedCreator ? (
-        <div className="flex-1 flex flex-col bg-muted/30 min-h-0">
-          {/* Chat Header */}
-          <div className="h-16 px-4 flex items-center justify-between border-b bg-background">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage src={selectedCreator.avatar} />
-                  <AvatarFallback>{getInitials(selectedCreator.fullName)}</AvatarFallback>
-                </Avatar>
-                {onlineStatus[getUserId(selectedCreator._id)] && (
-                  <span className="absolute bottom-0 right-0 block h-2.5 w-2.5 rounded-full bg-green-500 ring-2 ring-background" />
-                )}
-              </div>
-              <div>
-                <p className="font-semibold">{selectedCreator.fullName}</p>
-                <p className="text-xs text-muted-foreground">
-                  {onlineStatus[getUserId(selectedCreator._id)] ? "Online" : "Offline"}
-                </p>
-              </div>
+      {/* Chat Area - WhatsApp Style - Visible on mobile when chat is open */}
+      <div className={`${showChat ? 'flex' : 'hidden md:flex'} flex-1 flex-col bg-muted/30 min-h-0`}>
+        {/* Chat Header */}
+        <div className="h-14 md:h-16 px-2 md:px-4 flex items-center justify-between border-b bg-background">
+          <div className="flex items-center gap-2 md:gap-3">
+            {/* Back button for mobile */}
+            <Button variant="ghost" size="icon" className="md:hidden" onClick={handleBackToList}>
+              <ChevronLeft className="h-5 w-5" />
+            </Button>
+            <div className="relative">
+              <Avatar className="h-9 md:h-10 w-9 md:w-10">
+                <AvatarImage src={selectedCreator?.avatar} />
+                <AvatarFallback>{selectedCreator ? getInitials(selectedCreator.fullName) : '?'}</AvatarFallback>
+              </Avatar>
+              {selectedCreator && onlineStatus[getUserId(selectedCreator._id)] && (
+                <span className="absolute bottom-0 right-0 block h-2 w-2 rounded-full bg-green-500 ring-2 ring-background" />
+              )}
+            </div>
+            <div className="hidden md:block">
+              <p className="font-semibold">{selectedCreator?.fullName}</p>
+              <p className="text-xs text-muted-foreground">
+                {selectedCreator ? (onlineStatus[getUserId(selectedCreator._id)] ? "Online" : "Offline") : ""}
+              </p>
+            </div>
+            <div className="md:hidden">
+              <p className="font-medium text-sm">{selectedCreator?.fullName}</p>
             </div>
           </div>
+        </div>
 
-          {/* Messages Area */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 min-h-0">
-            <div className="flex flex-col gap-2 max-w-3xl mx-auto">
-              {loadingMessages ? (
-                <div className="flex justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
+        {/* Messages Area */}
+        <div className="flex-1 overflow-y-auto px-2 md:px-4 py-3 min-h-0">
+          <div className="flex flex-col gap-2 max-w-3xl mx-auto">
+            {loadingMessages ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              </div>
+            ) : !selectedCreator ? (
+              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <MessageCircle className="h-8 w-8" />
                 </div>
-              ) : messages.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
-                  <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                    <Send className="h-8 w-8" />
-                  </div>
-                  <p className="text-sm">No messages yet</p>
-                  <p className="text-xs mt-1">Send a message to start the conversation</p>
+                <p className="text-sm">Select a creator to start chatting</p>
+              </div>
+            ) : messages.length === 0 ? (
+              <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Send className="h-8 w-8" />
                 </div>
-              ) : (
-                <>
-                  {messages.map((msg, idx) => {
-                    const messageSenderId = getUserId(msg.senderId);
-                    const prevSenderId = getUserId(messages[idx - 1]?.senderId);
-                    const isSubscriber = messageSenderId === currentUserIdRef.current;
-                    const showAvatar = !isSubscriber && (idx === 0 || prevSenderId !== messageSenderId);
-                    
-                    return (
-                      <div key={msg._id || idx} className={`flex ${isSubscriber ? "justify-end" : "justify-start"} gap-2`}>
-                        {!isSubscriber && showAvatar && (
-                          <Avatar className="h-8 w-8 mt-1">
-                            <AvatarFallback className="text-xs">
-                              {getInitials(selectedCreator.fullName)}
-                            </AvatarFallback>
-                          </Avatar>
-                        )}
-                        <div className={`max-w-[70%] ${!isSubscriber && !showAvatar ? "ml-10" : ""}`}>
-                          <div
-                            className={`px-3 py-2 rounded-2xl text-sm ${
-                              isSubscriber
-                                ? "bg-primary text-primary-foreground rounded-br-sm"
-                                : "bg-background rounded-bl-sm shadow-sm"
-                            }`}
-                          >
-                            {msg.content}
-                          </div>
-                          <p className={`text-[10px] text-muted-foreground mt-0.5 ${isSubscriber ? "text-right" : "text-left"}`}>
-                            {formatMessageTime(msg.createdAt)}
-                            {isSubscriber && msg.read && <span className="ml-1">✓✓</span>}
-                          </p>
+                <p className="text-sm">No messages yet</p>
+                <p className="text-xs mt-1">Send a message to start the conversation</p>
+              </div>
+            ) : (
+              <>
+                {messages.map((msg, idx) => {
+                  const messageSenderId = getUserId(msg.senderId);
+                  const prevSenderId = getUserId(messages[idx - 1]?.senderId);
+                  const isSubscriber = messageSenderId === currentUserIdRef.current;
+                  const showAvatar = !isSubscriber && (idx === 0 || prevSenderId !== messageSenderId);
+                  
+                  return (
+                    <div key={msg._id || idx} className={`flex ${isSubscriber ? "justify-end" : "justify-start"} gap-1 md:gap-2`}>
+                      {!isSubscriber && showAvatar && (
+                        <Avatar className="h-7 md:h-8 w-7 md:w-8 mt-1">
+                          <AvatarFallback className="text-xs">
+                            {selectedCreator ? getInitials(selectedCreator.fullName) : '?'}
+                          </AvatarFallback>
+                        </Avatar>
+                      )}
+                      <div className={`max-w-[75%] md:max-w-[70%] ${!isSubscriber && !showAvatar ? "ml-8 md:ml-10" : ""}`}>
+                        <div
+                          className={`px-2 md:px-3 py-1.5 md:py-2 rounded-xl md:rounded-2xl text-sm ${
+                            isSubscriber
+                              ? "bg-primary text-primary-foreground rounded-br-sm"
+                              : "bg-background rounded-bl-sm shadow-sm"
+                          }`}
+                        >
+                          {msg.content}
                         </div>
-                      </div>
-                    );
-                  })}
-                  {otherUserTyping && (
-                    <div className="flex justify-start gap-2">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {getInitials(selectedCreator.fullName)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="bg-background px-4 py-2 rounded-2xl rounded-bl-sm shadow-sm">
-                        <div className="flex gap-1">
-                          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce"></span>
-                          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
-                          <span className="w-2 h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
-                        </div>
+                        <p className={`text-[10px] text-muted-foreground mt-0.5 ${isSubscriber ? "text-right" : "text-left"}`}>
+                          {formatMessageTime(msg.createdAt)}
+                          {isSubscriber && msg.read && <span className="ml-1">✓✓</span>}
+                        </p>
                       </div>
                     </div>
-                  )}
-                </>
-              )}
-              <div ref={bottomRef} />
-            </div>
-          </div>
-
-          {/* Input Area */}
-          <div className="p-3 bg-background border-t">
-            <div className="flex gap-2 max-w-3xl mx-auto">
-              <Input
-                placeholder="Type a message..."
-                value={inputText}
-                onChange={(e) => setInputText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSend()}
-                onKeyUp={handleTyping}
-                className="flex-1 bg-muted/50"
-                disabled={sending}
-              />
-              <Button 
-                size="icon" 
-                onClick={handleSend} 
-                disabled={!inputText.trim() || sending}
-                className="shrink-0"
-              >
-                {sending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  <Send className="h-4 w-4" />
+                  );
+                })}
+                {otherUserTyping && (
+                  <div className="flex justify-start gap-1 md:gap-2">
+                    <Avatar className="h-7 md:h-8 w-7 md:w-8">
+                      <AvatarFallback className="text-xs">
+                        {selectedCreator ? getInitials(selectedCreator.fullName) : '?'}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="bg-background px-3 md:px-4 py-2 rounded-xl md:rounded-2xl rounded-bl-sm shadow-sm">
+                      <div className="flex gap-1">
+                        <span className="w-1.5 md:w-2 h-1.5 md:h-2 bg-foreground/50 rounded-full animate-bounce"></span>
+                        <span className="w-1.5 md:w-2 h-1.5 md:h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></span>
+                        <span className="w-1.5 md:w-2 h-1.5 md:h-2 bg-foreground/50 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></span>
+                      </div>
+                    </div>
+                  </div>
                 )}
-              </Button>
-            </div>
+              </>
+            )}
+            <div ref={bottomRef} />
           </div>
         </div>
-      ) : (
-        <div className="flex-1 flex items-center justify-center bg-muted/30">
-          <div className="text-center">
-            <div className="w-20 h-20 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-              <MessageCircle className="h-10 w-10 text-muted-foreground" />
-            </div>
-            <p className="text-muted-foreground">Select a creator to start chatting</p>
+
+        {/* Input Area */}
+        <div className="p-2 md:p-3 bg-background border-t">
+          <div className="flex gap-2 max-w-3xl mx-auto">
+            <Input
+              placeholder="Type a message..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSend()}
+              onKeyUp={handleTyping}
+              className="flex-1 bg-muted/50 text-sm"
+              disabled={sending}
+            />
+            <Button 
+              size="icon" 
+              onClick={handleSend} 
+              disabled={!inputText.trim() || sending}
+              className="shrink-0"
+            >
+              {sending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
+            </Button>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

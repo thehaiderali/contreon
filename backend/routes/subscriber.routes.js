@@ -30,6 +30,7 @@ router.get('/profile', verifyToken, async (req, res) => {
   }
 });
 
+
 // UPDATE subscriber profile (including avatar)
 router.put('/profile', verifyToken, async (req, res) => {
   try {

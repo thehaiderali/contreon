@@ -73,28 +73,28 @@ const Insights = () => {
   }
 
 return (
-    <div className="p-6 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:justify-between sm:items-center gap-2">
         <h1 className="text-xl font-semibold">Insights</h1>
         <span className="text-sm text-muted-foreground">Last 30 days</span>
       </div>
 
       <Tabs defaultValue="overview" className="w-full">
-        <TabsList className="mb-6">
+        <TabsList className="mb-4 md:mb-6 flex-wrap h-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="posts">Posts</TabsTrigger>
           <TabsTrigger value="traffic">Traffic</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <TabsContent value="overview" className="space-y-4 md:space-y-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 md:gap-4">
             {stats.map((stat) => (
               <Card key={stat.label}>
-                <CardContent className="pt-4 pb-4">
+                <CardContent className="pt-3 md:pt-4 pb-3 md:pb-4">
                   <div className="flex items-center gap-2">
                     <stat.icon className="h-4 w-4 text-muted-foreground" />
                     <div>
-                      <p className="text-xl font-semibold">{stat.value || 0}</p>
+                      <p className="text-lg md:text-xl font-semibold">{stat.value || 0}</p>
                       <p className="text-xs text-muted-foreground">{stat.label}</p>
                     </div>
                   </div>

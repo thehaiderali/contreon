@@ -106,7 +106,7 @@ const Payouts = () => {
   const showEarnings = stripeStatus?.isOnboarded && earnings
 
   return (
-    <div className="p-6 space-y-6 max-w-2xl">
+    <div className="p-3 md:p-6 space-y-4 md:space-y-6 max-w-2xl">
       <h1 className="text-xl font-semibold">Earnings</h1>
 
       {!isConnected ? (

@@ -33,9 +33,9 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="grid h-screen lg:grid-cols-2">
+    <div className="grid h-screen md:grid-cols-2">
       {/* Left Column - Signup Form (Scrollable) */}
-      <div className="flex flex-col gap-4 p-6 md:p-10 overflow-y-auto">
+      <div className="flex flex-col gap-4 p-4 md:p-6 lg:p-10 overflow-y-auto">
         <div className="flex justify-center gap-2 md:justify-start">
           {/* Add your logo/link here if needed */}
         </div>
@@ -51,23 +51,21 @@ export default function SignupPage() {
       </div>
 
       {/* Right Column - Branding */}
-      <div className="hidden bg-black lg:block h-screen sticky top-0">
-        <div className="flex justify-center items-center h-screen">
-          <div className="flex flex-col gap-8 max-w-md px-8">
-            {/* Logo and Brand Name */}
-            <div className="flex items-center gap-5">
-              <div className="rounded-full overflow-hidden">
-                <img
-                  src="./applogo.png"
-                  className="w-18 h-18 object-cover"
-                  alt="logo"
-                />
-              </div>
-              <div className="text-7xl font-serif text-white">Contreon</div>
+      <div className="hidden md:flex bg-black h-screen sticky top-0 items-center justify-center">
+        <div className="flex flex-col gap-8 max-w-md px-8">
+          {/* Logo and Brand Name */}
+          <div className="flex items-center gap-4 md:gap-5">
+            <div className="rounded-full overflow-hidden">
+              <img
+                src="./applogo.png"
+                className="w-14 md:w-16 h-14 md:h-16 object-cover"
+                alt="logo"
+              />
             </div>
-            <div className="text-white/40 text-sm text-center mt-4">
-              Join thousands of creators already on Contreon
-            </div>
+            <div className="text-4xl md:text-6xl lg:text-7xl font-serif text-white">Contreon</div>
+          </div>
+          <div className="text-white/40 text-sm text-center mt-4">
+            Join thousands of creators already on Contreon
           </div>
         </div>
       </div>

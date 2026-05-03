@@ -34,7 +34,7 @@ const HomePage = () => {
   }, []);
 
   return (
-    <div className='w-full h-[200vh] relative  tracking-wide'>
+    <div className='w-full min-h-screen relative tracking-wide'>
       <Navbar />
   <Grainient
     color1="#ebe6ea"

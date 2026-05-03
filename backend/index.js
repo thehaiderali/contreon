@@ -46,7 +46,7 @@ app.use('/api/webhooks', webhookRoutes);
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(limiter)
+// app.use(limiter)
 
 app.get("/", (req, res) => res.send("CONTREON API"));
 
