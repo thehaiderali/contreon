@@ -2,14 +2,15 @@ import React, { useEffect, useState } from 'react'
 import ReactConfetti from 'react-confetti'
 import { useWindowSize } from 'react-use'
 import { motion, AnimatePresence } from 'motion/react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { ArrowRight, CheckCircle2, Sparkles } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 
 const ProfileCreationSuccess = () => {
   const { width, height } = useWindowSize()
-  const [showConfetti, setShowConfetti] = useState(true)
+  const [showConfetti, setShowConfetti] = useState(true);
+  const navigate=useNavigate()
 
   useEffect(() => {
     const timer = setTimeout(() => setShowConfetti(false), 5000)
@@ -76,12 +77,10 @@ const ProfileCreationSuccess = () => {
               transition={{ delay: 0.6 }}
               className="flex flex-col sm:flex-row gap-3 justify-center"
             >
-              <Link to="/creator">
-                <Button variant="default" size="lg" className="w-full sm:w-auto gap-2">
+                <Button onClick={()=>navigate(0)} variant="default" size="lg" className="w-full sm:w-auto gap-2">
                   Go to Dashboard
                   <ArrowRight className="h-4 w-4" />
                 </Button>
-              </Link>
               <Link to="/creator/library">
                 <Button variant="outline" size="lg" className="w-full sm:w-auto gap-2">
                   <Sparkles className="h-4 w-4" />

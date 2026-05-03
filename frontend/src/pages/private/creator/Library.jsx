@@ -8,7 +8,7 @@ const Library = () => {
     <div className='w-full min-h-screen flex flex-col gap-4'>
       <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3'>
         <h1 className='text-xl text-left font-semibold'>Library</h1>
-        <div className='w-full sm:w-fit'><CreateMenu/></div>
+        <div className='mr-30 w-full sm:w-fit'><CreateMenu/></div>
       </div>
       <PostTable/>
     </div>
