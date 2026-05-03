@@ -1,12 +1,3 @@
-// import React from 'react'
-
-// const SubscriberChat = () => {
-//   return (
-//     <div>SubscriberChat</div>
-//   )
-// }
-
-// export default SubscriberChat
 import React, { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
