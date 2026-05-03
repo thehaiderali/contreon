@@ -143,13 +143,13 @@ export const Dashboard = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className='w-full min-h-screen p-20'
+      className='w-full min-h-screen p-4 md:p-8 lg:p-12 xl:p-20'
     >
       <motion.div 
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className='flex gap-9 justify-center items-center flex-wrap'
+        className='flex gap-4 md:gap-6 lg:gap-9 justify-center items-center flex-wrap'
       >
         {navlinks.map((link) => (
           <motion.div

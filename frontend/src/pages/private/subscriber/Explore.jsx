@@ -47,7 +47,7 @@ function CreatorCard({ creator }) {
 
   return (
     <div 
-      className="group flex-shrink-0 w-[180px] cursor-pointer"
+      className="group flex-shrink-0 w-[120px] sm:w-[140px] md:w-[180px] cursor-pointer"
       onClick={handleClick}
     >
       <div className="rounded-xl overflow-hidden aspect-[4/3] mb-2 border border-border">
@@ -423,15 +423,15 @@ export default function ExplorePage() {
   return (
     <div className="min-h-screen bg-background text-foreground">
       {/* Sticky top bar */}
-      <div className="sticky top-0 z-20 bg-background border-b border-border px-4 py-3 space-y-3">
+      <div className="sticky top-0 z-20 bg-background border-b border-border px-2 md:px-4 py-2 md:py-3 space-y-2 md:space-y-3">
         <SearchBar onSearch={handleSearch} onTopicClick={handleTopicClick} />
         <CategoryFilter categories={categories} selected={activeCategory} onSelect={setActiveCategory} />
       </div>
 
       {/* Main content */}
-      <main className="max-w-6xl mx-auto px-4 py-8 space-y-10">
+      <main className="max-w-6xl mx-auto px-2 md:px-4 py-4 md:py-8 space-y-6 md:space-y-10">
         <RecentlyVisited creators={recentlyVisited} />
-        <Separator />
+        <Separator className="my-4 md:my-6" />
 
         {/* Creators for you */}
         {creatorsForYou.length > 0 && (
@@ -446,16 +446,16 @@ export default function ExplorePage() {
                 ))}
               </HorizontalSection>
             </section>
-            <Separator />
+            <Separator className="my-4 md:my-6" />
           </>
         )}
 
         <PopularThisWeek creators={popularThisWeek} />
 
-        <Separator />
+        <Separator className="my-4 md:my-6" />
         <ExploreTopics topics={topics} onTopicClick={handleTopicClick} />
 
-        <Separator />
+        <Separator className="my-4 md:my-6" />
         {/* New on platform */}
         {newCreators.length > 0 && (
           <>
@@ -464,7 +464,7 @@ export default function ExplorePage() {
                 <CreatorCard key={c.id} creator={c} />
               ))}
             </HorizontalSection>
-            <Separator />
+            <Separator className="my-4 md:my-6" />
           </>
         )}
         <TopCreatorsSection topCreatorsByCategory={topCreatorsByCategory} />

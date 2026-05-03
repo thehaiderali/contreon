@@ -152,13 +152,13 @@ export default function MyPostsPage() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>My Posts</CardTitle>
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <CardTitle className="text-lg md:text-xl">My Posts</CardTitle>
           <Tabs 
             defaultValue="all" 
             value={status}
             onValueChange={handleStatusChange}
-            className="w-[400px]"
+            className="w-full sm:w-[400px]"
           >
             <TabsList>
               <TabsTrigger 
@@ -219,102 +219,159 @@ export default function MyPostsPage() {
               exit="exit"
               transition={{ duration: 0.2 }}
             >
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Created</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {posts.length === 0 ? (
-                    <motion.tr
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <TableCell colSpan={5} className="text-center">
-                        No posts found
-                      </TableCell>
-                    </motion.tr>
-                  ) : (
-                    posts.map((post, index) => (
+              {/* Desktop Table View */}
+              <div className="hidden md:block">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Title</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {posts.length === 0 ? (
                       <motion.tr
-                        key={post._id}
-                        custom={index}
-                        variants={rowVariants}
-                        initial="hidden"
-                        animate="visible"
-                        whileHover={{ 
-                          backgroundColor: "rgba(0,0,0,0.02)",
-                          transition: { duration: 0.1 }
-                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <TableCell className="font-medium">{post.title}</TableCell>
-                        <TableCell>
-                          <motion.div
-                            variants={badgeVariants}
-                            initial="initial"
-                            animate="animate"
-                            whileHover="whileHover"
-                            whileTap="whileTap"
-                          >
-                            <Badge variant="outline">{post.type}</Badge>
-                          </motion.div>
-                        </TableCell>
-                        <TableCell>
-                          <motion.div
-                            variants={badgeVariants}
-                            initial="initial"
-                            animate="animate"
-                            whileHover="whileHover"
-                          >
-                            <Badge variant={post.isPublished ? "default" : "secondary"}>
-                              {post.isPublished ? "Published" : "Draft"}
-                            </Badge>
-                          </motion.div>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(post.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex gap-2">
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() =>
-                                  navigate(`/creator/posts/${post.type}/${post._id}/edit`)
-                                }
-                              >
-                                Edit
-                              </Button>
-                            </motion.div>
-                            <motion.div
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                            >
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => handleDeleteClick(post._id)}
-                              >
-                                Delete
-                              </Button>
-                            </motion.div>
-                          </div>
+                        <TableCell colSpan={5} className="text-center">
+                          No posts found
                         </TableCell>
                       </motion.tr>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
+                    ) : (
+                      posts.map((post, index) => (
+                        <motion.tr
+                          key={post._id}
+                          custom={index}
+                          variants={rowVariants}
+                          initial="hidden"
+                          animate="visible"
+                          whileHover={{ 
+                            backgroundColor: "rgba(0,0,0,0.02)",
+                            transition: { duration: 0.1 }
+                          }}
+                        >
+                          <TableCell className="font-medium">{post.title}</TableCell>
+                          <TableCell>
+                            <motion.div
+                              variants={badgeVariants}
+                              initial="initial"
+                              animate="animate"
+                              whileHover="whileHover"
+                              whileTap="whileTap"
+                            >
+                              <Badge variant="outline">{post.type}</Badge>
+                            </motion.div>
+                          </TableCell>
+                          <TableCell>
+                            <motion.div
+                              variants={badgeVariants}
+                              initial="initial"
+                              animate="animate"
+                              whileHover="whileHover"
+                            >
+                              <Badge variant={post.isPublished ? "default" : "secondary"}>
+                                {post.isPublished ? "Published" : "Draft"}
+                              </Badge>
+                            </motion.div>
+                          </TableCell>
+                          <TableCell>
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex gap-2">
+                              <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() =>
+                                    navigate(`/creator/posts/${post.type}/${post._id}/edit`)
+                                  }
+                                >
+                                  Edit
+                                </Button>
+                              </motion.div>
+                              <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                whileTap={{ scale: 0.95 }}
+                              >
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleDeleteClick(post._id)}
+                                >
+                                  Delete
+                                </Button>
+                              </motion.div>
+                            </div>
+                          </TableCell>
+                        </motion.tr>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+
+              {/* Mobile Card View */}
+              <div className="md:hidden space-y-3">
+                {posts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No posts found
+                  </div>
+                ) : (
+                  posts.map((post, index) => (
+                    <motion.div
+                      key={post._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className="border rounded-lg p-3 space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-medium text-sm truncate">{post.title}</h3>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(post.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Badge variant="outline" className="text-xs">{post.type}</Badge>
+                          <Badge variant={post.isPublished ? "default" : "secondary"} className="text-xs">
+                            {post.isPublished ? "Published" : "Draft"}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="flex-1 text-xs"
+                          onClick={() =>
+                            navigate(`/creator/posts/${post.type}/${post._id}/edit`)
+                          }
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="text-xs"
+                          onClick={() => handleDeleteClick(post._id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </motion.div>
+                  ))
+                )}
+              </div>
             </motion.div>
           </AnimatePresence>
 

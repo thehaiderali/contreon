@@ -35,9 +35,9 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="grid min-h-svh lg:grid-cols-2">
+    <div className="grid min-h-svh md:grid-cols-2">
       {/* Left Column - Login Form */}
-      <div className="flex flex-col gap-4 p-6 md:p-10 overflow-y-auto">
+      <div className="flex flex-col gap-4 p-4 md:p-6 lg:p-10 overflow-y-auto">
         <div className="flex justify-center gap-2 md:justify-start">
           {/* Add logo/link here if needed */}
         </div>
@@ -53,25 +53,23 @@ export default function LoginPage() {
       </div>
 
       {/* Right Column - Branding */}
-      <div className="hidden bg-black lg:block sticky top-0 h-screen">
-        <div className="flex justify-center items-center h-screen">
-          <div className="flex flex-col gap-8 max-w-md px-8">
-            <div className="flex items-center gap-5">
-              <div className="rounded-full overflow-hidden">
-                <img
-                  src="./applogo.png"
-                  className="w-18 h-18 object-cover"
-                  alt="logo"
-                />
-              </div>
-              <div className="text-7xl font-serif text-white">Contreon</div>
+      <div className="hidden md:flex bg-black sticky top-0 h-screen items-center justify-center">
+        <div className="flex flex-col gap-8 max-w-md px-8">
+          <div className="flex items-center gap-4 md:gap-5">
+            <div className="rounded-full overflow-hidden">
+              <img
+                src="./applogo.png"
+                className="w-14 md:w-16 h-14 md:h-16 object-cover"
+                alt="logo"
+              />
             </div>
+            <div className="text-4xl md:text-6xl lg:text-7xl font-serif text-white">Contreon</div>
+          </div>
 
-            <div className="text-white/80 text-xl italic leading-relaxed text-center">
-              <span className="text-primary text-3xl">"</span>
-              Where creators and fans build meaningful connections
-              <span className="text-primary text-3xl">"</span>
-            </div>
+          <div className="text-white/80 text-lg md:text-xl italic leading-relaxed text-center">
+            <span className="text-primary text-2xl md:text-3xl">"</span>
+            Where creators and fans build meaningful connections
+            <span className="text-primary text-2xl md:text-3xl">"</span>
           </div>
         </div>
       </div>
