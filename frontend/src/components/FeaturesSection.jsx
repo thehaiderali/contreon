@@ -36,7 +36,7 @@ export default function FeaturesSection() {
   const ctaInView = useInView(ctaRef, { once: true, margin: "-100px" });
 
   return (
-    <section className="relative w-full overflow-hidden bg-background px-4 py-12 md:py-20 lg:py-28 ">
+    <section id='features' className="relative w-full overflow-hidden bg-background px-4 py-12 md:py-20 lg:py-28 ">
       <div className="absolute inset-0 -z-10 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
       
       <div className="container mx-auto max-w-7xl">
