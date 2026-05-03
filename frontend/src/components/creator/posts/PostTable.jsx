@@ -4,32 +4,19 @@ import { motion, AnimatePresence } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  Table, TableBody, TableCell, TableHead,
+  TableHeader, TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
+  Pagination, PaginationContent, PaginationItem,
+  PaginationLink, PaginationNext, PaginationPrevious,
 } from "@/components/ui/pagination";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription,
+  AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { api } from "@/lib/api";
 
@@ -37,26 +24,18 @@ export default function MyPostsPage() {
   const navigate = useNavigate();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [pagination, setPagination] = useState({
-    page: 1,
-    limit: 10,
-    total: 0,
-    pages: 0,
-  });
+  const [pagination, setPagination] = useState({ page: 1, limit: 10, total: 0, pages: 0 });
   const [status, setStatus] = useState("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [postToDelete, setPostToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Fetch posts
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         setLoading(true);
-        const params = {};
-        if (pagination.page) params.page = pagination.page;
+        const params = { page: pagination.page };
         if (status !== "all") params.status = status;
-
         const response = await api.get("creators/posts/my-posts", { params });
         setPosts(response.data.data);
         setPagination(response.data.pagination);
@@ -69,16 +48,14 @@ export default function MyPostsPage() {
     fetchPosts();
   }, [pagination.page, status]);
 
-  // Delete post
   const handleDelete = async () => {
     if (!postToDelete) return;
-    
     try {
       setIsDeleting(true);
       await api.delete(`/creators/posts/${postToDelete}`);
-      const response = await api.get("creators/posts/my-posts", {
-        params: { page: pagination.page, status: status !== "all" ? status : undefined },
-      });
+      const params = { page: pagination.page };
+      if (status !== "all") params.status = status;
+      const response = await api.get("creators/posts/my-posts", { params });
       setPosts(response.data.data);
       setPagination(response.data.pagination);
       setDeleteDialogOpen(false);
@@ -96,403 +73,215 @@ export default function MyPostsPage() {
   };
 
   const handlePageChange = (newPage) => {
-    setPagination({ ...pagination, page: newPage });
+    setPagination((prev) => ({ ...prev, page: newPage }));
   };
 
   const handleStatusChange = (value) => {
     setStatus(value);
-    setPagination(prev => ({ ...prev, page: 1 }));
+    setPagination((prev) => ({ ...prev, page: 1 }));
   };
 
-  // Get post title for dialog
-  const getPostTitle = () => {
-    const post = posts.find(p => p._id === postToDelete);
-    return post?.title || "this post";
-  };
-
-  // Animation variants
-  const tableVariants = {
-    initial: { opacity: 0, y: 10 },
-    animate: { opacity: 1, y: 0 },
-    exit: { opacity: 0, y: -10 }
-  };
+  const getPostTitle = () => posts.find((p) => p._id === postToDelete)?.title || "this post";
 
   const rowVariants = {
-    hidden: { opacity: 0, x: -20 },
+    hidden: { opacity: 0, y: 6 },
     visible: (i) => ({
-      opacity: 1,
-      x: 0,
-      transition: {
-        delay: i * 0.03,
-        duration: 0.2,
-        ease: "easeOut"
-      }
-    })
+      opacity: 1, y: 0,
+      transition: { delay: i * 0.04, duration: 0.2, ease: "easeOut" },
+    }),
   };
-
-  const badgeVariants = {
-    initial: { scale: 0.8, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    whileHover: { scale: 1.05 },
-    whileTap: { scale: 0.95 }
-  };
-
-  if (loading) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-center p-8"
-      >
-        Loading...
-      </motion.div>
-    );
-  }
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <CardTitle className="text-lg md:text-xl">My Posts</CardTitle>
-          <Tabs 
-            defaultValue="all" 
-            value={status}
-            onValueChange={handleStatusChange}
-            className="w-full sm:w-[400px]"
-          >
-            <TabsList>
-              <TabsTrigger 
-                value="all" 
-                className="cursor-pointer relative"
-              >
-                All
-                {status === "all" && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="published" 
-                className="cursor-pointer relative"
-              >
-                Published
-                {status === "published" && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-              </TabsTrigger>
-              <TabsTrigger 
-                value="draft" 
-                className="cursor-pointer relative"
-              >
-                Drafts
-                {status === "draft" && (
-                  <motion.div
-                    layoutId="activeTab"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary"
-                    initial={{ scaleX: 0 }}
-                    animate={{ scaleX: 1 }}
-                    transition={{ duration: 0.2 }}
-                  />
-                )}
-              </TabsTrigger>
+      <Card className="w-full">
+        {/* ── Header ── */}
+        <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between pb-4">
+          <CardTitle className="text-lg md:text-xl shrink-0">My Posts</CardTitle>
+
+          <Tabs value={status} onValueChange={handleStatusChange} className="w-full sm:w-auto">
+            <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:flex">
+              {["all", "published", "draft"].map((tab) => (
+                <TabsTrigger key={tab} value={tab} className="capitalize cursor-pointer">
+                  {tab === "all" ? "All" : tab === "published" ? "Published" : "Drafts"}
+                </TabsTrigger>
+              ))}
             </TabsList>
           </Tabs>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="px-3 sm:px-6">
           <AnimatePresence mode="wait">
             <motion.div
               key={status}
-              variants={tableVariants}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -8 }}
+              transition={{ duration: 0.18 }}
             >
-              {/* Desktop Table View */}
-              <div className="hidden md:block">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Title</TableHead>
-                      <TableHead>Type</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Created</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {posts.length === 0 ? (
-                      <motion.tr
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <TableCell colSpan={5} className="text-center">
-                          No posts found
-                        </TableCell>
-                      </motion.tr>
-                    ) : (
-                      posts.map((post, index) => (
-                        <motion.tr
-                          key={post._id}
-                          custom={index}
-                          variants={rowVariants}
-                          initial="hidden"
-                          animate="visible"
-                          whileHover={{ 
-                            backgroundColor: "rgba(0,0,0,0.02)",
-                            transition: { duration: 0.1 }
-                          }}
-                        >
-                          <TableCell className="font-medium">{post.title}</TableCell>
-                          <TableCell>
-                            <motion.div
-                              variants={badgeVariants}
-                              initial="initial"
-                              animate="animate"
-                              whileHover="whileHover"
-                              whileTap="whileTap"
-                            >
-                              <Badge variant="outline">{post.type}</Badge>
-                            </motion.div>
-                          </TableCell>
-                          <TableCell>
-                            <motion.div
-                              variants={badgeVariants}
-                              initial="initial"
-                              animate="animate"
-                              whileHover="whileHover"
-                            >
+              {loading ? (
+                <div className="flex justify-center py-12 text-muted-foreground text-sm">
+                  Loading...
+                </div>
+              ) : posts.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground text-sm">
+                  No posts found
+                </div>
+              ) : (
+                <>
+                  {/* ── Desktop Table ── */}
+                  <div className="hidden md:block overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[40%]">Title</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {posts.map((post, i) => (
+                          <motion.tr
+                            key={post._id}
+                            custom={i}
+                            variants={rowVariants}
+                            initial="hidden"
+                            animate="visible"
+                            className="border-b transition-colors hover:bg-muted/40"
+                          >
+                            <TableCell className="font-medium max-w-[240px] truncate">
+                              {post.title}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="outline" className="capitalize">{post.type}</Badge>
+                            </TableCell>
+                            <TableCell>
                               <Badge variant={post.isPublished ? "default" : "secondary"}>
                                 {post.isPublished ? "Published" : "Draft"}
                               </Badge>
-                            </motion.div>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(post.createdAt).toLocaleDateString()}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex gap-2">
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() =>
-                                    navigate(`/creator/posts/${post.type}/${post._id}/edit`)
-                                  }
-                                >
+                            </TableCell>
+                            <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="outline"
+                                  onClick={() => navigate(`/creator/posts/${post.type}/${post._id}/edit`)}>
                                   Edit
                                 </Button>
-                              </motion.div>
-                              <motion.div
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                              >
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  onClick={() => handleDeleteClick(post._id)}
-                                >
+                                <Button size="sm" variant="destructive"
+                                  onClick={() => handleDeleteClick(post._id)}>
                                   Delete
                                 </Button>
-                              </motion.div>
-                            </div>
-                          </TableCell>
-                        </motion.tr>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-
-              {/* Mobile Card View */}
-              <div className="md:hidden space-y-3">
-                {posts.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    No posts found
+                              </div>
+                            </TableCell>
+                          </motion.tr>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
-                ) : (
-                  posts.map((post, index) => (
-                    <motion.div
-                      key={post._id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className="border rounded-lg p-3 space-y-3"
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0 flex-1">
-                          <h3 className="font-medium text-sm truncate">{post.title}</h3>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(post.createdAt).toLocaleDateString()}
-                          </p>
+
+                  {/* ── Mobile Cards ── */}
+                  <div className="md:hidden space-y-3">
+                    {posts.map((post, i) => (
+                      <motion.div
+                        key={post._id}
+                        custom={i}
+                        variants={rowVariants}
+                        initial="hidden"
+                        animate="visible"
+                        className="border rounded-lg p-4 space-y-3 bg-card"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm leading-snug line-clamp-2">
+                              {post.title}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              {new Date(post.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex flex-col items-end gap-1 shrink-0">
+                            <Badge variant="outline" className="text-xs capitalize">{post.type}</Badge>
+                            <Badge variant={post.isPublished ? "default" : "secondary"} className="text-xs">
+                              {post.isPublished ? "Published" : "Draft"}
+                            </Badge>
+                          </div>
                         </div>
-                        <div className="flex gap-1 shrink-0">
-                          <Badge variant="outline" className="text-xs">{post.type}</Badge>
-                          <Badge variant={post.isPublished ? "default" : "secondary"} className="text-xs">
-                            {post.isPublished ? "Published" : "Draft"}
-                          </Badge>
+                        <div className="flex gap-2 pt-1">
+                          <Button size="sm" variant="outline" className="flex-1 h-8 text-xs"
+                            onClick={() => navigate(`/creator/posts/${post.type}/${post._id}/edit`)}>
+                            Edit
+                          </Button>
+                          <Button size="sm" variant="destructive" className="h-8 text-xs px-4"
+                            onClick={() => handleDeleteClick(post._id)}>
+                            Delete
+                          </Button>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-xs"
-                          onClick={() =>
-                            navigate(`/creator/posts/${post.type}/${post._id}/edit`)
-                          }
-                        >
-                          Edit
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          className="text-xs"
-                          onClick={() => handleDeleteClick(post._id)}
-                        >
-                          Delete
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </>
+              )}
             </motion.div>
           </AnimatePresence>
 
-          {/* Pagination */}
+          {/* ── Pagination ── */}
           {pagination.pages > 1 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1, duration: 0.3 }}
-            >
-              <Pagination className="mt-4">
-                <PaginationContent>
-                  <PaginationItem>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+            <Pagination className="mt-6">
+              <PaginationContent className="flex-wrap gap-1">
+                <PaginationItem>
+                  <PaginationPrevious
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (pagination.page > 1) handlePageChange(pagination.page - 1); }}
+                    className={pagination.page <= 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                {[...Array(pagination.pages)].map((_, i) => (
+                  <PaginationItem key={i + 1}>
+                    <PaginationLink
+                      href="#"
+                      isActive={pagination.page === i + 1}
+                      onClick={(e) => { e.preventDefault(); handlePageChange(i + 1); }}
+                      className="cursor-pointer"
                     >
-                      <PaginationPrevious
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (pagination.page > 1)
-                            handlePageChange(pagination.page - 1);
-                        }}
-                        className="cursor-pointer"
-                      />
-                    </motion.div>
+                      {i + 1}
+                    </PaginationLink>
                   </PaginationItem>
-                  {[...Array(pagination.pages)].map((_, i) => (
-                    <PaginationItem key={i + 1}>
-                      <motion.div
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.95 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 17 }}
-                      >
-                        <PaginationLink
-                          href="#"
-                          isActive={pagination.page === i + 1}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            handlePageChange(i + 1);
-                          }}
-                          className="cursor-pointer"
-                        >
-                          {i + 1}
-                        </PaginationLink>
-                      </motion.div>
-                    </PaginationItem>
-                  ))}
-                  <PaginationItem>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                    >
-                      <PaginationNext
-                        href="#"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          if (pagination.page < pagination.pages)
-                            handlePageChange(pagination.page + 1);
-                        }}
-                        className="cursor-pointer"
-                      />
-                    </motion.div>
-                  </PaginationItem>
-                </PaginationContent>
-              </Pagination>
-            </motion.div>
+                ))}
+                <PaginationItem>
+                  <PaginationNext
+                    href="#"
+                    onClick={(e) => { e.preventDefault(); if (pagination.page < pagination.pages) handlePageChange(pagination.page + 1); }}
+                    className={pagination.page >= pagination.pages ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
           )}
         </CardContent>
       </Card>
 
-      {/* Delete Confirmation Dialog */}
+      {/* ── Delete Dialog ── */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent asChild>
-          <motion.div
-            initial={{ scale: 0.95, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0.95, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <AlertDialogHeader>
-              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently delete "{getPostTitle()}". This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel asChild>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button variant="outline">Cancel</Button>
-                </motion.div>
-              </AlertDialogCancel>
-              <AlertDialogAction asChild>
-                <motion.div
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                >
-                  <Button 
-                    variant="destructive" 
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
-                    {isDeleting ? (
-                      <motion.div
-                        initial={{ rotate: 0 }}
-                        animate={{ rotate: 360 }}
-                        transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                        className="w-4 h-4 border-2 border-white border-t-transparent rounded-full"
-                      />
-                    ) : (
-                      "Delete"
-                    )}
-                  </Button>
-                </motion.div>
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </motion.div>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete post?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete <span className="font-medium text-foreground">"{getPostTitle()}"</span>. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction asChild>
+              <Button variant="destructive" onClick={handleDelete} disabled={isDeleting} className="min-w-[80px]">
+                {isDeleting ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : "Delete"}
+              </Button>
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

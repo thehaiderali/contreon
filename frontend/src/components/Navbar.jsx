@@ -34,15 +34,12 @@ const Navbar = () => {
           </div>
           <span className="hidden sm:inline">Contreon</span>
         </Link>
-        <Link to="#" className="hidden md:block hover:text-primary transition">
-          Creators
-        </Link>
-        <Link to="#" className="hidden md:block hover:text-primary transition">
+        <a href="#features" className="hidden md:block hover:text-primary transition">
           Features
-        </Link>
-        <Link to="#" className="hidden md:block hover:text-primary transition">
+        </a>
+        <a href="#pricing" className="hidden md:block hover:text-primary transition">
           Pricing
-        </Link>
+        </a>
       </div>
 
       <div className="flex gap-2 md:gap-4 items-center">
