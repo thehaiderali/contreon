@@ -39,8 +39,14 @@ import SubscriberChat from './pages/private/subscriber/SubscriberChat';
 import CreatorChats from './pages/private/creator/CreatorChats';
 import LinkRedirect from './pages/LinkRedirect';
 import CreatorSettings from './pages/private/creator/CreatorSettings';
-
+import { useEffect } from "react";
+import posthog from "posthog-js";
 const App = () => {
+
+   useEffect(() => {
+    posthog.reset();
+  }, []);
+  
 
   return (
     <Routes>
