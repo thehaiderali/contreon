@@ -532,7 +532,7 @@ export async function getCreatorSubscribers(req, res) {
     const subscriptions = await Subscription.find({
       creatorId,
       status: "active"
-    }).populate("subscriberId", "fullName email role");
+    }).populate("subscriberId", "fullName email role avatar");
 
     // Get all conversations for this creator
     const conversations = await Conversation.find({
