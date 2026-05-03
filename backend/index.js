@@ -24,6 +24,7 @@ import contentAccessRouter from "./routes/contentAccess.routes.js";
 import adminRouter from "./routes/admin.routes.js";
 import trackingLinkRouter from "./routes/trackingLink.routes.js";
 import { rateLimit } from 'express-rate-limit'
+import subscriberRouter from "./routes/subscriber.routes.js";
 
 const limiter = rateLimit({
 	windowMs: 15 * 60 * 1000,
@@ -76,6 +77,7 @@ app.use("/api/content", contentAccessRouter);
 app.use("/api/chat", chatRouter);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/explore",exploreRouter)
+app.use("/api/subscriber", subscriberRouter);
 app.use("/api/insights", insightsRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/tracking-links", trackingLinkRouter);
