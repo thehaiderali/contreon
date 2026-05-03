@@ -6,9 +6,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon index.js",
-    "start": "node index.js",
-    "populate": "node scripts/populateDatabase.js",
-    "populate:feed": "node scripts/populateFeed.js"
+    "start": "node index.js"
   },
   "keywords": [],
   "author": "Haider Ali",
@@ -19,22 +17,19 @@
     "@mux/mux-node": "^12.8.1",
     "assemblyai": "^4.29.0",
     "bcryptjs": "^3.0.3",
+    "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
-    "express-rate-limit": "^8.4.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.3.1",
     "node-fetch": "^3.3.2",
     "nodemon": "^3.1.14",
-    "resend": "^6.12.2",
     "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3",
     "stripe": "^21.0.1",
     "uploadthing": "^7.7.4",
     "zod": "^4.3.6"
-  },
-  "devDependencies": {
-    "@faker-js/faker": "^10.4.0"
   }
 }

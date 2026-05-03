@@ -4,6 +4,8 @@ import SignupPage from './pages/Signup';
 import LoginPage from './pages/Login';
 import Home from './pages/private/subscriber/Home';
 import Explore from './pages/private/subscriber/Explore';
+import Chats from './pages/private/subscriber/Chats';
+import Settings from './pages/private/subscriber/Settings';
 import Notifications from './pages/private/subscriber/Notifications';
 import { Dashboard } from './pages/private/creator/Dashboard';
 import Library from './pages/private/creator/Library';
@@ -11,9 +13,7 @@ import Members from './pages/private/creator/Members';
 import Insights from './pages/private/creator/Insights';
 import Payouts from './pages/private/creator/Payouts';
 import Profile from './pages/private/creator/Profile';
-import TrackingLinks from './pages/private/creator/TrackingLinks';
 
-// Protected Routes
 import { ProtectedRoutes } from './components/ProtectedRoutes';
 import { CreatorRoutes } from './components/CreatorRoutes';
 import EditCreatorProfile from './pages/private/creator/ProfileEdit';
@@ -42,22 +42,26 @@ import CreatorSettings from './pages/private/creator/CreatorSettings';
 
 const App = () => {
 
+
+   const { fetchMySubscriptions } = useMembershipStore();
+  
+  useEffect(() => {
+    // Load user's subscriptions when app loads
+    fetchMySubscriptions().catch(console.error);
+  }, [fetchMySubscriptions]);
   return (
     <Routes>
-      
       <Route path="/" element={<HomePage />} />
       <Route path="/signup" element={<SignupPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/c/:creatorUrl/*" element={<CreatorPage/>}/>
-      <Route path="/l/:token" element={<LinkRedirect />} />
-       <Route path="/payment/success" element={<PaymentSuccess />} />
-       <Route path="/payment/cancel" element={<PaymentCancel />} />
       <Route element={<ProtectedRoutes />}>
-        
         <Route path="/home" element={<Home />}>
           <Route index element={<SubscriberHome />} />
           <Route path="explore" element={<Explore />} />
-          <Route path="chat" element={<SubscriberChat />} />
+          <Route path="chat" element={<Chats />} />
+          <Route path="messages" element={<Chats />} />
+          <Route path="settings" element={<Settings />} />
           <Route path="notifications" element={<Notifications />} />
           <Route path='memberships' element={<Memberships/>}/>
           <Route path="settings" element={<CreatorSettings />} />
@@ -77,8 +81,8 @@ const App = () => {
             <Route path="insights" element={<Insights />} />
             <Route path="tracking-links" element={<TrackingLinks />} />
             <Route path="payouts" element={<Payouts />} />
-            <Route path="messages" element={<CreatorChats />} />
-            <Route path="settings" element={<CreatorSettings />} />
+            <Route path="messages" element={<Chats />} />
+            <Route path="settings" element={<Settings />} />
             <Route path='memberships/create' element={<CreateMemberShip />} />
             <Route path="memberships/:id/edit" element={<MembershipEditForm />} /> 
             <Route path='recommendations/create' element={<RecommendationSearch/>}/>
