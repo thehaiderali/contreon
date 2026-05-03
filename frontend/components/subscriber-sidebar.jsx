@@ -38,7 +38,7 @@ export function SubscriberAppSidebar() {
   }
   useEffect(()=>{
     fetchProfile();
-  })
+  },[])
   const handleLogout = async () => {
     await logout()
     navigate("/")

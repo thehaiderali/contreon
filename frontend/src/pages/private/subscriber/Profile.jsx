@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '@/lib/api'
 import { useAuthStore } from '@/store/authStore'
 import { toast } from 'sonner'
@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { Loader2, MapPin, Calendar, Edit2, Save, X, Camera } from 'lucide-react'
+import { uploadFiles } from '@/lib/uploadthing'
 
 const SubscriberProfile = () => {
   const { user } = useAuthStore()
@@ -32,96 +33,168 @@ const SubscriberProfile = () => {
     avatar: ''
   })
 
-  useEffect(() => {
-    fetchProfile()
-  }, [])
-
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     setLoading(true)
     try {
       const response = await api.get('/subscriber/profile')
       const data = response.data?.data || response.data
-      setProfile({
+      
+      const newProfile = {
         displayName: data.displayName || user?.fullName || 'User',
         email: data.email || user?.email || '',
         country: data.country || 'Not specified',
         avatar: data.avatar || '',
         bio: data.bio || '',
         joinedDate: data.joinedDate || user?.createdAt || new Date().toISOString()
-      })
+      }
+      
+      setProfile(newProfile)
       setFormData({
-        displayName: data.displayName || user?.fullName || '',
-        country: data.country || '',
-        bio: data.bio || '',
-        avatar: data.avatar || ''
+        displayName: newProfile.displayName,
+        country: newProfile.country === 'Not specified' ? '' : newProfile.country,
+        bio: newProfile.bio,
+        avatar: newProfile.avatar
       })
     } catch (error) {
       console.error('Error fetching profile:', error)
-      setProfile({
+      const fallbackProfile = {
         displayName: user?.fullName || 'User',
         email: user?.email || '',
         country: 'Not specified',
         avatar: '',
         bio: '',
         joinedDate: user?.createdAt || new Date().toISOString()
+      }
+      setProfile(fallbackProfile)
+      setFormData({
+        displayName: fallbackProfile.displayName,
+        country: '',
+        bio: '',
+        avatar: ''
       })
     } finally {
       setLoading(false)
     }
-  }
+  }, [user])
+
+  useEffect(() => {
+    fetchProfile()
+  }, [])
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  // Simple working avatar upload using fetch
-  const handleAvatarUpload = async (e) => {
-    const file = e.target.files[0]
-    if (!file) return
+  // const handleAvatarUpload = async (e) => {
+  //   const file = e.target.files[0]
+  //   if (!file) return
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB')
-      return
-    }
+  //   if (file.size > 5 * 1024 * 1024) {
+  //     toast.error('Image size should be less than 5MB')
+  //     return
+  //   }
 
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file')
-      return
-    }
+  //   if (!file.type.startsWith('image/')) {
+  //     toast.error('Please upload an image file')
+  //     return
+  //   }
 
-    setUploadingAvatar(true)
+  //   setUploadingAvatar(true)
     
-    try {
-      // Create a temporary URL for preview
-      const tempUrl = URL.createObjectURL(file)
-      setFormData(prev => ({ ...prev, avatar: tempUrl }))
+  //   try {
       
-      // For now, just show success - actual upload to be implemented later
-      toast.success('Profile picture selected! (Upload will be implemented)')
+  //     const res = await uploadFiles("imageUploader", {
+  //       files: [file]
+  //     })
+  //     console.log("Uploadthing Responsee : ",res)
+  //     const uploadedUrl = res[0].ufsUrl
+  //     setProfile(prev => ({
+  //       ...prev,
+  //       avatar: uploadedUrl
+  //     }))
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       avatar: uploadedUrl
+  //     }))
       
-    } catch (error) {
-      console.error('Error:', error)
-      toast.error('Failed to select image')
-    } finally {
-      setUploadingAvatar(false)
-    }
+  //     toast.success('Profile picture uploaded successfully!')
+  //   } catch (error) {
+  //     console.error('Error uploading avatar:', error)
+  //     toast.error('Failed to upload image')
+  //     // Revert the preview if upload fails
+  //     setFormData(prev => ({
+  //       ...prev,
+  //       avatar: profile.avatar
+  //     }))
+  //   } finally {
+  //     setUploadingAvatar(false)
+  //   }
+  // }
+  const handleAvatarUpload = async (e) => {
+  const file = e.target.files[0]
+  if (!file) return
+
+  if (file.size > 5 * 1024 * 1024) {
+    toast.error('Image size should be less than 5MB')
+    return
   }
+
+  if (!file.type.startsWith('image/')) {
+    toast.error('Please upload an image file')
+    return
+  }
+
+  // Show local preview immediately
+  const localPreview = URL.createObjectURL(file)
+  setFormData(prev => ({ ...prev, avatar: localPreview }))
+
+  setUploadingAvatar(true)
+
+  try {
+    const res = await uploadFiles("imageUploader", { files: [file] })
+    console.log("UploadThing response:", res)
+
+    // Handle both `url` and `ufsUrl` depending on UploadThing version
+    const uploadedUrl = res[0]?.ufsUrl || res[0]?.url
+    if (!uploadedUrl) throw new Error("No URL returned from upload")
+
+    setProfile(prev => ({ ...prev, avatar: uploadedUrl }))
+    setFormData(prev => ({ ...prev, avatar: uploadedUrl }))
+
+    toast.success('Profile picture uploaded successfully!')
+  } catch (error) {
+    console.error('Error uploading avatar:', error)
+    toast.error('Failed to upload image')
+
+    // Revert preview on failure
+    setFormData(prev => ({ ...prev, avatar: profile.avatar }))
+  } finally {
+    // Clean up the object URL to avoid memory leaks
+    URL.revokeObjectURL(localPreview)
+    setUploadingAvatar(false)
+    // Reset file input so same file can be re-selected
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+}
 
   const handleSave = async () => {
     setSaving(true)
     try {
       const response = await api.put('/subscriber/profile', formData)
       if (response.data.success) {
-        setProfile(prev => ({
-          ...prev,
+        const updatedProfile = {
+          ...profile,
           displayName: formData.displayName,
-          country: formData.country,
+          country: formData.country || 'Not specified',
           bio: formData.bio,
           avatar: formData.avatar
-        }))
+        }
+        setProfile(updatedProfile)
         setIsEditing(false)
         toast.success('Profile updated successfully!')
+      } else {
+        toast.error('Failed to update profile')
       }
     } catch (error) {
       console.error('Error updating profile:', error)
@@ -148,6 +221,7 @@ const SubscriberProfile = () => {
   }
 
   const getInitials = (name) => {
+    if (!name) return 'U'
     return name
       .split(' ')
       .map(word => word[0])
@@ -313,15 +387,64 @@ const SubscriberProfile = () => {
                     name="country"
                     value={formData.country}
                     onChange={handleInputChange}
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   >
                     <option value="">Select a country</option>
                     <option value="Afghanistan">Afghanistan</option>
-                    <option value="Pakistan">Pakistan</option>
-                    <option value="United States">United States</option>
-                    <option value="United Kingdom">United Kingdom</option>
-                    <option value="Canada">Canada</option>
+                    <option value="Albania">Albania</option>
+                    <option value="Algeria">Algeria</option>
+                    <option value="Argentina">Argentina</option>
                     <option value="Australia">Australia</option>
+                    <option value="Austria">Austria</option>
+                    <option value="Bangladesh">Bangladesh</option>
+                    <option value="Belgium">Belgium</option>
+                    <option value="Brazil">Brazil</option>
+                    <option value="Canada">Canada</option>
+                    <option value="China">China</option>
+                    <option value="Denmark">Denmark</option>
+                    <option value="Egypt">Egypt</option>
+                    <option value="Finland">Finland</option>
+                    <option value="France">France</option>
+                    <option value="Germany">Germany</option>
+                    <option value="Greece">Greece</option>
+                    <option value="India">India</option>
+                    <option value="Indonesia">Indonesia</option>
+                    <option value="Iran">Iran</option>
+                    <option value="Iraq">Iraq</option>
+                    <option value="Ireland">Ireland</option>
+                    <option value="Israel">Israel</option>
+                    <option value="Italy">Italy</option>
+                    <option value="Japan">Japan</option>
+                    <option value="Jordan">Jordan</option>
+                    <option value="Kenya">Kenya</option>
+                    <option value="Kuwait">Kuwait</option>
+                    <option value="Malaysia">Malaysia</option>
+                    <option value="Mexico">Mexico</option>
+                    <option value="Morocco">Morocco</option>
+                    <option value="Nepal">Nepal</option>
+                    <option value="Netherlands">Netherlands</option>
+                    <option value="New Zealand">New Zealand</option>
+                    <option value="Nigeria">Nigeria</option>
+                    <option value="Norway">Norway</option>
+                    <option value="Pakistan">Pakistan</option>
+                    <option value="Philippines">Philippines</option>
+                    <option value="Poland">Poland</option>
+                    <option value="Portugal">Portugal</option>
+                    <option value="Russia">Russia</option>
+                    <option value="Saudi Arabia">Saudi Arabia</option>
+                    <option value="Singapore">Singapore</option>
+                    <option value="South Africa">South Africa</option>
+                    <option value="South Korea">South Korea</option>
+                    <option value="Spain">Spain</option>
+                    <option value="Sri Lanka">Sri Lanka</option>
+                    <option value="Sweden">Sweden</option>
+                    <option value="Switzerland">Switzerland</option>
+                    <option value="Thailand">Thailand</option>
+                    <option value="Turkey">Turkey</option>
+                    <option value="United Arab Emirates">United Arab Emirates</option>
+                    <option value="United Kingdom">United Kingdom</option>
+                    <option value="United States">United States</option>
+                    <option value="Vietnam">Vietnam</option>
                   </select>
                 </div>
 
@@ -334,7 +457,7 @@ const SubscriberProfile = () => {
                     value={formData.bio}
                     onChange={handleInputChange}
                     rows={3}
-                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    className="flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   />
                 </div>
               </div>
