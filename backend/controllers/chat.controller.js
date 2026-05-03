@@ -590,7 +590,7 @@ export async function getCreatorSubscribers(req, res) {
         lastMessageAt: lastMessageData?.createdAt || sub.createdAt,
         lastMessageSender: lastMessageData?.senderId || null,
         unreadCount: unreadCount,
-        avatar: null // You can add avatar URL if you have it
+        avatar: subscriber.avatar // You can add avatar URL if you have it
       });
     }
 
