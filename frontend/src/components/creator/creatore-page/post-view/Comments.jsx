@@ -68,8 +68,7 @@ export default function Comments({ postId, creatorUrl, commentsAllowed }) {
       setEditing(false);
       setEditId("")
       setNewComment("")
-      
-
+      fetchComments()
     }
  
   };
