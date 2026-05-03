@@ -39,6 +39,7 @@ import SubscriberChat from './pages/private/subscriber/SubscriberChat';
 import CreatorChats from './pages/private/creator/CreatorChats';
 import LinkRedirect from './pages/LinkRedirect';
 import CreatorSettings from './pages/private/creator/CreatorSettings';
+import SubscriberProfile from './pages/private/subscriber/Profile';
 import { useEffect } from "react";
 import posthog from "posthog-js";
 const App = () => {
@@ -67,6 +68,7 @@ const App = () => {
           <Route path="notifications" element={<Notifications />} />
           <Route path='memberships' element={<Memberships/>}/>
           <Route path="settings" element={<CreatorSettings />} />
+          <Route path="profile" element={<SubscriberProfile />} />
         </Route>
 
         <Route element={<CreatorRoutes />}>
