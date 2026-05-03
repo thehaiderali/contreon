@@ -96,7 +96,7 @@ useEffect(() => {
       setLoading(true);
       const response = await chatService.getSubscribers();
       const raw = response?.data?.subscribers || [];
-  
+      console.log("Subscribers : ",raw)
       // Deduplicate by subscriber _id, keeping the latest entry
       const seen = new Map();
       raw.forEach((sub) => {
