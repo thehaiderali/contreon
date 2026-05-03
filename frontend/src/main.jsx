@@ -11,6 +11,11 @@ posthog.init(import.meta.env.VITE_PUBLIC_POSTHOG_TOKEN, {
   defaults: '2026-01-30', 
 }); 
 
+posthog.init('API_KEY', {
+  session_recording: {
+    maskTextSelector: '.chat-message'
+  }
+})
 createRoot(document.getElementById('root')).render(
     <PostHogProvider client={posthog}>
     <BrowserRouter>

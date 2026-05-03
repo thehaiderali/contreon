@@ -248,7 +248,7 @@ const CreatorSettings = () => {
                   </AlertDescription>
                 </Alert>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="mt-4">
                 <Button 
                   type="submit" 
                   disabled={isUpdatingPassword}
